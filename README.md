@@ -11,6 +11,9 @@ copy of what matters. You decide what matters. The app only proposes.
 
 ## The problem: digital trash
 
+At the end, we are all digital hoarders. In German there is a word for it:
+*Messies*.
+
 Most of us keep the same files in several clouds, photos in three resolutions,
 scans with names like `scan0042.pdf`, and a mailbox that is mostly
 advertisement. We keep it because storage is cheap and sorting is not.
