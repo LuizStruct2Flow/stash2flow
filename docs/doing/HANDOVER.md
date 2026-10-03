@@ -43,12 +43,43 @@ Two things it does NOT do, so you do not go looking:
 
 ## 2. WIP — what is in flight right now
 
-*(Nothing yet. Replace this with the open / in-flight work a waking agent has to
-pick up: the branch, what is done, what is not, and the finding that is still
-unfixed. Delete anything that a lifecycle folder or `git log` already answers.)*
+**Nothing has been pushed.** Every commit on `main` is local. The remote is a
+public repository, so before the first push grep the tracked files for the
+founder's account data (names, addresses, folder and machine names) and confirm
+`docs/SPEC-*.md` is ignored.
+
+**The index plan is waiting on the founder, not on an agent.**
+`PLAN-FEATURE-001-media-index.md` has been reviewed by the PO and three
+architects and revised once. Two things are not in the plan's body yet:
+
+- **D30 (local copies) was decided after the revision.** Only its decision row
+  says so. §2.3, the temp directory, the "bytes on request" port and several
+  scenarios still describe the old "no mirror" design. Revise them in one pass,
+  together with the founder's remaining rulings, before slice 0.
+- **Only one reviewer saw the revised plan.** The Codex architect re-checked his
+  own findings. The PO, the Claude architect and the Kimi architect reviewed the
+  version before it; their findings were applied but not re-checked by them.
+
+Do not start slice 0 (feature files) before the founder has named the unnamed
+concepts in plan §1.3: the feature files must use his words.
+
+**The frontend item is not planned.** Its two open questions (how a frontier
+model may help with the taxonomy; whether the taxonomy replaces `doc_type` and
+`person`) must be settled before slice 6 of the index is built.
+
+**`AGENT_SIGNAL.md` carries an uncommitted fix** to the mic-watcher recipe, filed
+to the blueprint as pull request 86. Leave it uncommitted; it resolves when the
+founder merges and this project pulls. `blueprint drift` reports it until then.
 
 ## 3. Standing gotchas for this project
 
-*(Host quirks and standing founder decisions live in
-`project_config_overview.md`. Put here only what a waking agent would trip over
-in the next hour.)*
+- **Host quirks are private.** They are in `project_config_overview.md`
+  §"Host quirks", which is not in the repository. Read them before running
+  anything against the server or its database.
+- **The mic watcher lives 30 minutes here**, not the hour `AGENT_SIGNAL.md` says,
+  and the Claude persona agent types are not registered in a session that
+  started before `.claude/agents/` was written. Check with one dispatch; fall
+  back to a general-purpose agent with the persona's roster model.
+- **The dispatchers die with the session.** Start
+  `scripts/start-codex-signal-watch.mts` and `scripts/start-kimi-signal-watch.mts`
+  before flipping the mic to Codex or Kimi.
