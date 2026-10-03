@@ -1,0 +1,830 @@
+#!/bin/sh
+# Pre-push hook: block push if any of these fail:
+#   - Security (gitleaks + Semgrep + osv-scanner — see docs/SECURITY.md)
+#   - Build (tsc / compile)
+#   - Lint (--max-warnings ratcheted)
+#   - Format check (Prettier)
+#   - Tests + coverage (per docs/DoD.md §3)
+#   - IaC validate (cdk synth / terraform / helm — see docs/INFRASTRUCTURE.md)
+#   - Project-specific guards (see .githooks/pre-push-project)
+#
+# This file is tracked at .githooks/pre-push, but being tracked is NOT the same
+# as being active: git only runs it when `core.hooksPath` points here, and that
+# is repo-LOCAL config a fresh clone does not have. This header used to claim a
+# `postinstall` wires it up; there is no root package.json, so nothing did, and
+# a 12-commit push went out ungated while this gate was run by hand and reported
+# green (BUG-004).
+#
+# `arm_gate` (scripts/lib/gate.mts) now sets it from paths that already run on
+# every wake — the activity feed and `blueprint drift`. Verify with
+# `git config --get core.hooksPath`; empty means this file is decoration.
+#
+# This is the BLUEPRINT version: generic checks only. Project-specific guards
+# (placeholder injection, asset invariants, release-notes guard, etc.) live
+# in .githooks/pre-push-project and are sourced below if present.
+
+set -e
+
+# BUG-014 — strip git's exported repo pointers before running ANYTHING.
+#
+# Git exports GIT_DIR (and may export GIT_WORK_TREE / GIT_INDEX_FILE) to every
+# hook. The suites below build fixtures with `( cd "$WORK" && git init && … )`,
+# and `cd` does not protect them: with GIT_DIR set, git ignores the working
+# directory and operates on the directory that variable names. A fixture's
+# commit then lands in the REAL repository.
+#
+# That is not a hypothetical. On 2026-08-02 this repo's .git/config was rewritten
+# at 12:40:15 — core.bare=true, core.hooksPath wiped — which BUG-004 recorded as
+# done by an unidentified process. It was the gate's own test suites. The suite
+# that proves the gate arms is what disarmed it, and the next push went out
+# ungated and looked identical to a gated one.
+#
+# Unsetting here is safe: git runs hooks from the repository top level, so every
+# git command below discovers the same repository from the working directory.
+# The suites also unset these individually, because a suite can be run from any
+# other hook context and must not depend on its caller.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY
+
+# --- BUG-066: the CODE root ---------------------------------------------------
+#
+# Every path below is anchored on BP_CODE_ROOT, which pipeline.sh,
+# pre-push-project, run-ts-suites and dod-gate read. It is the work-tree root:
+#
+#   * NOT from $0. `core.hooksPath` and a symlinked .git/hooks both give the
+#     right answer, but a COPIED .git/hooks/pre-push gives `<repo>/.git` — a
+#     plausible directory with no tests/ — and git supports that install. And
+#     $BASH_SOURCE is a bashism; this file is #!/bin/sh.
+#   * FROM CWD, which git guarantees: hooks run at the work-tree root. `pwd` is
+#     a syscall, so unlike `git rev-parse --show-toplevel` no exported GIT_DIR
+#     can move it (BUG-077).
+#
+# A missing renderer REFUSES. It does not fall through to a skip: this whole
+# block exists because a gate reported PASSED having run nothing.
+BP_CODE_ROOT="$(pwd -P)"
+if [ ! -r "$BP_CODE_ROOT/scripts/lib/pipeline.sh" ]; then
+  echo "❌ no code root: scripts/lib/pipeline.sh is not readable under $BP_CODE_ROOT"
+  echo "   (git guarantees a hook runs at the work-tree root)"
+  echo "   Run: blueprint pull scripts/lib/pipeline.sh"
+  echo "   Blocking the push: a gate that cannot find its own code has not run"
+  echo "   its stages, and a gate that skips them all still reports green."
+  exit 1
+fi
+export BP_CODE_ROOT
+[ -d "$BP_CODE_ROOT/tests" ] || \
+  echo "⚠ code root $BP_CODE_ROOT has no tests/ — the suite stages will say so."
+
+# FEATURE-002 — render the gate as a pipeline. The banner is not decoration: a
+# gate that does not run prints NOTHING, which looks exactly like a gate that
+# passed. On 2026-08-02 something wiped core.hooksPath and a push went out
+# completely ungated, indistinguishable from a gated one. With a banner, its
+# absence is the signal.
+#
+# Fails CLOSED and loudly if the renderer is absent. It would be tempting to
+# degrade to plain echoes instead, but that is a second code path through the
+# gate — and the one that runs precisely when something is already wrong. A
+# derived project that pulled this hook before scripts/lib/pipeline.sh lands
+# here, and a confusing block is far better than a gate whose stages quietly
+# do not run.
+#
+# The readable-check above already decided this path, so the `else` here is
+# unreachable in practice and kept as the fail-closed floor.
+# shellcheck source=scripts/lib/pipeline.sh
+if [ -r "$BP_CODE_ROOT/scripts/lib/pipeline.sh" ]; then
+  . "$BP_CODE_ROOT/scripts/lib/pipeline.sh"
+else
+  echo "❌ $BP_CODE_ROOT/scripts/lib/pipeline.sh is missing — the gate renderer is absent."
+  echo "   Run: blueprint pull scripts/lib/pipeline.sh"
+  echo "   Blocking the push: a gate that cannot render its stages cannot"
+  echo "   demonstrate that it ran them."
+  exit 1
+fi
+
+# --- What is actually being pushed (A-03) ------------------------------------
+# git feeds a pre-push hook one line per ref on STDIN:
+#     <local_ref> <local_sha> <remote_ref> <remote_sha>
+# Read it ONCE, here, into a variable. Nothing further down consumes stdin, and
+# a later step that did would otherwise silently eat the ref list.
+#
+# This exists because the secret scan used to run `gitleaks protect --staged`,
+# which scans the INDEX — empty at pre-push time, since the commit is already
+# made. Verified against a real gitleaks with a real secret in the outgoing
+# commit: "0 commits scanned, ~0 bytes ... no leaks found". The gate that
+# CLAUDE.md §Security calls blocking was a no-op in the normal flow.
+_PUSH_REFS="$(cat || true)"
+_ZERO=0000000000000000000000000000000000000000
+
+# The DESTINATION remote, which git passes as $1. It matters: "already
+# published" has to mean "already on the remote I am pushing to", not "on any
+# remote I happen to have configured. A commit sitting on a private mirror is
+# still a first disclosure when it goes to the public one.
+_PUSH_REMOTE="${1:-}"
+
+# push_log_opts — prints the `git log` selector covering everything about to be
+# published, or nothing when there is nothing to scan. Handles the three shapes
+# git can hand us:
+#   normal update  remote_sha..local_sha
+#   new branch     remote_sha is all-zero and is NOT a resolvable revision, so
+#                  `000..local` would make the scan ERROR. Subtract only THIS
+#                  remote's tracking refs.
+#   deletion       local_sha is all-zero: nothing is published, so nothing to
+#                  scan — and a range built from it would be nonsense.
+#
+# A NEW ref is scanned in FULL — everything reachable from the local sha, with
+# nothing subtracted. Two rejected attempts are worth recording, because the
+# obvious optimisations are both unsafe:
+#
+#   `--not --remotes`             subtracts EVERY configured remote, so a
+#                                 commit sitting on a private mirror was
+#                                 skipped on its first push to a public one.
+#   `--not --remotes=<dest>`      still only a namespace selector over
+#                                 refs/remotes/<dest>/*. It never asks the
+#                                 destination what it actually has, and it does
+#                                 not interpret an unusual fetch refspec. A
+#                                 stale-ahead, phantom, or repurposed local ref
+#                                 in that namespace subtracts commits the
+#                                 destination need not contain — an UNDER-scan.
+#
+# git gives the hook no server-authenticated view of what a new destination ref
+# already holds, so there is nothing trustworthy to subtract. Over-scanning
+# costs time; under-scanning ships secrets. For an updated ref the old sha
+# comes from git itself on stdin, so `remote..local` is authoritative there.
+push_log_opts() {
+  echo "$_PUSH_REFS" | while read -r _lref _lsha _rref _rsha; do
+    [ -n "${_lsha:-}" ] || continue
+    [ "$_lsha" = "$_ZERO" ] && continue
+    if [ "${_rsha:-$_ZERO}" = "$_ZERO" ]; then
+      echo "$_lsha"
+    else
+      echo "$_rsha..$_lsha"
+    fi
+  done
+}
+
+# TASK-053 — a push that changes only `.md` files takes the TEXT-ONLY profile:
+# gitleaks, the DoD checklist and the doc suites still run, and the code stages
+# skip with a "text-only push:" reason. Founder decision 2026-09-16, and it
+# includes root files such as CLAUDE.md.
+#
+# FAIL-SAFE: every ref must qualify ON ITS OWN, or the push takes the FULL gate.
+# A ref fails when it is a deletion, a new branch (zero remote sha), a
+# non-fast-forward update (the remote sha is unknown or not an ancestor, so a
+# rewrite can drop code without listing it), or its range lists no files or any
+# path not ending in `.md` (git quotes odd paths, so they fail too).
+# Ranges are never joined into one `git log`: one ref's lower bound would
+# exclude another ref's commits. `--no-renames` lists a rename as delete + add,
+# so renaming a script to `.md` still names the script. `-m` lists a merge's
+# changes too.
+bp_push_is_text_only() {
+  printf '%s\n' "$_PUSH_REFS" | (
+    _to_ok=0
+    while read -r _lref _lsha _rref _rsha; do
+      [ -n "${_lsha:-}" ] || continue
+      [ "$_lsha" != "$_ZERO" ] || exit 1
+      [ "${_rsha:-$_ZERO}" != "$_ZERO" ] || exit 1
+      git merge-base --is-ancestor "$_rsha" "$_lsha" 2>/dev/null || exit 1
+      _to_files="$(git log -m --no-renames --name-only --format= "$_rsha..$_lsha" 2>/dev/null)" || exit 1
+      _to_files="$(printf '%s\n' "$_to_files" | grep -v '^$' || true)"
+      [ -n "$_to_files" ] || exit 1
+      if printf '%s\n' "$_to_files" | grep -qv '\.md$'; then exit 1; fi
+      _to_ok=1
+    done
+    [ "$_to_ok" = 1 ]
+  )
+}
+_PP_TEXT_ONLY=0
+if bp_push_is_text_only; then _PP_TEXT_ONLY=1; fi
+_pp_text_reason="text-only push: every changed file is .md"
+
+# Open the pipeline once the ref list is known, so the header can say what is
+# actually being pushed. Everything from here to pipe_finish renders as stages,
+# including .githooks/pre-push-project, which shares this one pipeline rather
+# than opening a second.
+# No external binaries in the header: `basename` is not guaranteed to be on
+# PATH, and a hook that cannot even print its own banner is a hook that blocks
+# a push for a cosmetic reason. tests/pre-push-secrets #11 runs with a
+# deliberately stripped PATH and caught exactly that. Parameter expansion is
+# POSIX and needs nothing installed.
+_pp_head="$(git rev-parse --short HEAD 2>/dev/null || echo '?')"
+_pp_n="$(git rev-list --count '@{u}..HEAD' 2>/dev/null || echo '?')"
+# BUG-077: `pwd`, not `git rev-parse --show-toplevel`. git runs hooks from the
+# work-tree root, so this is the same answer from a syscall no exported GIT_DIR
+# can redirect — and it is the PROJECT root, which is what the banner names,
+# rather than the code root resolved above.
+_pp_top="$(pwd)"
+
+# TASK-019 — the blueprint is trunk-based, like every project derived from it.
+#
+# A guard here used to refuse a push from the blueprint's main, with a matching
+# pre-commit refusing the commit. Both are gone. Pull requests exist for
+# EXTERNAL collaboration — that is what `blueprint a2bp` files — not as a review
+# step the owner performs on themselves, and a gate that stands between someone
+# and their own trunk is one they learn to route around.
+
+pipe_init "pre-push gate" "${_pp_top##*/} · $_pp_n commit(s) · $_pp_head"
+
+# --- Security: gitleaks + Semgrep + osv-scanner (docs/SECURITY.md cross-recipe rules) ---
+# All three are skipped with a warning if the binary isn't installed locally
+# — CI re-runs them as a backstop. This keeps a fresh clone from being
+# blocked on day 1 while still nudging the developer to install them.
+
+_st_gitleaks(){
+  # Same exit-code discipline as the semgrep step below: gitleaks exits 1 when
+  # it FINDS a leak and >=2 when it could not run. Treating both as "found a
+  # secret" is misleading in one direction and, worse, an operator who learns to
+  # shrug off spurious failures will shrug off a real one.
+  _gl_out="$(mktemp)"
+  _gl_rc=0
+  _gl_ranges="$(push_log_opts)"
+
+  if [ -z "$_gl_ranges" ]; then
+    if [ -n "$_PUSH_REFS" ]; then
+      # Every ref was a deletion — nothing is being published.
+      echo "     nothing published (branch deletion) — no content to scan."
+    else
+      # No ref lines: the hook was invoked by hand, by CI, or by a fixture
+      # rehearsing the gate. Scanning nothing here would turn "run the gate
+      # manually" into a hole, so fall back to the outgoing commits against the
+      # upstream, and to the whole history when there is no upstream to
+      # subtract. Never silently skip.
+      _gl_up="$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || true)"
+      if [ -n "$_gl_up" ]; then
+        _gl_ranges="$_gl_up..HEAD"
+      else
+        _gl_ranges="--all"
+      fi
+      echo "     no ref info on stdin — scanning $_gl_ranges"
+    fi
+  fi
+
+  # Same exit-code discipline as semgrep below (BUG-003): 1 means gitleaks
+  # FOUND something, >=2 means it could not run. They are different failures
+  # and are reported differently — an operator who learns to shrug off a
+  # spurious one will shrug off a real one.
+  # The loop runs in a subshell, so the exit status is passed back through the
+  # output file rather than a variable — one range per line, any of which may
+  # find something.
+  # BOUNDED, and it fails closed when the bound is hit (A-03 R3-F2). A new ref
+  # is scanned in full — the only security-safe choice with what a pre-push hook
+  # knows — but "full" is unbounded, and the ≤30s gate ceiling in CLAUDE.md is
+  # unconditional. Those two cannot both be satisfied silently, so the conflict
+  # is resolved explicitly: cap the local scan, and if it does not finish, BLOCK
+  # and say the scan was incomplete. An unfinished scan is not a clean one.
+  # Push again after `--log-opts` narrows, or let CI do the full history.
+  _gl_budget="${GITLEAKS_TIMEOUT_SECONDS:-20}"
+
+  # A timeout provider is REQUIRED, not best-effort (R4-F2). The previous
+  # version fell back to running gitleaks unbounded when `timeout` was absent,
+  # which is exactly what the documented macOS install path produced — so "the
+  # scan is capped" was not a property of the blueprint at all, just of this
+  # Linux box. macOS gets it from coreutils as `gtimeout`; the toolchain
+  # installer pulls that in (TASK-017).
+  _gl_timeout=""
+  if command -v timeout >/dev/null 2>&1; then
+    _gl_timeout="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    _gl_timeout="gtimeout"
+  else
+    echo "❌ no 'timeout' (or 'gtimeout') available — the secret scan cannot be bounded."
+    echo "   A new ref is scanned over its whole history, which is unbounded, so an"
+    echo "   unbounded scanner can blow the ≤30s gate budget with no way to stop it."
+    echo "   Install it: bash scripts/install-toolchain.sh  (from repo root)"
+    return 1
+  fi
+
+  # ONE deadline for the whole gitleaks step, not one per ref (R4-F1). The
+  # budget used to be handed to a fresh `timeout` inside the loop, so a push
+  # with three slow refs could spend 3× the "cap" before the rest of the gate
+  # even started — the documented property was per-invocation while the ≤30s
+  # ceiling it claimed to respect is per-push.
+  _gl_deadline=$(( $(date +%s) + _gl_budget ))
+  printf '%s\n' "$_gl_ranges" | while IFS= read -r _gl_range; do
+    [ -n "$_gl_range" ] || continue
+    _gl_left=$(( _gl_deadline - $(date +%s) ))
+    if [ "$_gl_left" -le 0 ]; then
+      echo "GITLEAKS_RC=124" >>"$_gl_out"
+      break
+    fi
+    "$_gl_timeout" "$_gl_left" gitleaks detect --redact --no-banner --log-opts="$_gl_range" >>"$_gl_out" 2>&1 \
+      || echo "GITLEAKS_RC=$?" >>"$_gl_out"
+  done
+  _gl_rc=0
+  if grep -q '^GITLEAKS_RC=1$' "$_gl_out" 2>/dev/null; then
+    _gl_rc=1
+  elif grep -q '^GITLEAKS_RC=' "$_gl_out" 2>/dev/null; then
+    _gl_rc="$(grep -m1 '^GITLEAKS_RC=' "$_gl_out" | cut -d= -f2)"
+  fi
+
+  if [ "$_gl_rc" -eq 1 ]; then
+    tail -30 "$_gl_out"; rm -f "$_gl_out"
+    echo "❌ gitleaks found a secret in the commits you are pushing."
+    echo "   Rotate the credential FIRST, then rewrite the history that carries it."
+    echo "   A leaked secret is compromised the moment it lands on origin, and"
+    echo "   removing the commit does not un-leak it."
+    return 1
+  elif [ "$_gl_rc" -eq 124 ]; then
+    tail -10 "$_gl_out"; rm -f "$_gl_out"
+    echo "❌ gitleaks did not finish within ${_gl_budget}s — the scan is INCOMPLETE."
+    echo "   Blocked, because an unfinished scan is not a clean one. This is the"
+    echo "   documented edge of the ≤30s pre-push budget (DoD §4): a brand-new"
+    echo "   ref is scanned over its whole history, which is unbounded."
+    echo "   Options: raise GITLEAKS_TIMEOUT_SECONDS deliberately for this push,"
+    echo "   push a smaller range first, or let CI scan the full history."
+    return 1
+  elif [ "$_gl_rc" -ne 0 ]; then
+    tail -30 "$_gl_out"; rm -f "$_gl_out"
+    echo "❌ gitleaks could not complete (exit $_gl_rc) — the secret gate did NOT run."
+    echo "   This is a TOOL failure, not a clean scan, so the push is blocked."
+    return 1
+  fi
+  rm -f "$_gl_out"
+  return 0
+}
+if command -v gitleaks >/dev/null 2>&1; then
+  pipe_stage "secret scan · gitleaks" _st_gitleaks
+else
+  pipe_skip "secret scan · gitleaks" "gitleaks not installed locally — secret scan skipped (CI will catch it)."
+fi
+
+_st_semgrep(){
+  # p/owasp-top-ten is the conservative baseline; projects can add packs in
+  # .githooks/pre-push-project. NOTE: `p/` configs are fetched from the Semgrep
+  # registry (cached under ~/.semgrep), so this is NOT a purely offline step.
+  #
+  # CLASSIFY FROM JSON, NOT THE EXIT CODE. A finding and a crash are DIFFERENT
+  # outcomes and must never be confused — a broken scanner reported as a
+  # vulnerability teaches operators to shrug off the gate. The exit code cannot
+  # tell them apart: semgrep exits 1 for findings AND for some fatal errors
+  # (an unwritable ~/.semgrep dir exits 1 with a traceback and no JSON — Codex
+  # R-3). So:
+  #   - FINDINGS come from `.results[]` in --json output. An OSError produces no
+  #     results, so it can never be misread as a finding.
+  #   - COMPLETENESS comes from the exit code, and ONLY exit 0 proves it. Any
+  #     non-zero exit with zero results means the scan is not proven complete
+  #     (exit >=2 is the io_uring/memlock crash; exit 1 is ambiguous), so "0
+  #     findings" cannot be trusted and we retry single-job, then fail closed.
+  # jq is required: without a reliable parser we would be back to guessing, which
+  # is the exact defect this fixes — so a missing jq fails closed, not open.
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "❌ jq is required to classify semgrep output reliably, but is not installed."
+    echo "   Install it: bash scripts/install-toolchain.sh (or apt/dnf install jq). Blocking rather than"
+    echo "   guessing whether a non-zero semgrep exit is a finding or a crash."
+    return 1
+  fi
+
+  _sg_json="$(mktemp)"; _sg_err="$(mktemp)"
+
+  # $1 = extra args (word-split intentionally, e.g. "--jobs 1"); sets _sg_class
+  # (finding|incomplete|clean), _sg_findings, _sg_rc.
+  #
+  # A "clean" verdict is the strongest claim this gate makes, so it demands the
+  # most evidence: semgrep exited 0 AND emitted a well-formed `.results` ARRAY
+  # AND that array is empty. Anything weaker is incomplete, never clean:
+  #   - invalid JSON (crash before output — the OSError class);
+  #   - `.results` missing or not an array (wrong/partial schema) — NOT coerced
+  #     to zero findings, which would fail open;
+  #   - a NON-ZERO exit with zero results — exit 1 is not semgrep's clean exit,
+  #     so "0 results" there is not a proven-complete scan (Codex R2-1).
+  #   - exit 0 and zero results, but an `.errors` entry this policy does not
+  #     accept (BUG-126). semgrep exits 0 when it could not parse a target and
+  #     says so ONLY in `.errors`, so that file was never analysed.
+  # Only the exit code and `.errors` prove completeness; only the results array
+  # proves findings. Neither is inferred from the other.
+  #
+  # BUG-126 — THE PARSE-ERROR POLICY LIVES IN ONE FILE, and this stage sources
+  # it: scripts/semgrep-verdict.sh decides which diagnostics a scan may carry and
+  # still be called clean, and .github/workflows/security.yml EXECUTES the same
+  # file. The two used to carry separate copies kept in step only by a test.
+  # The policy itself, and why shell parse errors are the one accepted class, is
+  # documented there rather than restated here.
+  #
+  # FAILS CLOSED when the file is absent, exactly as the renderer above does: a
+  # gate that cannot compute its verdict has not produced a clean one.
+  if [ -r "$BP_CODE_ROOT/scripts/semgrep-verdict.sh" ]; then
+    # shellcheck source=scripts/semgrep-verdict.sh
+    . "$BP_CODE_ROOT/scripts/semgrep-verdict.sh"
+  else
+    echo "❌ $BP_CODE_ROOT/scripts/semgrep-verdict.sh is missing — the SAST verdict"
+    echo "   cannot be computed, so this is not a clean scan."
+    echo "   Run: blueprint pull scripts/semgrep-verdict.sh"
+    return 1
+  fi
+
+  _sg_classify() {
+    _sg_rc=0; _sg_unaccepted=''; _sg_undecodable=''
+    # shellcheck disable=SC2086
+    semgrep $1 --json \
+      --config=p/owasp-top-ten \
+      --severity=WARNING --severity=ERROR \
+      --timeout=20 --metrics=off --quiet \
+      . >"$_sg_json" 2>"$_sg_err" || _sg_rc=$?
+    # Require well-formed results AND errors ARRAYS. `jq -e` is false/non-zero
+    # when the JSON is invalid, or either is missing / not an array — incomplete.
+    if ! jq -e '(.results | type) == "array" and (.errors | type) == "array"' "$_sg_json" >/dev/null 2>&1; then
+      _sg_class=incomplete; return
+    fi
+    _sg_findings="$(jq '.results | length' "$_sg_json")"
+    if [ "${_sg_findings:-0}" -gt 0 ]; then
+      _sg_class=finding                        # real results, regardless of exit
+      return
+    fi
+    # The verdict, from the one shared policy. Exit 2 is "could not decode",
+    # which says nothing about whether code went unanalysed (Alex, finding 1),
+    # so it is incomplete rather than clean.
+    _sgv_rc=0
+    _sg_unaccepted="$(sgv_unaccepted "$_sg_json")" || _sgv_rc=$?
+    if [ "$_sgv_rc" -eq 2 ]; then
+      _sg_undecodable=1; _sg_class=incomplete; return
+    fi
+    if [ "$_sg_rc" -ne 0 ] || [ "$_sgv_rc" -ne 0 ]; then
+      _sg_class=incomplete                     # a non-zero exit, or errors not accepted
+    else
+      _sg_class=clean                          # zero results, clean exit, no unaccepted error
+    fi
+  }
+
+  _sg_classify ""
+  if [ "$_sg_class" = "incomplete" ]; then
+    # Retry single-job. --jobs 1 avoids the io_uring parallelism that crashes
+    # under a low RLIMIT_MEMLOCK (8 MB is a common Linux default) even with tens
+    # of GB free — a strictly better retry than repeating the identical command.
+    echo "  ⚠ semgrep did not complete (exit $_sg_rc) — retrying single-job..."
+    # Survives the stage buffer: a retry that succeeded is still a fact about
+    # how this gate ran, and it is the local signature of the io_uring failure
+    # documented in HANDOVER §2. Silently recovering would hide a real thing.
+    pipe_note "retrying single-job"
+    _sg_retried=1
+    _sg_classify "--jobs 1"
+  fi
+
+  if [ "$_sg_class" = "finding" ]; then
+    jq -r '.results[] | "  \(.check_id)  \(.path):\(.start.line)"' "$_sg_json" 2>/dev/null | head -40
+    rm -f "$_sg_json" "$_sg_err"
+    echo "❌ Semgrep found ${_sg_findings} WARNING+ finding(s)."
+    echo "   Fix the finding, or suppress with '// nosemgrep: <rule-id> — <justification>'"
+    echo "   naming the threat-model entry in project_config_security.md that makes it safe."
+    return 1
+  elif [ "$_sg_class" = "incomplete" ]; then
+    tail -20 "$_sg_err"
+    if [ -n "$_sg_unaccepted" ]; then
+      echo "   semgrep reported these errors (type, path):"
+      printf '%s\n' "$_sg_unaccepted" | head -40
+    fi
+    if [ -n "${_sg_undecodable:-}" ]; then
+      echo "   the error list semgrep emitted, truncated:"
+      jq -c '.errors' "$_sg_json" 2>/dev/null | cut -c1-400
+    fi
+    rm -f "$_sg_json" "$_sg_err"
+    if [ -n "${_sg_undecodable:-}" ]; then
+      echo "❌ semgrep's error list could not be read — the SAST scan is INCOMPLETE, not clean."
+      echo "   An entry is not a shape this gate knows how to classify, so whether"
+      echo "   code went unanalysed cannot be decided. Blocked rather than guessed."
+      echo "   If semgrep's schema changed, teach _sg_decode_errors the new shape"
+      echo "   in .githooks/pre-push AND the sast job in .github/workflows/security.yml."
+      return 1
+    fi
+    if [ "$_sg_rc" -eq 0 ] && [ -n "$_sg_unaccepted" ]; then
+      echo "❌ semgrep exited 0 but reported errors — the SAST scan is INCOMPLETE, not clean."
+      echo "   Code semgrep could not parse was NOT analysed, so the push is blocked."
+      echo "   Fix the syntax, or exclude the path in .semgrepignore if it is not source."
+      echo "   If semgrep is wrong about valid code, extend the reviewed policy in"
+      echo "   scripts/semgrep-verdict.sh — the one file both this gate and CI read."
+      return 1
+    fi
+    echo "❌ semgrep could not complete (exit $_sg_rc) — the SAST gate did NOT run."
+    echo "   This is a TOOL failure, not a clean scan, so the push is blocked."
+    echo "   Common causes: an unwritable ~/.semgrep dir, or registry/network"
+    echo "   unavailable for the p/ pack. Re-run, or set SEMGREP_RULES to a local"
+    echo "   ruleset if you need to work offline."
+    return 1
+  fi
+  _sg_accepted="$(jq '.errors | length' "$_sg_json")"
+  if [ "${_sg_accepted:-0}" -gt 0 ]; then
+    _sg_note="${_sg_accepted} shell parse error(s) accepted by the BUG-126 policy"
+    if [ -n "${_sg_retried:-}" ]; then _sg_note="; $_sg_note"; fi
+    pipe_note "$_sg_note"
+  fi
+  rm -f "$_sg_json" "$_sg_err"
+  return 0
+}
+if [ "$_PP_TEXT_ONLY" = "1" ]; then
+  pipe_skip "SAST · semgrep p/owasp-top-ten" "$_pp_text_reason"
+elif command -v semgrep >/dev/null 2>&1; then
+  pipe_stage "SAST · semgrep p/owasp-top-ten" _st_semgrep
+else
+  pipe_skip "SAST · semgrep p/owasp-top-ten" "semgrep not installed locally — SAST skipped (CI will catch it)."
+fi
+
+_st_osv_scanner(){
+  # POLICY: MEDIUM+ (CVSS >= 4.0) blocks. Lower-severity advisories are printed
+  # and tracked in docs/config/findings.md; they do not block the push. This is
+  # the SAME policy .github/workflows/security.yml's `sca` job applies, with the
+  # same jq classification over the same --format=json output.
+  #
+  # BUG-045: the two used to disagree. This hook failed on ANY non-zero exit that
+  # was not the literal "No package sources found" — no severity filter at all —
+  # while CI blocked MEDIUM+ only. A LOW advisory with no upgrade available
+  # therefore blocked every local push with no in-gate escape, and the only exit
+  # was --no-verify. A gate people route around protects nothing (BUG-031).
+  # Only the blueprint felt no pain, because it had no lockfile and took the
+  # no-op branch; TASK-018 phase 2 removes that exemption everywhere.
+  #
+  # --allow-no-lockfiles turns "No package sources found" into a clean exit, so a
+  # repo with no lockfile (a template before bootstrap, a workspace not yet
+  # installed) is a PASS by the tool's own contract rather than a string parsed
+  # out of stderr. NOTE: in that case osv-scanner emits `"results": null`, not
+  # `[]` — verified on 2.4.0 — so the completeness check below accepts both.
+  #
+  # jq is required: without a reliable parser the severity policy cannot be
+  # applied at all, and guessing from the exit code is the exact defect being
+  # fixed. So a missing jq fails CLOSED, matching _st_semgrep above.
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "❌ jq is required to apply the MEDIUM+ severity policy, but is not installed."
+    echo "   Install it: bash scripts/install-toolchain.sh (or apt/dnf install jq)."
+    return 1
+  fi
+
+  _osv_json="$(mktemp)"; _osv_err="$(mktemp)"
+  _osv_rc=0
+  osv-scanner scan source \
+    --recursive \
+    --allow-no-lockfiles \
+    --licenses=false \
+    --format=json \
+    . >"$_osv_json" 2>"$_osv_err" || _osv_rc=$?
+
+  # A scan that did not run is NOT a clean scan. osv-scanner exits 0 with no
+  # vulnerabilities and 1 with them; anything else is a tool failure. Require
+  # BOTH a sane exit AND a well-formed `results` key (array, or null when there
+  # were no package sources) before trusting a verdict — never coerce a missing
+  # key to zero findings, which would fail open.
+  #
+  # BUG-136: a tool failure used to discard the scanner's own stderr
+  # (`2>/dev/null`), so "could not complete (exit N)" was all the log ever said —
+  # CI run 35220731328 hit exit 127 and nobody could tell a network failure from
+  # anything else. Capture it to a temp file and print it (bounded) on this
+  # branch only; a clean or findings run stays exactly as quiet as before.
+  if [ "$_osv_rc" -gt 1 ] || \
+     ! jq -e 'has("results") and ((.results | type) as $t | $t == "array" or $t == "null")' \
+          "$_osv_json" >/dev/null 2>&1; then
+    echo "❌ osv-scanner could not complete (exit $_osv_rc) — the SCA gate did NOT run."
+    echo "   This is a TOOL failure, not a clean scan, so the push is blocked."
+    if [ -s "$_osv_err" ]; then
+      echo "   osv-scanner's own error (last 20 lines):"
+      tail -20 "$_osv_err"
+    fi
+    rm -f "$_osv_json" "$_osv_err"
+    return 1
+  fi
+
+  _osv_all="$(jq '[.results[]?.packages[]?.groups[]?] | length' "$_osv_json")"
+  _osv_blocking="$(jq '[.results[]?.packages[]?.groups[]? | select((.max_severity | tonumber? // 0) >= 4.0)] | length' "$_osv_json")"
+
+  if [ "${_osv_all:-0}" -gt 0 ]; then
+    jq -r '.results[]?.packages[]? as $p | $p.groups[]? | "  - \(.ids | join(", ")) (CVSS \(.max_severity // "unknown")) in \($p.package.name)@\($p.package.version)"' \
+       "$_osv_json" | head -40
+  fi
+
+  if [ "${_osv_blocking:-0}" -gt 0 ]; then
+    rm -f "$_osv_json" "$_osv_err"
+    echo "❌ osv-scanner found ${_osv_blocking} dependency vulnerabilit(ies) at MEDIUM+ (CVSS >= 4.0)."
+    echo "   Upgrade or pin to a known-good version. MEDIUM+ blocks here AND in CI,"
+    echo "   so there is nothing to be gained by pushing past it."
+    return 1
+  fi
+
+  rm -f "$_osv_json" "$_osv_err"
+  if [ "${_osv_all:-0}" -gt 0 ]; then
+    echo "⚠  osv-scanner: $((_osv_all - _osv_blocking)) advisor(ies) below MEDIUM — reported, not blocking."
+    echo "   Track them in docs/config/findings.md with a planned upgrade date."
+  fi
+  return 0
+}
+if [ "$_PP_TEXT_ONLY" = "1" ]; then
+  pipe_skip "SCA · osv-scanner" "$_pp_text_reason"
+elif command -v osv-scanner >/dev/null 2>&1; then
+  pipe_stage "SCA · osv-scanner" _st_osv_scanner
+else
+  pipe_skip "SCA · osv-scanner" "osv-scanner not installed locally — SCA skipped (CI will catch it)."
+fi
+
+# Do not edit this block for your layout: a pull replaces this whole file. A
+# project's own build/lint/test stages belong after the end marker in
+# .githooks/pre-push-project, which a pull preserves.
+
+# Each workspace runs the same gate order (per docs/DoD.md §4):
+#   build → lint → format:check → test:coverage → project guards
+#
+# Required npm scripts per workspace:
+#   - build         (e.g. tsc)
+#   - lint          (eslint with ratcheted --max-warnings)
+#   - format:check  (prettier --check . — fails if anything unformatted)
+#   - test:coverage (test runner + coverage; fails if project's
+#                    greenfield ≥90% / brownfield ≥70% threshold not met,
+#                    per project_config_dod.md)
+
+# These stages only recognise backend/, frontend/ and infra/ (or infrastructure/). A project laid out
+# any other way skips every one of them and the gate still ends PASSED, so the
+# skip says where that project's own build/lint/test stages belong. (The hint
+# deliberately does not spell the marker token: prose naming a marker is how
+# BUG-052 and BUG-112 both happened.)
+_pp_layout_hint="if your code lives elsewhere, its stages belong after the end marker in .githooks/pre-push-project (declare them in project_config_dod.md)"
+
+# --- Backend (if present) ---
+_st_backend_build(){ ( cd backend && npm run build ) || { echo "❌ Backend build failed."; return 1; }; }
+_st_backend_lint(){ ( cd backend && npm run lint ) || { echo "❌ Backend lint exceeded --max-warnings threshold."; return 1; }; }
+_st_backend_format_check(){ ( cd backend && npm run format:check ) || { echo "❌ Backend has unformatted files. Run 'npm run format' in backend/ and recommit."; return 1; }; }
+_st_backend_test_coverage(){ ( cd backend && npm run test:coverage ) || { echo "❌ Backend tests failed or coverage below threshold (see project_config_dod.md)."; return 1; }; }
+if [ "$_PP_TEXT_ONLY" = "1" ]; then
+  pipe_skip "backend" "$_pp_text_reason"
+elif [ -d backend ]; then
+  pipe_stage "backend · build" _st_backend_build
+  pipe_stage "backend · lint" _st_backend_lint
+  pipe_stage "backend · format" _st_backend_format_check
+  pipe_stage "backend · tests + coverage" _st_backend_test_coverage
+else
+  pipe_skip "backend · build" "no backend/ directory — $_pp_layout_hint"
+  pipe_skip "backend · lint" "no backend/ directory"
+  pipe_skip "backend · format" "no backend/ directory"
+  pipe_skip "backend · tests + coverage" "no backend/ directory"
+fi
+
+# --- Frontend (if present) ---
+_st_frontend_lint(){ ( cd frontend && npm run lint ) || { echo "❌ Frontend lint exceeded --max-warnings threshold."; return 1; }; }
+_st_frontend_format_check(){ ( cd frontend && npm run format:check ) || { echo "❌ Frontend has unformatted files. Run 'npm run format' in frontend/ and recommit."; return 1; }; }
+_st_frontend_test_coverage(){ ( cd frontend && npm run test:coverage ) || { echo "❌ Frontend tests failed or coverage below threshold (see project_config_dod.md)."; return 1; }; }
+if [ "$_PP_TEXT_ONLY" = "1" ]; then
+  pipe_skip "frontend" "$_pp_text_reason"
+elif [ -d frontend ]; then
+  pipe_stage "frontend · lint" _st_frontend_lint
+  pipe_stage "frontend · format" _st_frontend_format_check
+  pipe_stage "frontend · tests + coverage" _st_frontend_test_coverage
+else
+  pipe_skip "frontend · lint" "no frontend/ directory — $_pp_layout_hint"
+  pipe_skip "frontend · format" "no frontend/ directory"
+  pipe_skip "frontend · tests + coverage" "no frontend/ directory"
+fi
+
+# --- IaC validate: cdk synth / terraform validate / helm lint (docs/INFRASTRUCTURE.md cross-recipe rules) ---
+# Each step runs only if the corresponding infra layout is present and the
+# tool is installed. Missing tool prints a hint and skips — CI re-runs as
+# the backstop. Same UX pattern as the security gate above.
+
+# The IaC tree is infra/ or infrastructure/, and BOTH are checked.
+#
+# TASK-040. Detection used to take the first that EXISTED and stop, before asking
+# whether it held a recipe. So an empty infra/ beside a populated infrastructure/
+# — cdk.json, main.tf, .terraform/, charts/ — ran no CDK, no Terraform and no
+# Helm, exited 0, and printed no skip either: the gate said PASSED over an IaC
+# tree it had never looked at. A stray empty directory is an ordinary accident,
+# and it silently disabled the whole section.
+#
+# Checking both is preferred over refusing the ambiguous layout: blocking a push
+# because an empty directory exists punishes a project for a naming guess, while
+# reading both finds the recipes wherever they actually live. Each stage names
+# the directory it ran in, so a project carrying two trees gets two readable
+# stage lines rather than two identical ones.
+_st_cdk(){
+  ( cd "$_iac" && cdk synth --quiet >/dev/null ) || {
+    echo "❌ cdk synth failed. Fix the IaC errors before pushing."
+    echo "   Run 'cd $_iac && cdk synth' locally to see the full output."
+    return 1
+  }
+}
+_st_terraform(){
+  ( cd "$_iac" && terraform fmt -check -recursive >/dev/null ) || {
+    echo "❌ Terraform files are unformatted. Run 'terraform fmt -recursive' in $_iac/ and recommit."
+    return 1
+  }
+  # terraform validate needs init; skip if .terraform/ isn't present (CI does the deeper validate)
+  if [ -d "$_iac/.terraform" ]; then
+    ( cd "$_iac" && terraform validate >/dev/null ) || {
+      echo "❌ terraform validate failed. Fix the IaC errors before pushing."
+      return 1
+    }
+  else
+    echo "    (skipping terraform validate — run 'terraform init' in $_iac/ to enable locally)"
+  fi
+}
+_st_helm(){
+  for chart in "$_iac"/charts/*/; do
+    helm lint "$chart" >/dev/null || { echo "❌ helm lint failed on $chart"; return 1; }
+  done
+}
+
+# `_iac` is the LOOP variable, and the stage functions above read it when they
+# run, which is inside this loop. Each existing tree is examined on its own.
+_iac_found=0
+_iac_dirs="infra infrastructure"
+if [ "$_PP_TEXT_ONLY" = "1" ]; then
+  pipe_skip "IaC validate" "$_pp_text_reason"
+  _iac_dirs=""
+  _iac_found=1
+fi
+for _iac in $_iac_dirs; do
+  [ -d "$_iac" ] || continue
+  _iac_found=1
+
+  # Recipe A — CDK (TypeScript): detect by <iac>/cdk.json
+  if [ -f "$_iac/cdk.json" ]; then
+    if command -v cdk >/dev/null 2>&1; then
+      pipe_stage "IaC synth · cdk · $_iac" _st_cdk
+    else
+      pipe_skip "IaC synth · cdk · $_iac" "cdk not installed (bash scripts/install-toolchain.sh --infra) — CI will catch it"
+    fi
+  fi
+
+  # Recipe B — Terraform: detect by any <iac>/**/*.tf
+  if ls "$_iac"/**/*.tf >/dev/null 2>&1 || ls "$_iac"/*.tf >/dev/null 2>&1; then
+    if command -v terraform >/dev/null 2>&1; then
+      pipe_stage "IaC validate · terraform · $_iac" _st_terraform
+    else
+      pipe_skip "IaC validate · terraform · $_iac" "terraform not installed (bash scripts/install-toolchain.sh --infra) — CI will catch it"
+    fi
+  fi
+
+  # Recipe C — Helm charts: detect by <iac>/charts/*/Chart.yaml
+  if ls "$_iac"/charts/*/Chart.yaml >/dev/null 2>&1; then
+    if command -v helm >/dev/null 2>&1; then
+      pipe_stage "IaC lint · helm · $_iac" _st_helm
+    else
+      pipe_skip "IaC lint · helm · $_iac" "helm not installed (bash scripts/install-toolchain.sh --infra) — CI will catch it"
+    fi
+  fi
+done
+
+if [ "$_iac_found" = "0" ]; then
+  pipe_skip "IaC validate" "no infra/ or infrastructure/ directory — $_pp_layout_hint"
+fi
+
+# --- .claude/settings.json host-path guard (generic struct2flow rule) ---
+# The COMMITTED settings.json must be host-agnostic — it travels with the
+# repo to every machine and (when public) every fork. Absolute paths to a
+# specific machine's home directory leak via Claude Code's auto-allowlist
+# every time the agent runs a Bash command with such a path. They belong
+# in .claude/settings.local.json (gitignored), never in settings.json.
+#
+# Three drift cycles in a row landed paths like /Users/<name>/.ssh,
+# /Users/<name>/sources/, /Users/<name>/Library/Containers/... in
+# settings.json. This guard blocks any future occurrence.
+#
+# To allow-list a legitimate generic path that happens to contain /Users
+# or /home as a literal substring (rare), add a comment line above the
+# entry: this grep is line-based and won't match across lines.
+_st_host_paths(){
+  HOST_PATHS=$(grep -nE '/(Users|home)/[A-Za-z0-9_.-]+/' .claude/settings.json || true)
+  if [ -n "$HOST_PATHS" ]; then
+    echo "❌ .claude/settings.json contains host-specific paths."
+    echo "   Move them to .claude/settings.local.json (gitignored) — settings.json"
+    echo "   is committed and must stay host-agnostic."
+    echo "$HOST_PATHS" | sed 's/^/     /'
+    return 1
+  fi
+}
+if [ -f .claude/settings.json ]; then
+  pipe_stage "settings.json host-path guard" _st_host_paths
+else
+  pipe_skip "settings.json host-path guard" "no .claude/settings.json"
+fi
+
+# --- Project-specific guards (sourced if present) ---
+# Add your project's invariants in .githooks/pre-push-project:
+#   - placeholder / config drift guards
+#   - asset / favicon / head-block invariants
+#   - release-notes guard
+#   - localization parity checks
+# This keeps .githooks/pre-push pristine (blueprint-managed) and lets the
+# blueprint sync forward without trampling your project guards.
+#
+# BUG-066: resolved against the code root first, because pre-push-project is
+# this file's sibling and travels with it. The cwd-relative form is kept as the
+# second candidate so a tree that moves the code but leaves .githooks at the
+# repository root still finds it.
+_pp_proj=''
+for _pp_c in "$BP_CODE_ROOT/.githooks/pre-push-project" ".githooks/pre-push-project"; do
+  [ -f "$_pp_c" ] || continue
+  _pp_proj="$_pp_c"
+  break
+done
+if [ -n "$_pp_proj" ]; then
+  # shellcheck source=.githooks/pre-push-project
+  . "$_pp_proj"
+else
+  pipe_skip "project guards" "no .githooks/pre-push-project"
+fi
+
+# pipe_finish returns non-zero if any stage failed. `set -e` is on, so an
+# explicit exit keeps the intent readable rather than relying on the last
+# command's status — and a failing gate must exit non-zero even if pipe_finish
+# is ever changed to return something else.
+if pipe_finish; then
+  # FEATURE-002 — the server side of the pipeline. Detached and fire-and-forget:
+  # it cannot block the push, cannot change its exit status, and exits on a hard
+  # deadline even if no run ever appears. Opt out with AGENT_CI_WATCH=0.
+  if [ "${AGENT_CI_WATCH:-1}" = "1" ] && [ -x "$BP_CODE_ROOT/scripts/watch-ci.sh" ] \
+     && command -v gh >/dev/null 2>&1; then
+    ( setsid sh "$BP_CODE_ROOT/scripts/watch-ci.sh" "$(git rev-parse HEAD 2>/dev/null)" >/dev/null 2>&1 & ) 2>/dev/null || true
+    echo "  watching CI for $(git rev-parse --short HEAD 2>/dev/null) — results here and in logs/agent-activity.log"
+  fi
+  exit 0
+fi
+exit 1

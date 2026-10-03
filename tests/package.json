@@ -1,0 +1,23 @@
+{
+  "name": "struct2flow-blueprint",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Test harness for the struct2flow blueprint's own regression suites (TASK-018). Lives under tests/, which is a blueprint-managed directory no derived project owns a copy of — so it cannot collide with a project's own root package.json (TASK-020).",
+  "scripts": {
+    "test": ". ../scripts/run-ts-suites.sh && ts_scrubbed vitest run",
+    "test:watch": ". ../scripts/run-ts-suites.sh && ts_scrubbed vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "_testScriptNote": "BUG-149 — `npm test` is the documented human entry point, and a normal terminal (VS Code) exports GIT_ASKPASS, which tests/harness/env.ts rightly refuses. The script sources scripts/run-ts-suites.sh and runs vitest through its ts_scrubbed, so the ONE scrub (BUG-117) applies here too — do not inline a second unset list (A-09). A plain `vitest run` without the scrub still fails BY DESIGN: specs that spawn directly are guarded by assertProcessEnvClean.",
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "typescript": "5.9.2",
+    "vitest": "4.1.11",
+    "yaml": "2.9.1"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "_engineNote": "Floor RAISED by TASK-067, not merely restated: scripts/**/*.mts runs on Node's own type stripping with no flag and no tsx/ts-node, and 22.18.0 is the first release that strips by default — measured directly against the official tarball (verified against SHASUMS256.txt): 22.17.1 throws SyntaxError on a one-line typed file, 22.18.0 runs it. The old ^20.19.0 arm is GONE, not narrowed — TASK-067's synthesis dropped it outright rather than keeping a 20.x branch this repo would then have to prove strips types too. The vitest-driven floor this note used to cite (vitest 4.1.11 / GHSA-82fw-gwwq-j7x9, CVSS 5.9) is subsumed: 22.18.0 already clears >=22.12.0. scripts/install-toolchain.sh must assert BOTH as a capability: `command -v node` is true for a Node that cannot run the harness, and (new) a Node can satisfy this range while still being a distro build with type stripping compiled out — see require_node's capability probe."
+}

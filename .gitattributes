@@ -1,0 +1,245 @@
+# Controls what `git archive` ships — which is what `scripts/new-project.sh`
+# uses to bootstrap a derived project (A-05).
+#
+# The blueprint is both a TEMPLATE and a working repo. Its own lifecycle folders
+# therefore hold real, tracked work items — BUG plans, audit registers, review
+# records. Without this, a freshly bootstrapped project opens with the
+# BLUEPRINT's active bugs sitting in its docs/doing/, which its agents then read
+# as their own. Observed: a test bootstrap inherited BLUEPRINT-AUDIT-2026-07-23.md
+# and PLAN-BUG-001.md as if they described the new project.
+#
+# Switching bootstrap to `git archive HEAD` stopped untracked and gitignored
+# files (a .env holding SONAR_TOKEN, logs/, node_modules/) from shipping. It does
+# NOT stop TRACKED work items — those need an explicit export boundary, which is
+# what this file is.
+#
+# The structure ships; this repo's contents do not. README.md explains each
+# lifecycle state and stays. HANDOVER.md used to be listed here as "the
+# canonical resume template" — it was not; it was this repo's LIVE handover,
+# naming its current branch and its unfixed findings, with a link into
+# docs/done/ that does not ship. Every project opened with another repo's WIP as
+# its resume doc and failed doc-links on day one. The template now lives in
+# templates/HANDOVER.md and is seeded by new-project.sh (BUG-028), exactly as
+# BUG-009 split the project_config_*.md files.
+
+docs/doing/**                      export-ignore
+docs/doing/README.md              -export-ignore
+
+docs/waiting-acceptance/**         export-ignore
+docs/waiting-acceptance/README.md -export-ignore
+
+docs/done/**                       export-ignore
+docs/done/README.md               -export-ignore
+
+# backlog/ used to keep BACKLOG.md and BUGS.md, on the grounds that they were
+# "empty tables with only a header row — genuine templates". That note ended
+# with the condition that undid it: "If the blueprint ever parks real items
+# there, they need listing here too." It did. BACKLOG.md carried thirteen of
+# this repo's own parked items (A-04, A-13, TASK-004, FEATURE-004 …) and
+# BUGS.md three live parked bugs, all shipping into every new project's backlog
+# for its agents to read as their own — the A-05 defect the folders above exist
+# to stop, and the one BUG-009 found in project_config_*.md. One of those rows
+# also linked to this repo's audit register, so a fresh bootstrap failed
+# `doc-links` on a link it never wrote (BUG-028).
+#
+# The empty tables now live in templates/ and are seeded by new-project.sh, the
+# same split BUG-009 made. A condition written into a comment is not a control;
+# `tests/bootstrap-gate` is.
+docs/backlog/**                    export-ignore
+docs/backlog/README.md            -export-ignore
+
+# BUG-013 — the blueprint's self-identification marker must never reach a derived
+# project. `drift` uses its presence as positive proof of "this IS the blueprint";
+# if it shipped, every derived project would claim to be the source of truth and
+# compare nothing. Belt and braces with bp_managed_files subtracting it.
+.blueprint-root                    export-ignore
+
+# Agent scratch. Gitignored already, so nothing here is tracked — but the
+# export-ignore is belt and braces for the same reason .blueprint-root has one:
+# two independent mechanisms, because a scratch fixture reaching a derived
+# project would be one project's debris seeded into every new one.
+.scratch/                          export-ignore
+
+# BUG-009 — the root project_config_*.md are THIS REPO'S OWN configuration, not
+# the template. They must never reach a derived project: bootstrap ships
+# `git archive HEAD`, so without these lines whatever the blueprint wrote about
+# itself went out to every new project. It already did once — a wake-time
+# Monitor row describing an incident in this stream was seeded verbatim into
+# linkedin-watcher-agent.
+#
+# The seed source lives in templates/ and is copied by new-project.sh directly
+# from the blueprint working tree, so it does not need to travel in the archive
+# either — and must not, or a derived project would carry a templates/ dir it
+# has no use for and could seed from.
+project_config_overview.md         export-ignore
+project_config_paths.md            export-ignore
+project_config_dod.md              export-ignore
+project_config_security.md         export-ignore
+project_config_infra.md            export-ignore
+templates/                         export-ignore
+
+# TASK-021 Stage 0 — bootstrapping is the one thing a derived project never
+# does, so the bootstrapper does not ship. LICENSE names this repo's copyright
+# holder, and a project writes its own. Copies already in projects are offered
+# for retirement by `blueprint pull`, which reads these removals from history.
+scripts/new-project.sh             export-ignore
+LICENSE                            export-ignore
+
+# TASK-021 Stage 2 — the rules for maintaining the blueprint (its trunk,
+# integrating a2bp requests, the deck). AGENTS.md imports it, and a project skips
+# the import because the file is missing, as it does agents.internal.md. Named
+# CLAUDE.blueprint.md until TASK-084.
+AGENTS.blueprint.md                export-ignore
+
+# BUG-028 — blueprint-ONLY machinery must not ship, and the suites that test it
+# must not ship either.
+#
+# `tests/` ships on purpose: 33 of its suites guard blueprint-MANAGED machinery
+# (`blueprint pull/drift/a2bp`, signal-set.sh, the feed, the hooks, the gate
+# renderer) that a derived project runs and can break, and `.githooks/pre-push-
+# project` is what wires them. Shipping the wiring without the suites, or the
+# suites without the wiring, is a gate that looks armed and measures nothing —
+# BUG-004 and A-22 in a new costume.
+#
+# These six are the exception. Each drives `scripts/new-project.sh`,
+# `templates/`, or `.blueprint-root` — things that exist ONLY in the blueprint,
+# because bootstrapping is the one thing a derived project never does
+# (AGENTS.blueprint.md, "blueprint-only machinery"). Downstream they did not merely fail;
+# they could not have passed anywhere. `pull-exec-bit` was the honest one — it
+# reported itself VACUOUS, because it needs an unsubstituted placeholder-bearing
+# file and a bootstrapped project has none by construction.
+#
+# THE LINES BELOW ARE THE TIER (TASK-020). `scripts/lib/suites.sh` derives a
+# suite's tier from them, so this file is the ONE description of what ships —
+# tests/SUITES.md's Tier column was the second copy, and it is deleted.
+# tests/manifest #2b asserts the boundary in BOTH directions against a real
+# `git archive`: a suite named here that nevertheless ships fails the push, and
+# so does a suite NOT named here whose files do not arrive. Not upkeep — checked.
+tests/bootstrap-contents/          export-ignore
+tests/bootstrap-identity/          export-ignore
+tests/template-source/             export-ignore
+tests/drift-in-blueprint/          export-ignore
+tests/pull-exec-bit/               export-ignore
+tests/bootstrap-gate/              export-ignore
+
+# BUG-114 — `managed-references` asks whether THE BLUEPRINT's managed set
+# names every script its managed files call. In a derived project a locally
+# edited managed file may name that project's own scripts, which would read as a
+# gap there is nothing to fix for — so this one is blueprint-only by subject.
+tests/managed-references/          export-ignore
+
+# TASK-021 — `env-namespace` scans the files THE BLUEPRINT manages, and the
+# managed set is now derived from the blueprint's archive. A derived project can
+# only answer that by fetching the blueprint, which its gate must not need (and a
+# fresh bootstrap cannot: its remote is FILL-ME-IN). Blueprint-only by subject,
+# like managed-references.
+tests/env-namespace/               export-ignore
+
+# TASK-078 — this suite judges the blueprint's `released` promotion job and
+# its blueprint-only local stage set. Derived projects receive security.yml,
+# but its release job is deliberately disabled there and project-owned guards
+# may add stages after the managed marker, so running this policy in a derived
+# tree would judge a contract that belongs only to the blueprint.
+tests/gate-ci-parity/              export-ignore
+
+# TASK-080 — `link-guard` drives the Stop hook against REAL lifecycle rows
+# (TASK-080 in docs/doing/BACKLOG.md, BUG-035 in docs/backlog/BUGS.md), and a
+# derived project ships no row tables at all (docs/* is export-ignored above),
+# so every behavioural case there would be vacuous at best. Blueprint-only by
+# subject, like managed-references. The HOOK itself ships: in a derived tree
+# it finds no rows, demands nothing, and exits 0 — correct, not untested.
+tests/link-guard/                  export-ignore
+
+# TASK-067 — the shell inventory gate is blueprint-only (review synthesis,
+# "the inventory check runs in the blueprint only"): downstream, managed
+# scripts are placeholder-substituted, so every legacy blob sha would differ
+# from what this repo recorded, and a derived project's own shell is its own
+# decision besides. The data file, the checker, and its regression suite all
+# travel together, or the gate would ship armed with no data to check against —
+# BUG-004/A-22 in a new costume.
+scripts/shell-inventory.json       export-ignore
+scripts/shell-inventory-check.mts  export-ignore
+tests/shell-inventory/             export-ignore
+
+# --- TASK-018 PHASE 2: the TypeScript harness SHIPS -------------------------
+#
+# THE INVARIANT IS UNCHANGED, and it is asserted rather than remembered:
+#
+#     the TS toolchain ships  IF AND ONLY IF  a SHIPPING suite is TypeScript.
+#
+# What changed is which side of it we are on. `tests/bug-numbers` (BUG-071)
+# is a shipping suite and is TypeScript: every project has its own BUGS.md
+# files and its own bug numbers, so every project has the defect it catches.
+# Phase 1's two exits were both wrong for it — export-ignoring it would have
+# removed the check from the projects that need it, and a shell twin would
+# have been a second implementation of one check, the copy-that-drifts this
+# repo has now deleted twice (INDEX.md, tests/SUITES.md). The invariant's own
+# logic named the resolution: ship the toolchain. That is BUG-073.
+#
+# THE SIX LINES THAT WERE HERE ARE GONE, and nothing replaces them. Under
+# `tests/` — a managed directory no derived project owns a copy of — an
+# export-ignore'd file travels by NEITHER propagation path and a file with no
+# line travels by BOTH:
+#
+#   bootstrap  ships the WHOLE archive (new-project.sh: git archive HEAD).
+#   pull       ships the managed set: what `git archive HEAD` ships, minus
+#              the project-owned seeds (TASK-021).
+#
+# Both answer the same query for anything under `tests/`, so the two paths
+# cannot disagree about the toolchain. That property is what made this move one
+# edit instead of two that have to agree, and it is why the block is short.
+#
+# WHAT STILL DECIDES A SUITE'S TIER: the `tests/<suite>/ export-ignore` lines
+# ABOVE, unchanged. TASK-020 deleted tests/SUITES.md, whose Tier column was a
+# second description of exactly this boundary, and `scripts/lib/suites.sh`
+# derives the tier from those directory lines. A blueprint-only suite's spec
+# does not ship because its DIRECTORY is named there — not because specs were
+# withheld wholesale, which is what the deleted `tests/**/*.spec.ts` line did.
+# So deleting that line ships the shipping suites' specs and nothing else, and
+# tests/manifest #2b proves it against a real `git archive` rather than
+# describing it here.
+#
+# BUG-061 IS WHY package-lock.json IS STILL WORTH NAMING even with no line to
+# write. It once SHIPPED ALONE for the whole of phase 1, because nothing listed
+# it and the manifest computed the toolchain from a hand-written subset that
+# also omitted it — so both checks printed "phase 1 is whole" while
+# .github/workflows/security.yml (MANAGED, and running `npm ci`) went red on
+# every derived project's first push, on a job it never wrote. The lesson
+# survives the phase change: #2c's partial-ship tally, not any list, is what
+# catches a toolchain that travels in pieces. It is symmetric and guards phase 2
+# exactly as it guarded phase 1.
+#
+# THE CI JOB NEEDED NO EDIT, and that was designed in. security.yml's `ts-tests`
+# steps are guarded on `hashFiles('tests/package.json') != ''`; the moment the
+# toolchain stops being export-ignore'd that file is present downstream and
+# every step runs there exactly as it does here. Its final step — the one that
+# ANNOUNCES the skip, because a job whose steps all skip renders green — now
+# goes quiet on its own.
+
+# This repo's own records in docs/config/ — the audit register and findings.md.
+# Same class as docs/doing/** above: real records of THIS repo, not template
+# material. The audit's ten links point into docs/done/, which does not ship, so
+# a derived project once failed `doc-links` on links it never wrote. And since
+# the managed set is what ships (TASK-021), a shipped findings.md would be
+# MANAGED: pull would offer to overwrite every project's own findings register
+# with this one. The directory convention, so the next record needs no line.
+docs/config/**                     export-ignore
+docs/config/README.md             -export-ignore
+
+# TASK-021 Stage 2 — the audience split, by responsibility. What operates a
+# project, or asks the blueprint for a change, ships. What maintains the
+# blueprint does not: the deck and its builder, talks, brand, the a2bp
+# implementer's playbook, and this repo's own requirements. Shipped, each was
+# managed, and a pull pushed it into every project. Copies already there are
+# offered for retirement. Conventions where there is one, so the next deck
+# format, talk, brand asset or requirement needs no new line.
+#
+# The deck's PDF is also a binary, and managed files must be text: substitution
+# refuses NUL bytes, so a shipped PDF drifted forever and never pulled.
+docs/requirements/**               export-ignore
+docs/requirements/README.md       -export-ignore
+docs/assets/**                     export-ignore
+docs/way-of-working.*              export-ignore
+docs/talk-*                        export-ignore
+docs/A2BP_PLAYBOOK.md              export-ignore
+scripts/build-deck.sh              export-ignore

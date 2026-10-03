@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    // Specs import scripts/*.mts by its explicit .mts specifier (required at
+    // runtime under Node ESM), e.g. scripts/blueprint.mts.
+    "allowImportingTsExtensions": true,
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  // BUG-158 — THE HARNESS TYPECHECKS WHAT THE HARNESS RUNS: the suites
+  // vitest runs (vitest.config.ts's own include — "**/*.spec.ts" and
+  // "**/*.spec.tsx") and vitest.config.ts, with every harness, helper and
+  // suite-local module reached BY IMPORT from them. It used to be "**/*.ts",
+  // which also claimed a derived project's own tests under tests/
+  // ("*.test.ts") — those import src/ and the ROOT packages, which CI's
+  // ts-tests job never installs (it runs `npm ci` in tests/ only), so CI
+  // failed TS2307 while a host with root node_modules passed. The project's
+  // tests are typechecked by the project's own root tsconfig, with its own
+  // dependencies. A rule by the harness's naming convention, not by path,
+  // because the blueprint cannot know a project's paths.
+  //
+  // MEASURED on this tree when it changed (tsc --listFilesOnly, tests/
+  // only, node_modules excluded): 98 files before, 98 after, none dropped —
+  // every non-spec module the old include compiled is reached by import
+  // from a spec or vitest.config.ts (73 spec files + 25 import-reached
+  // modules: 9 harness, 4 helpers, vitest.config.ts, and 11 suite-local
+  // modules each imported by its own spec). A harness module no spec
+  // imports WOULD drop out — it is dead code, the one thing this scope
+  // does not check.
+  "include": ["**/*.spec.ts", "**/*.spec.tsx", "vitest.config.ts"]
+}

@@ -1,0 +1,98 @@
+#!/bin/sh
+# .githooks/commit-msg — every commit names the backlog item it serves.
+#
+# DoD §1b rule 1: all work refers to a backlog item. This is the enforcement.
+# Without it the rule is a thing you must remember while you are busy, which is
+# the shape this repo has now rejected five times (BUG-004's "flip the mic
+# last", BUG-014's fixture isolation, the no-chaining rule that needed a
+# PreToolUse hook, BUG-020's baked state paths, BUG-019's migration hazard).
+#
+# THE FORMAT
+#
+#   <TYPE>#<number>: <subject>
+#
+#   BUG#20: a refused pull exits non-zero
+#   FEATURE#3: the gate renders as a pipeline
+#   TASK#1: move the lcm checklist into the DoD
+#
+# TYPE is BUG, FEATURE or TASK — the three lifecycle ID namespaces. The number
+# is the item's number. Everything after the colon is an ordinary subject line.
+#
+# WHAT IS ALLOWED THROUGH, and why each is not a loophole:
+#
+#   merge commits    — git generates the message; there is no single item.
+#   revert commits   — git generates "Revert \"<original>\"", and the original
+#                      already named its item.
+#   fixup!/squash!   — these are rebase instructions, not final messages. The
+#                      commit they fold into was checked when it was written.
+#   comment lines    — the template git appends is not the subject.
+#
+# It reads the SUBJECT ONLY (first non-comment, non-blank line). A body may say
+# anything.
+#
+# FAILS CLOSED. An unreadable or absent message file is a rejection, not a pass.
+# A gate that cannot read its input has not checked anything, and "could not
+# check" must never render as "passed" — the lesson BUG-018 taught twice.
+
+set -u
+
+msg_file="${1:-}"
+
+if [ -z "$msg_file" ] || [ ! -r "$msg_file" ]; then
+  echo "commit-msg: cannot read the commit message file — refusing." >&2
+  echo "  A gate that cannot read its input has checked nothing." >&2
+  exit 1
+fi
+
+# First line that is neither blank nor a git comment.
+subject="$(grep -vE '^\s*#' "$msg_file" | grep -vE '^[[:space:]]*$' | head -1)"
+
+if [ -z "$subject" ]; then
+  echo "commit-msg: the commit message is empty — refusing." >&2
+  exit 1
+fi
+
+# THE RULE ITSELF lives in scripts/lib/commit-subject.sh, shared with
+# scripts/check-commit-subjects.sh (which CI points at the PR title, where this
+# hook cannot reach). It used to live here, and that meant CI had to copy the
+# regex — two copies of a rule are two rules that drift silently while each
+# keeps passing its own tests.
+#
+# FAILS CLOSED if the library is missing: a hook that cannot load its rule has
+# checked nothing, and must not report a pass.
+#
+# BUG-077: `pwd`, not `git rev-parse --show-toplevel`. git runs hooks from the
+# work-tree root, so this is the same answer from a syscall that no exported
+# GIT_DIR can redirect — and unlike the rev-parse form it cannot silently
+# resolve to another repository's tree when a fixture invokes this hook.
+_cs_lib="$(pwd)/scripts/lib/commit-subject.sh"
+if [ ! -r "$_cs_lib" ]; then
+  echo "commit-msg: cannot read scripts/lib/commit-subject.sh — refusing." >&2
+  echo "  Restore it with: blueprint pull scripts/lib/commit-subject.sh" >&2
+  exit 1
+fi
+# shellcheck source=scripts/lib/commit-subject.sh
+. "$_cs_lib"
+
+# THE ROOT COMMIT is exempt. A repository's first commit creates the repository;
+# it is not work on an item, and it CANNOT name one because no backlog exists
+# yet. Found immediately: this hook ships into every bootstrapped project and
+# `new-project.sh` commits the initial tree, so without this the very first
+# thing a new project does is fail.
+#
+# Narrow on purpose — only the commit with no parent, which happens once per
+# repository ever.
+if ! git rev-parse --verify -q HEAD >/dev/null 2>&1; then
+  exit 0
+fi
+
+if commit_subject_ok "$subject"; then
+  exit 0
+fi
+
+echo "commit-msg: REJECTED — the subject must start with its backlog item." >&2
+echo "" >&2
+echo "  got:      $subject" >&2
+echo "" >&2
+commit_subject_help >&2
+exit 1

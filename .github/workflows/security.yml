@@ -1,0 +1,540 @@
+# Security CI — backs the pre-push hook's "skipped (CI will catch it)"
+# soft-warn UX with a real per-push + nightly-cron pipeline.
+#
+# Per project_config_overview.md §Security stack:
+#   gitleaks  → any leak blocks
+#   semgrep   → WARNING+ blocks
+#   osv-scanner → MEDIUM+ blocks
+#   contamination scan → any BLOCK finding in the pushed diff blocks (TASK-079)
+#
+# Per project_config_security.md §6 Findings register: failures land
+# as `[SEC-XXX]` entries in docs/config/findings.md.
+
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    # `edited` is NOT a default activity type, and it is the one that matters
+    # here: a squash merge takes its subject from the PR TITLE, so a title
+    # changed after a green run would land unchecked. Re-run on every edit.
+    types: [opened, synchronize, reopened, edited]
+  schedule:
+    # Nightly osv-scanner re-scan for new CVEs landing on already-pinned deps.
+    # 03:17 UTC chosen to avoid the usual cron-storm windows.
+    - cron: "17 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  secret-scan:
+    name: secret-scan (gitleaks)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0 # gitleaks scans full history
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  sast:
+    name: SAST (semgrep p/owasp-top-ten)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+      security-events: write
+    container:
+      image: returntocorp/semgrep
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Run semgrep
+        # BUG-126 — CLASSIFIED FROM JSON, as .githooks/pre-push's _st_semgrep is.
+        # `semgrep scan --error` fails on findings only, and semgrep exits 0 with
+        # zero results when it could not parse a file, reporting it only in
+        # `.errors`. So: findings block; malformed JSON or a non-zero exit blocks;
+        # any error the hook's reviewed policy does not accept blocks. That policy
+        # accepts only a "Syntax error" or "PartialParsing" on a shell script (by
+        # extension, or an sh/bash/dash shebang); read its reasons in the hook.
+        # It is copied here because the hook cannot be sourced, and
+        # tests/pre-push-scanners BUG-126 #ci executes this block over the hook
+        # cases' payloads so the copies cannot drift unseen. No --jobs 1 retry:
+        # that is for a local memlock limit. jq ships in the returntocorp/semgrep
+        # image (jq 1.8.2, checked 2026-09-16).
+        shell: bash
+        run: |
+          rc=0
+          out=$(mktemp) # outside the checkout, or semgrep scans its own output
+          semgrep scan --json \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --severity WARNING --severity ERROR \
+            > "$out" || rc=$?
+          if ! jq -e '(.results | type) == "array" and (.errors | type) == "array"' "$out" > /dev/null 2>&1; then
+            echo "::error::semgrep exited $rc without well-formed JSON: the SAST scan did not run."
+            exit 1
+          fi
+          findings=$(jq '.results | length' "$out")
+          if [ "$findings" -gt 0 ]; then
+            jq -r '.results[] | "  \(.check_id)  \(.path):\(.start.line)"' "$out"
+            echo "::error::semgrep found $findings WARNING+ finding(s)."
+            exit 1
+          fi
+          # THE VERDICT COMES FROM scripts/semgrep-verdict.sh — the one statement
+          # of the policy, sourced by .githooks/pre-push and executed here. It was
+          # inline until semgrep's own gha-curl-pipe-shell rule, which re-parses
+          # every run: block as Bash, could not read it: the workflow this
+          # repository SHIPS became unparseable, so every derived project's first
+          # gate refused its own checkout as an incomplete scan (bootstrap-gate #2).
+          bad=$(mktemp)
+          verdict=0
+          sh scripts/semgrep-verdict.sh "$out" > "$bad" || verdict=$?
+          if [ "$verdict" -eq 2 ]; then
+            echo "::error::semgrep's error list could not be read, so the scan is incomplete, not clean."
+            exit 1
+          fi
+          if [ "$rc" -ne 0 ] || [ "$verdict" -ne 0 ]; then
+            echo "semgrep reported these errors (type, path):"
+            cat "$bad"
+            echo "::error::semgrep exited $rc and reported errors it could not recover from: the SAST scan is incomplete, not clean."
+            exit 1
+          fi
+          echo "semgrep: 0 findings, $(jq '.errors | length' "$out") shell parse error(s) accepted by the BUG-126 policy. PASS."
+
+  sca:
+    name: SCA (osv-scanner)
+    runs-on: ubuntu-latest
+    # NOTE: runs osv-scanner as a direct step and gates the build on the
+    # MEDIUM+ policy ourselves — it does NOT upload SARIF to GitHub Code
+    # Scanning. The previous reusable-workflow form
+    # (osv-scanner-reusable.yml) always tried to upload SARIF, which fails
+    # on any repo without Code Scanning enabled (private repos need paid
+    # GitHub Advanced Security). This portable form works on public AND
+    # private repos with no paid features. Blocking behaviour is unchanged:
+    # MEDIUM+ (CVSS >= 4.0) still fails the build.
+    permissions:
+      contents: read
+    env:
+      OSV_SCANNER_VERSION: "2.3.8"
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install osv-scanner
+        run: |
+          set -euo pipefail
+          curl -sSfL \
+            "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64" \
+            -o /usr/local/bin/osv-scanner
+          chmod +x /usr/local/bin/osv-scanner
+          osv-scanner --version
+      - name: Run osv-scanner (MEDIUM+ blocks)
+        run: |
+          set -euo pipefail
+          # The scanner exits non-zero on ANY vulnerability (any severity),
+          # so we capture JSON regardless of its own exit code, print the
+          # human-readable table for the log, then apply the MEDIUM+ policy
+          # gate ourselves. --allow-no-lockfiles makes "no package sources
+          # found" (historically exit 128) a PASS, so docs/framework repos
+          # with no lockfiles do not fail the job; repos WITH a lockfile get
+          # a full recursive scan that blocks on real CVEs.
+          osv-scanner scan source \
+            --recursive \
+            --allow-no-lockfiles \
+            --licenses=false \
+            --format=json \
+            ./ > osv-results.json || true
+          osv-scanner scan source --recursive --allow-no-lockfiles ./ || true
+          # MEDIUM+ == CVSS >= 4.0. Lower-severity advisories are reported
+          # above but do not fail the build.
+          BLOCKING=$(jq '[.results[]?.packages[]?.groups[]? | select((.max_severity | tonumber? // 0) >= 4.0)] | length' osv-results.json)
+          echo "osv-scanner: ${BLOCKING} finding(s) at MEDIUM+ (CVSS >= 4.0)"
+          if [ "${BLOCKING}" -gt 0 ]; then
+            echo "::error::osv-scanner found ${BLOCKING} dependency vulnerabilit(ies) at MEDIUM+ severity."
+            jq -r '.results[]?.packages[]? as $p | $p.groups[]? | select((.max_severity|tonumber? // 0) >= 4.0) | "  - \(.ids|join(", ")) (CVSS \(.max_severity)) in \($p.package.name)@\($p.package.version)"' osv-results.json
+            exit 1
+          fi
+          echo "osv-scanner: no MEDIUM+ vulnerabilities. PASS."
+
+  commit-subjects:
+    name: commit subjects name their item
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0 # the range below needs the base commit, not a shallow tip
+      - name: The PR title becomes the squash-merge subject
+        # THE load-bearing check. `.githooks/commit-msg` is client-side, so it
+        # cannot run where GitHub composes the squash commit — and it composes it
+        # from this title. 5fe89e0 landed on main through exactly this gap, after
+        # the hook had shipped.
+        #
+        # The title goes through the ENVIRONMENT, never interpolated into the
+        # script: it is attacker-controlled text on a fork PR, and `${{ }}` inside
+        # a `run:` block is string substitution before the shell ever sees it.
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: bash scripts/check-commit-subjects.sh --subject "$PR_TITLE"
+      - name: Every commit on the branch
+        # Belt and braces: catches commits made in a checkout whose
+        # core.hooksPath was never armed — a fresh clone does not have it, which
+        # is the same gap A-22 found for the pre-push gate.
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/check-commit-subjects.sh --range "$BASE_SHA..$HEAD_SHA"
+      - name: What actually landed on main
+        # Detection, not prevention — by here it is merged. It exists so a
+        # violation that slips through some future path is VISIBLE rather than
+        # discovered months later by reading the log.
+        #
+        # TASK-022: EVERY commit of the push, not HEAD~1..HEAD, which checked one
+        # subject of a 12-commit push. Then the gate's two DoD stages over the same
+        # range: every item has a row, every BUG has a test. They ran only in the
+        # local hook, which a clone without core.hooksPath never runs.
+        #
+        # The subject check goes FIRST: it refuses an unreadable or empty range,
+        # while dod_items_in_push swallows git errors and would pass over nothing.
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          RANGE="$BEFORE..$AFTER"
+          case "$BEFORE" in
+            *[!0]*) ;;
+            *)
+              # A new branch has no `before`. The tip alone is all there is to read.
+              RANGE="$AFTER^!"
+              echo "::warning::new branch push: checking the tip commit only (partial coverage)"
+              ;;
+          esac
+          if [ "$RANGE" = "$BEFORE..$AFTER" ]; then
+            # A force push: the old tip may be gone from a fresh clone, or the new
+            # tip may be an ancestor of it (a rollback pushes no new commits).
+            if git merge-base --is-ancestor "$AFTER" "$BEFORE" 2>/dev/null; then
+              echo "force push back to an earlier commit: nothing new to check"
+              exit 0
+            fi
+            if ! git merge-base --is-ancestor "$BEFORE" "$AFTER" 2>/dev/null; then
+              RANGE="$AFTER^!"
+              echo "::warning::force push rewrote history: checking the tip commit only (partial coverage)"
+            fi
+          fi
+          bash scripts/check-commit-subjects.sh --range "$RANGE"
+          export BP_CODE_ROOT=.
+          . scripts/lib/pipeline.sh
+          # Called under `||`, so `bash -e` does not abort inside the library, and
+          # both stages report before the step fails.
+          rc=0
+          echo "every item has a row:"
+          DOD_GATE_NOTE_FILE="${_PIPE_DIR:+$_PIPE_DIR/note.$_PIPE_N}" node scripts/lib/dod-gate.mts rows "$RANGE" || rc=1
+          echo "every BUG has a test:"
+          DOD_GATE_NOTE_FILE="${_PIPE_DIR:+$_PIPE_DIR/note.$_PIPE_N}" node scripts/lib/dod-gate.mts bugtests "$RANGE" || rc=1
+          exit "$rc"
+
+  contamination:
+    # TASK-079 (TASK-062-16), audit row C168. NOTHING scanned a push for
+    # contamination before this job: contamination_scan (scripts/lib/
+    # contamination.sh) ran only on the a2bp path, and the audit's premise of a
+    # pre-push call site to extend was measured to be wrong — the absence IS
+    # the finding. Founder decision 2026-09-22 (PLAN-TASK-062 §"Founder
+    # decisions" #3): the CI-only route, reusing the existing checker.
+    #
+    # The script sources scripts/lib/contamination.sh and hands the push's
+    # ADDED lines, for the files that SHIP (export-ignore'd records are
+    # skipped and counted), to the real contamination_scan — no pattern is
+    # duplicated here.
+    #
+    # BLUEPRINT-ONLY, AND SKIPPED — NOT GREEN — EVERYWHERE ELSE. Contamination
+    # publishes only from this repository's `released`; a derived project's
+    # push publishes nothing. This file is MANAGED and ships to every derived
+    # project, so the job is guarded the way the `release` job is: on
+    # `github.repository`, at JOB level, where it renders as skipped. A
+    # `hashFiles('.blueprint-root')` guard cannot do that — at job level it
+    # runs before checkout and sees an empty workspace (always false, here
+    # too), and at step level the job still renders green with a skipped
+    # step, which is the "green because it checked nothing" shape (BUG-004,
+    # A-22). A fork of the blueprint edits the repository name here and in
+    # `release` together. The script's own .blueprint-root check stays as the
+    # second mechanism: a fork that edited only one guard gets an announced
+    # skip, never a block on its own files.
+    #
+    # Push and pull_request only: a workflow_dispatch run has no range
+    # (empty BEFORE/AFTER resolved to `^!` and failed as "refusing to scan
+    # nothing"), so it is skipped rather than run on nothing.
+    #
+    # WHAT THIS DOES NOT DO: it does not prevent a contaminated push from
+    # landing on main — it detects after the push, and the release job's
+    # needs-list is what keeps a red result from advancing `released`, the
+    # ref downstream projects pull. Detection before publication, not
+    # prevention of the push.
+    name: contamination scan (pushed diff)
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && github.repository == 'LuizStruct2Flow/blueprint'
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0 # the pushed range needs the base commit, not a shallow tip
+      - name: Set up Node
+        # Same floor as ts-tests: scripts/**/*.mts runs on Node's own type
+        # stripping, on by default from 22.18.0, with no flag and no install.
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: '22.18.0'
+      - name: Scan the pushed diff for contamination
+        # The push-event range semantics (new branch, rollback, rewritten
+        # history) live IN THE SCRIPT, so the job stays a thin caller and the
+        # red/green proof drives the checker exactly the way this step does.
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            node scripts/contamination-push-scan.mts --range "$BASE_SHA..$HEAD_SHA"
+          else
+            node scripts/contamination-push-scan.mts --before "$BEFORE" --after "$AFTER"
+          fi
+
+  ts-tests:
+    name: TypeScript regression suites (vitest)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0 # tests/managed-references #3 reads a pre-TASK-025 project from history
+      # Pinned to the floor engines.node declares. TASK-067 raised it to
+      # 22.18.0, the first official release with type stripping on by
+      # default — scripts/**/*.mts needs that to run with no flag. The
+      # ^20.19 arm this comment used to describe (vitest 4.1.11 /
+      # GHSA-82fw-gwwq-j7x9, CVSS 5.9) is gone: 22.18.0 already clears the
+      # vitest floor, so there is nothing left for a 20.x arm to cover.
+      # TASK-018 PHASE 2 HAS LANDED, AND THIS JOB NOW RUNS EVERYWHERE.
+      # `tests/package.json`, `tests/package-lock.json`, `tests/tsconfig.json`,
+      # `tests/vitest.config.ts`, `tests/harness/` and the shipping suites'
+      # `*.spec.ts` all reach derived projects, so the steps below execute there
+      # exactly as they execute here. That is the intent, not a side effect: a
+      # project that receives the specs must be able to run them.
+      #
+      # THE `hashFiles` GUARDS BELOW ARE KEPT, and they are no longer about the
+      # phase. During phase 1 they existed because this job is blueprint-only
+      # machinery inside a MANAGED, SHIPPING file — a combination
+      # .gitattributes cannot resolve, since you can export-ignore a file but
+      # not a job inside one — and without them a derived project's FIRST push
+      # went red on `npm ci` dying with ENOENT, on a job it never wrote
+      # (BUG-061). They were designed to dissolve at phase 2 with no edit, and
+      # they have: `tests/package.json` is present downstream now, so every
+      # guard is true and every step runs.
+      #
+      # They stay because the condition they test is still real, just rarer: a
+      # project that has deliberately removed the harness, or a checkout of this
+      # repo from before the toolchain shipped. Deleting them would trade a
+      # clean announced skip for an ENOENT crash in those cases, and buy
+      # nothing. `hashFiles` is evaluated per STEP, after checkout populates the
+      # workspace; at job level it would see an empty workspace and skip
+      # everything.
+      #
+      # The skip is ANNOUNCED, not silent — see the final step. A job whose
+      # steps all skip renders green, and "green because it checked nothing"
+      # is this repo's signature defect (BUG-004, A-22, BUG-005).
+      - name: Set up Node
+        if: hashFiles('tests/package.json') != ''
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          # TASK-067: raised from 22.12.0 to the floor engines.node now
+          # declares — the first official release with type stripping ON by
+          # default, so scripts/**/*.mts runs here with no flag, matching
+          # what require_node's capability probe demands on a developer machine.
+          node-version: '22.18.0'
+          cache: 'npm'
+          cache-dependency-path: tests/package-lock.json
+      # `npm ci` and not `npm install`: the lockfile is the pinned tree
+      # osv-scanner reads, and a CI job that silently resolved a different one
+      # would be scanning something the developer never runs.
+      - name: Install the harness
+        if: hashFiles('tests/package.json') != ''
+        working-directory: tests
+        run: npm ci
+      # BUG-132 — THIS MACHINE IS PREPARED BY THE INSTALLER EVERY DEVELOPER RUNS,
+      # so the suites see the tool set they see locally. It replaced a step that
+      # installed ShellCheck by name (TASK-033) and nothing else: BUG-127 made
+      # a2bp refuse without gitleaks, developer machines had it, this job did not,
+      # and six a2bp files were red here only. A tool list kept per step catches
+      # the tools someone remembered. tests/ts-bridge #9 executes this job's
+      # provisioning steps and requires `install-toolchain.sh check` to pass.
+      # Guarded like its neighbours: the installer's Node check reads
+      # tests/package.json, and Node is only set up when that file exists.
+      - name: Gate toolchain
+        if: hashFiles('tests/package.json') != ''
+        run: |
+          bash scripts/install-toolchain.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      # BUG-132 — THE HARNESS-LESS CHECKOUT STILL LINTS SHELL, and the installer
+      # above is skipped there with the harness. So ShellCheck is assured the way
+      # TASK-033 did it, only when it is absent, and only in that case: with the
+      # harness present the installer provides it. tests/ts-bridge #9c executes it.
+      - name: ShellCheck present without the harness
+        if: hashFiles('tests/package.json') == ''
+        run: |
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            sudo apt-get update -q
+            sudo apt-get install -y -q shellcheck
+          fi
+          shellcheck --version
+      # TASK-033 — THE SHELL LINT, through the function the pre-push gate's shell
+      # lint stage calls, so the two modes run one command. tests/ts-bridge #7
+      # executes this block.
+      - name: Blueprint shell lint
+        run: |
+          . scripts/run-ts-suites.sh
+          sh_lint .
+      # TASK-067 — THE SHELL INVENTORY GATE, blueprint-only (guarded on
+      # .blueprint-root, which is export-ignore'd, so this condition is false
+      # in every derived project's checkout, exactly as ts_shell_inventory_stage
+      # skips there). Through the raw command, like its sh_lint / ts_typecheck
+      # neighbours, since pipeline.sh's pipe_stage is not sourced in this job.
+      #
+      # BP_SHELL_INVENTORY_BASE = github.event.before — the tip BEFORE this
+      # push, which the push itself cannot have edited. Empty on a
+      # pull_request run (GitHub sets no top-level `before` there) or on a
+      # brand-new branch (all-zero sha): ts_shell_inventory_base treats both
+      # as unset and falls back to origin/main, which `fetch-depth: 0` above
+      # made resolvable.
+      - name: Blueprint shell inventory
+        if: hashFiles('.blueprint-root') != ''
+        env:
+          BP_SHELL_INVENTORY_BASE: ${{ github.event.before }}
+        run: |
+          . scripts/run-ts-suites.sh
+          ts_shell_inventory . "$(command -v node)"
+      # TASK-031 — THE TYPECHECK, through the function the pre-push gate's
+      # typecheck stage calls, so the two modes run one command. vitest strips
+      # types without checking them, so without this step CI passes a type error.
+      # tests/ts-bridge #5 executes this block.
+      - name: Blueprint TypeScript typecheck
+        if: hashFiles('tests/package.json') != ''
+        run: |
+          . scripts/run-ts-suites.sh
+          ts_typecheck .
+      # A separate job from the shell suites, deliberately. These need a
+      # toolchain the shell half does not, and a missing or broken toolchain
+      # must fail one clearly-named job rather than taking 40 shell suites down
+      # with it. It also keeps the shell suites runnable on a runner with no
+      # Node at all, which is the same property tests/manifest #9 asserts.
+      # BUG-117 — THROUGH THE GATE'S OWN SCRUB. The harness refuses a test process
+      # carrying any undeclared GIT_* / AGENT_* name, and a runner exports some
+      # (AGENT_TOOLSDIRECTORY refused 697 of 770 tests). `ts_scrubbed` is the
+      # function the pre-push gate's vitest stage uses, so the two execution modes
+      # cannot diverge again by one of them growing its own list. Sourced from the
+      # repository root, which is why this step has no working-directory.
+      # tests/ts-bridge #3 executes this block to prove it.
+      # TASK-054 — NO EXCLUDE HERE. This run includes the `*.release.spec.ts`
+      # suites the pre-push gate leaves to CI, and tests/manifest #5 fails if it
+      # stops including them.
+      - name: Blueprint TypeScript regression suites
+        if: hashFiles('tests/package.json') != ''
+        run: |
+          . scripts/run-ts-suites.sh
+          cd tests
+          ts_scrubbed npx vitest run
+      # BUG-146 — tests/sync-by-address #20d has hung ~320s in CI three times
+      # (61cfe01, 374a8d9, c7c47f6) and never once locally. `waitOrDump`
+      # (tests/harness/dump.ts) now gives a scenario's own waits a bound short
+      # of vitest's global testTimeout and writes a process-tree dump before a
+      # timeout propagates, so a hang here leaves evidence instead of only a
+      # red job. `if: failure()` — a dump is only interesting when the suites
+      # actually went red; a clean run leaves the directory empty or absent.
+      - name: Upload timeout evidence dumps
+        if: failure() && hashFiles('tests/package.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: harness-timeout-dumps
+          path: tests/.timeout-dumps/
+          # The directory is a dot-folder, and upload-artifact >= v4.4 skips
+          # hidden paths unless told otherwise: run 36010475442 wrote its dump
+          # and uploaded nothing. `warn`, not `ignore`, so a failure that
+          # leaves no dump says so instead of looking like a clean upload.
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+      # An absence has to say so. Without this the derived project sees a green
+      # job with three skipped steps and no reason, which reads identically to a
+      # suite that ran and passed.
+      - name: No TypeScript harness in this project
+        if: hashFiles('tests/package.json') == ''
+        # A block scalar, not a plain one: an unquoted value may not contain
+        # `: `, and "Restore it with: blueprint" once made GitHub reject this
+        # whole file and run zero jobs for four days (BUG-115).
+        run: |
+          echo "::notice::No tests/package.json in this checkout, so the TypeScript suites did not run. Since TASK-018 phase 2 the harness ships to every project, so this is unexpected — either the harness was removed deliberately, or this checkout predates the toolchain shipping. Restore it with: blueprint pull tests/"
+
+  # TASK-025 (PLAN §7.4) — `released` is the newest main commit on which every
+  # other job in this file passed. Derived projects read it through
+  # blueprint_release_branch; main stays the trunk the owner pushes to and a2bp
+  # files against.
+  #
+  #   - It pushes $GITHUB_SHA, the commit every `needs` job tested, never `main`
+  #     by name, which may have moved during the run.
+  #   - `needs` lists EVERY other job. A failed or skipped one skips the release.
+  #     tests/sync-by-address #33 derives the job list from this file, so a job
+  #     added later and left out of `needs` turns it red.
+  #   - Push events only, and this repository only: the file is MANAGED and
+  #     ships to every derived project, where the condition is false and the job
+  #     shows as skipped. A fork of the blueprint edits the repository name.
+  #   - Never force. The server refuses a non-fast-forward. If `released` already
+  #     contains the SHA (an older run finishing after a newer one), the job is
+  #     green; any other refusal is red and leaves the ref where it was.
+  #   - The refusal path reads FETCH_HEAD, not origin/released: a remote-tracking
+  #     ref exists only if the checkout configured a fetch refspec, and without
+  #     one the legitimate old-run rerun failed (PLAN §R4 #4). #33b runs this
+  #     block against a bare remote in every state, with and without a refspec.
+  #   - `contents: write` on this job only. It starts no test runner.
+  release:
+    name: release (fast-forward released to the tested commit)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.repository == 'LuizStruct2Flow/blueprint'
+    needs: [secret-scan, sast, sca, commit-subjects, contamination, ts-tests]
+    permissions:
+      contents: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Fast-forward released
+        shell: bash
+        run: |
+          if git push origin "$GITHUB_SHA:refs/heads/released"; then exit 0; fi
+          git fetch origin refs/heads/released
+          if git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "released already contains $GITHUB_SHA: a newer green run got there first"
+            exit 0
+          fi
+          echo "::error::released does not contain $GITHUB_SHA and was not moved"
+          exit 1
