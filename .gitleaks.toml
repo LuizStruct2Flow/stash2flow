@@ -1,0 +1,88 @@
+# gitleaks config — generic working-tree false-positive allowlist.
+#
+# Shipped in the blueprint baseline so every project bootstrapped from it
+# inherits the categories that triage as false-positives on the project's
+# OWN ground (gitignored `.env`, template-variable shell sites, etc.).
+#
+# Project-specific allowlist entries go in the project's own .gitleaks.toml
+# (this file is pulled into the project by `blueprint pull` and then
+# extended).
+#
+# ─────────────────────────────────────────────────────────────────────────
+# `[extend] useDefault = true` IS LOAD-BEARING. DO NOT REMOVE IT.
+#
+# gitleaks REPLACES its entire rule set with whatever config it loads. A
+# config that declares only an `[allowlist]` and no rules therefore detects
+# NOTHING: the scan exits "no leaks found" on a repo full of secrets, and
+# reports success while doing it.
+#
+# This is not theoretical and it does not need `-c` to happen. gitleaks
+# auto-discovers a `.gitleaks.toml` in the scanned root, which is exactly
+# where `blueprint pull` puts this file. Measured on a throwaway directory
+# holding one synthetic GitHub token and nothing else:
+#
+#   this file in the root, no -c flag   -> no leaks found
+#   same tree, this file removed        -> 1 leak found
+#
+# So every project that pulled the baseline had a silently vacuous secret
+# scan until it noticed.
+# ─────────────────────────────────────────────────────────────────────────
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Gitignored operator-owned environment files"
+paths = [
+  # .env IS the canonical location for operator secrets and is gitignored
+  # in every struct2flow project. The pre-push scan catches any attempt to
+  # commit one. --no-git audits would always report these files as "leaky"
+  # by design — that's the same as saying "the secret vault contains
+  # secrets". Keep this aligned with .gitignore: `.env.example` is tracked
+  # documentation and MUST remain scanned.
+  '''(^|/)(\.env|\.env\.local|\.env\.[^/]+\.local)$''',
+]
+
+# The two false-positive exceptions below are RULE-LEVEL allowlists, not
+# global [[allowlists]], and that is load-bearing too: measured on gitleaks
+# 8.30.1, a GLOBAL [[allowlists]] entry with condition = "AND" and both
+# paths and regexes skips the whole FILE when the path matches IN DIRECTORY
+# MODE (`gitleaks dir`, `--no-git`) — the regexes are silently dropped (a
+# planted real token in scripts/shell-inventory.json scanned to "no leaks
+# found", ~0 bytes read; with an impossible regex `a^` in place of the line
+# shape it was still skipped). Git-mode `detect`, which the pre-push gate
+# and CI run, honored the AND in the same measurement — but a config that
+# hides a file under one scan mode is not one to ship, and the header
+# above invites exactly that audit. The same structure under
+# [[rules.allowlists]] honors the AND in both modes: the safe line shape is
+# suppressed, anything else in the file is reported. Pinned by
+# tests/pre-push-secrets #14/#15, which run each planted file both ways.
+
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "Git object IDs recorded by the generated legacy-shell inventory"
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''(^|/)scripts/shell-inventory\.json$''',
+]
+regexes = [
+  # These quoted 40-hex values are git blob IDs used as an integrity baseline,
+  # not credentials. Scope the exception to JSON value lines in this one file.
+  '''^[[:space:]]+"[^"]+": "[0-9a-f]{40}",?$''',
+]
+
+[[rules]]
+id = "curl-auth-user"
+[[rules.allowlists]]
+description = "SonarQube curl reads its credential from the environment"
+condition = "AND"
+regexTarget = "line"
+paths = [
+  '''scripts/sonar-api\.sh$''',
+]
+regexes = [
+  # The token is a shell variable populated from gitignored `.env`; the line
+  # contains no credential. Match only this exact Basic-auth invocation.
+  '''^[[:space:]]*curl -sS -u "\$\{SONAR_TOKEN\}:" "\$\{SONAR_HOST_URL\}\$1"[[:space:]]*$''',
+]

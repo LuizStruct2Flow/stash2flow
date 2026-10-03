@@ -1,0 +1,529 @@
+#!/bin/sh
+# BLUEPRINT:BEGIN — blueprint-managed. Put YOUR guards below the end marker.
+#
+# Everything between the markers is owned by the blueprint and is REPLACED by
+# `blueprint pull`; everything below the end marker is yours and is preserved
+# byte-for-byte (marker_aware_merge, scripts/blueprint.mts). Editing inside the
+# region means losing the edit at the next pull — back-propagate it instead:
+# `blueprint a2bp .githooks/pre-push-project`.
+#
+# THE PROSE ABOVE DELIBERATELY DOES NOT SPELL THE END MARKER (BUG-052).
+# marker_aware_merge counts the marker tokens as SUBSTRINGS and refuses to merge
+# unless BEGIN and END balance. Two sentences here mentioned the end token by
+# name, giving this file a count of 1 and 3 — so the merge never ran, `pull`
+# fell back to a whole-file copy, and every derived project's own guards below
+# the region were REPLACED on every pull. The guarantee stated in this very
+# paragraph was broken by the paragraph stating it. tests/manifest #7b now
+# asserts the balance on both managed files.
+#
+# It is managed because it MUST travel with tests/ (BUG-029). A suite is
+# coherent only as two things — the files, and its invocation here. (It used to
+# be three; TASK-020 deleted tests/SUITES.md, whose row was a second description
+# of what those two already say.) Sync the suites without the wiring and
+# `tests/manifest` #4 fails every push on a suite the gate cannot invoke; sync
+# the wiring without the suites and the gate is armed over nothing, which is
+# BUG-004 and A-22 in a new costume.
+#
+# Sourced by .githooks/pre-push (see its "Project-specific guards" section).
+# The generic hook runs build/lint/test per workspace; the stages below run the
+# regression suites that guard the blueprint-managed machinery this project
+# depends on (blueprint pull/drift/a2bp, signal-set.sh, the feed, the hooks,
+# the gate renderer). Without them a regression to any of it pushes green —
+# audit finding A-15.
+#
+# There is NO wall-clock ceiling (founder decision 2026-08-02 closing BUG-005;
+# docs/DoD.md §3). The gate reports its total and slowest
+# stage every run. Suites named `*.release.spec.ts` run in CI only (TASK-054),
+# and the vitest stage prints a skip line for each.
+
+# Normally sourced by .githooks/pre-push, which has already sourced the renderer
+# and called pipe_init. Sourcing defensively keeps this file runnable on its own
+# (and keeps the "every gate file wires to the one renderer" assertion honest)
+# without starting a second pipeline inside the parent's.
+# shellcheck source=scripts/lib/pipeline.sh
+#
+# BUG-066: every path in this file hangs off $BP_CODE_ROOT, which the parent
+# hook resolves from git-guaranteed cwd. The `.` default keeps this file
+# runnable on its own and is what the cwd-relative form used to mean.
+: "${BP_CODE_ROOT:=.}"
+command -v pipe_stage >/dev/null 2>&1 || . "$BP_CODE_ROOT/scripts/lib/pipeline.sh"
+
+# BP-7 — `blueprint pull` must do a marker-aware merge, preserving the
+# project's outside-marker content byte-for-byte.
+# FEATURE-002 — the gate renderer must FAIL CLOSED. This file and .githooks/
+# pre-push now route every check through pipe_stage, so if the renderer ever
+# lets a non-zero stage through, EVERY gate in this repo silently stops
+# guarding anything — and it would look exactly like a passing gate. Cheapest
+# high-value suite here at ~0.5s.
+# MIGRATED to TypeScript (TASK-018). tests/pipeline/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# MIGRATED to TypeScript (TASK-018). tests/marker-merge/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-001 — the activity feed must hold exactly one instance with a bounded
+# process set, and must read file deltas byte-correctly. Guards the fork-bomb
+# regression plus the two silent-data-loss defects found in review rounds 3/4.
+# Runs in FULL as of 2026-08-02. It was `--fast` only because the suite is ~29 s
+# and the gate had a 30 s ceiling; the fast subset dropped the deterministic
+# race / fault-injection cases (#10, #18) and foreground mode. Those guard
+# BUG-001, which pegged ~24 of 32 threads for 2.7 days, so running them on every
+# push is worth the seconds.
+# MIGRATED to TypeScript (TASK-018). tests/agent-activity-bound/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-003 — the security gate must distinguish "scanner found something" from
+# "scanner could not run". Drives this hook in an isolated fixture with shim
+# scanners, so every exit-code path is deterministic. ~0.2s.
+# NOTE: the fixture copies only .githooks/pre-push (not this file), so the
+# nested hook run terminates rather than recursing.
+# MIGRATED to TypeScript (TASK-018). tests/pre-push-scanners/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-004 — the gate must arm itself on paths that already run, so a fresh clone
+# is not silently ungated. Also pins the boundaries: --status/--stop must not
+# arm (each on its own unset fixture — running --stop after --daemon cannot
+# tell "preserved unset" from "armed it"), a deliberate foreign core.hooksPath
+# must never be clobbered, and arm_gate must never fail its caller. ~2.3s.
+# MIGRATED to TypeScript (TASK-018). tests/gate-arming/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# A-09 — the feed and the dispatchers must derive ONE per-project state dir. An
+# unrun regression is the A-15 defect this repo already carried once: deleting
+# the shared helper or restoring a literal state path could otherwise push green
+# while cross-project log contamination silently returns. ~0.1s.
+# MIGRATED to TypeScript (TASK-018). tests/proc-cwd/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# MIGRATED to TypeScript (TASK-018). tests/state-dir/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# TASK-007 — the DoD stages themselves must fail when they should. Four extra
+# greens that check nothing would be worse than no stages at all, because the
+# stage COUNT is what signals a skipped step. ~1s.
+# MIGRATED to TypeScript (TASK-018). tests/dod-gate/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# TASK-002 — every commit names its backlog item (DoD §1b rule 1). ~0.3s.
+# MIGRATED to TypeScript (TASK-018). tests/commit-msg-gate/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# TASK-002 (reopened) — the rule is checked where the commit actually lands.
+# The hook above is client-side; this pins the shared rule, the CI wiring, and
+# the PR-title check that covers the squash-merge door. ~0.4s.
+# MIGRATED to TypeScript (TASK-018). tests/commit-subjects/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-021 — Codex output carries the persona that produced it. ~0.3s.
+# MIGRATED to TypeScript (TASK-018). tests/codex-persona-label/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-027 — delegated work is visible in the feed, under its persona. ~2.3s
+# (it drives a real supervisor over a real subagent transcript).
+# MIGRATED to TypeScript (TASK-018). tests/subagent-feed/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-022 — a dispatch into silence is visible. ~8s (it runs real supervisors).
+# MIGRATED to TypeScript (TASK-018). tests/watcher-liveness/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+
+# FEATURE-005 — the mic waiter must exit on a handoff and ONLY on a handoff. A
+# spurious exit is worse than the always-on Monitor it replaces: silence is
+# merely blind, but a phantom handoff makes the agent re-arm on an event that
+# never happened. Eight of its thirteen cases assert the negative; the five
+# positives guard the opposite defect, a reader that fails closed and sleeps
+# through a real handoff. ~16s (the negatives wait out real timeouts, which is
+# the only honest way to assert "did not fire").
+# MIGRATED to TypeScript (TASK-018). tests/wait-mic/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# FEATURE-003 — a woken session must be able to derive where it is, and an
+# INCOMPLETE replay must be LOUD. The guarded failure is SILENCE: the activity
+# feed is truncated on every daemon start, so a replay that cannot see its whole
+# window is the ordinary case, and a short one reads exactly like a quiet one.
+# Nothing about that is visible without a test, which is why it blocks a push
+# rather than reporting after it. ~1s.
+# MIGRATED to TypeScript (TASK-018). tests/session-resume/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# Relative links under docs/ must resolve. Files move through the lifecycle
+# constantly and every move breaks the references pointing at the old location —
+# 13 were broken on 2026-08-03, one of them wrong across two relocations. ~0.2s.
+# MIGRATED to TypeScript (TASK-018). tests/doc-links/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# The lifecycle documents must say something true: artefacts sit with their row,
+# and no table carries a phantom placeholder. Smaller than it was — the
+# index-vs-rows half went away with INDEX.md, because one record cannot disagree
+# with itself. ~0.1s.
+# MIGRATED to TypeScript (TASK-018). tests/lifecycle-docs/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-019 — a branch operation must not destroy a live dispatch. The baton used
+# to be a TRACKED file holding LIVE state, so checkout/switch/stash/rebase
+# rewrote it mid-dispatch and the dispatched agent silently had nothing to
+# claim. This suite starts a real watcher and fires a checkout inside the settle
+# window, so it costs a few seconds of real waiting — the only honest way to
+# test a race. It stays in the gate because every fix here is a branch, which is
+# exactly the condition that made the bug routine. ~10s.
+# MIGRATED to TypeScript (TASK-018). tests/baton-durability/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-010 — the roster is the single source of persona identity. Guards both
+# halves: a persona name hardcoded in a script that ships to every project
+# (renaming the roster then does nothing), and roster parsing that breaks on
+# column padding. The second is the dangerous one — a lookup miss used to be
+# indistinguishable from "no roster", so it failed silently. Pure text parsing,
+# Runs in FULL as of 2026-08-02: case #12 drives a real supervisor to prove a
+# RUNNING feed follows a roster rename — the half of BUG-010 the founder
+# actually hit ("you are still logging as anna").
+# MIGRATED to TypeScript (TASK-018). tests/roster/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# A-03 — the secret gate must scan the COMMITS BEING PUSHED, not the index.
+# `gitleaks protect --staged` scanned an index that is always empty at pre-push
+# time, so the gate CLAUDE.md §Security calls blocking was a no-op in the normal
+# commit-then-push flow. Unrun, this regression is invisible: a secret gate that
+# silently scans nothing looks exactly like one that finds nothing. ~0.3s.
+# Runs in FULL as of 2026-08-02. The budget cases drive a hanging scanner and
+# were skipped purely on cost; they prove the scan fails CLOSED when it cannot
+# finish, which is exactly the case where a silent pass ships secrets.
+# MIGRATED to TypeScript (TASK-018). tests/pre-push-secrets/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# RESTORED 2026-08-02 after Codex F2. This suite guards the autonomous handoff
+# path: a regression here silently dispatches an agent against work that is
+# already finished, which happened twice in one session and is what the suite
+# exists to prevent. It was CI-only at 125.4 s, and I defended that as a risk
+# call — Codex showed the cost was scaffolding, not signal (the watcher ran to a
+# fixed timeout regardless of when each assertion became decidable). Re-clocked
+# to 75.0 s with every assertion intact, so the tier question answers itself.
+# (37.5 s was measured first, at SETTLE=1 — an unsound clock; see the suite.)
+# MIGRATED to TypeScript (TASK-018). tests/signal-dispatch/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# ADDED 2026-08-02. Found by tests/manifest on its FIRST run: this suite was in
+# neither the gate nor CI — it ran nowhere at all, which is audit finding A-15
+# exactly ("a suite nothing executes"). It guards BUG-007: `blueprint drift`
+# dying inside the blueprint itself, which is the command every agent runs on
+# every wake. 1.7 s.
+# MIGRATED to TypeScript (TASK-018). The shell runner is gone, so this stage is
+# gone with it — the suite now runs inside the single vitest batch at the end of
+# this file and still renders as its own line, with its own timing, through
+# pipe_stage_report. Its equivalence was proven by mutation before the shell
+# runner was retired: making `_bp_is_blueprint_itself()` always return failure
+# turns #1 and #1b red in the spec, which is the bar PLAN-TASK-018 §5 sets.
+#
+# Leaving a `[ -f … ]` guard here would be worse than deleting it: it would
+# pipe_skip "suite absent" forever, which reads as a deliberate exclusion rather
+# than as a completed migration.
+
+# The manifest is the control that makes every stage above checkable (BUG-005 /
+# Codex F1). Without it, omitting a pipe_stage block is a silent, one-line
+# coverage cut — which is how signal-dispatch and drift-in-blueprint went
+# unnoticed.
+#
+# MIGRATED to TypeScript (TASK-018). The shell runner is gone, so this stage is
+# gone with it — the suite now runs inside the single vitest batch at the end of
+# this file and still renders as its own line, with its own timing, through
+# pipe_stage_report. Its equivalence was proven before the shell runner was
+# retired, and not by reading: twenty-one perturbed trees were built and BOTH
+# implementations run over each one, with the per-check verdict sets compared
+# mechanically. They agreed everywhere, and the single divergence found was a
+# defect in the SHELL version (BUG-074), isolated as its own case.
+#
+# Leaving a `[ -f … ]` guard here would be worse than deleting it: it would
+# pipe_skip "suite absent" forever, which reads as a deliberate exclusion rather
+# than as a completed migration.
+
+# BUG-055's shell stage was retired here (TASK-047, founder decision
+# 2026-09-16). `tests/ts-bridge/test.sh` ran before the vitest stage and proved
+# the bridge WORKS rather than merely that it is invoked; its assertions live in
+# tests/ts-bridge/ts-bridge.spec.ts, which the blanket vitest run below executes.
+#
+# What went with it is recorded as an accepted loss in docs/config/findings.md
+# F-003, not lost in a commit body: this was the only assertion about the vitest
+# bridge NOT executed by the vitest it asserts about, so a silently dead bridge
+# now produces no red case. Do not re-add a shell stage here — one runner
+# convention, no exceptions. If that loss ever needs covering again, it needs a
+# decision, not a stage.
+
+# BUG-029 — `tests/` is a managed DIRECTORY, and this is what makes that safe.
+# A derived project's suites were frozen at bootstrap while the machinery they
+# test kept being pulled forward, so its gate went green over assertions about
+# code it no longer runs. Syncing a directory is only correct if it is additive:
+# the property that must never regress is that a project-authored suite is
+# neither reported nor removed.
+# MIGRATED to TypeScript (TASK-018). tests/suite-sync/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-014 — a test suite must never write into the repo it runs from. Git exports
+# GIT_DIR to every hook, so the fixtures below inherited it and their `git init`
+# landed in the REAL repository. That is what wiped core.hooksPath on 2026-08-02
+# and sent a push out ungated. The suite that proves the gate arms was disarming
+# it. Cheap (~1 s) and guards the gate's own integrity.
+# MIGRATED to TypeScript (TASK-018). tests/git-isolation/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# The no-chain guard is an ENFORCEMENT control, and Codex F4 found it failing
+# OPEN on malformed input and missing jq — the opposite of its stated contract,
+# and undetectable without a test. A guard that evaporates when something is
+# already wrong is worse than no guard, because it is trusted. ~0.3s.
+# MIGRATED to TypeScript (TASK-018). tests/no-chain-guard/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-016 / BUG-018 — pull must record only what it actually synced, and must
+# survive having no TTY. A partial pull that advances bootstrap_sha makes every
+# later drift report "0 commits since sync" while the project is still behind,
+# and nothing recomputes that number — linkedin-watcher-agent sat 18 commits
+# behind partly this way. ~3s.
+# MIGRATED to TypeScript (TASK-018). tests/pull-behaviour/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-011 — a2bp must report "filed" only when a PR actually exists. It returned
+# exit 3 ("filed, awaiting a decision") while opening nothing, which is the one
+# thing CLAUDE.md says no script may do: read "PR opened" as "the blueprint has
+# this". Guards the only sanctioned path for improvements to reach the blueprint.
+# MIGRATED to TypeScript (TASK-018). tests/a2bp-pr-filing/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-008 — pull must preserve the executable bit. A pulled `.githooks/pre-push`
+# that comes out 600 is ARMED but never runs: core.hooksPath is set, and git
+# skips a non-executable hook without a word. This bug was "fixed" once and
+# shipped broken because there was no test; the suite pins the PRIMITIVE, since
+# the previous repair fixed the four callers and the primitive undid them.
+# MIGRATED to TypeScript (TASK-018) — see the note on drift-in-blueprint above.
+# Equivalence proven by mutation first: removing the mode-preservation block
+# before `mv "$tmp" "$f"` in scripts/lib/placeholders.sh turns #1 red with
+# `755 -> 600`, and #5 catches .githooks/pre-push becoming non-executable.
+
+# BUG-006 — a managed script must carry no project-specific env namespace.
+# `LWA_FEED_*` was one project's initials in a file that ships to every project,
+# so every derived project inherited knobs named after somebody else's repo. The
+# guard is generic on purpose: this repo has now found four instances of "a
+# specific thing baked into a travelling file" by hand (BUG-002, 006, 009, 010).
+# ~0.3s.
+# MIGRATED to TypeScript (TASK-018). tests/env-namespace/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# BUG-009 — the seed template and this repo's own config must stay separate.
+# They were the same files, so anything the blueprint wrote about itself shipped
+# to every new project: a monitor row describing an incident in THIS stream was
+# seeded verbatim into linkedin-watcher-agent. Asserts against `git archive`
+# (what bootstrap actually ships) rather than against .gitattributes, and runs a
+# real bootstrap to prove the split did not drop the configs. ~2s.
+# MIGRATED to TypeScript (TASK-018) — see the note on drift-in-blueprint above.
+# Equivalence proven by mutation first, and the recipe has a wrinkle worth
+# knowing: `git archive` reads .gitattributes from the COMMIT, not the working
+# tree, so deleting the `project_config_overview.md export-ignore` line only
+# reintroduces BUG-009 once that deletion is committed. Uncommitted, both
+# runners stay green, which would read as a spec that cannot fail. Committed,
+# both go red at #2 naming the leaked file.
+
+# HISTORICAL NOTE — tests/signal-set/ and tests/a2bp-contamination/ were both
+# CI-only under the 30 s ceiling. Both are back in this file as of 2026-08-02
+# (founder decision, BUG-005), and the reasoning is kept because it is a clean
+# record of how a time budget quietly becomes a coverage policy.
+#
+# signal-set was excluded by a "keep only fast, push-critical suites" rule. It
+# costs 0.2 s — there was never a real cost to weigh; the rule existed only
+# because the gate had reached 27.6 s of 30 s.
+#
+# a2bp-contamination was excluded for growing from 2.3 s to 6.0 s when a2bp
+# began driving real transport. That suite is the 41-assertion detection matrix
+# guarding the door BUG-002 and A-09 came through, and its removal was recorded
+# at the time as a REDUCTION in what blocks a push. Both exclusions were
+# defensible only against a clock that no longer exists.
+
+# A-07 — RESTORED 2026-08-02. The contamination scan on the a2bp request path is
+# the only thing stopping one project's host paths and project name reaching
+# every other project on their next pull.
+# MIGRATED to TypeScript (TASK-018). tests/a2bp-contamination/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# RESTORED 2026-08-02. Atomic baton publication, 0.2 s.
+# MIGRATED to TypeScript (TASK-018). tests/signal-set/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# MIGRATED to TypeScript (TASK-018). tests/a2bp-request/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# FEATURE-001 — request construction. Two properties, both load-bearing:
+#   1. The request tree is seeded from the fetched base, so a request changes
+#      ONLY its target paths. Unseeded, it proposes deleting the whole blueprint.
+#   2. The commit is byte-reproducible, which is what lets a retry recognise its
+#      own earlier request instead of refusing forever.
+# Runs git plumbing against a scratch fixture; no network. ~1.5s.
+# MIGRATED to TypeScript (TASK-018). tests/a2bp-build/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# FEATURE-001 §5.1/§8 — where a request is filed, and which bytes go into it. The
+# contamination guard checks what the content SAYS; this checks that the content
+# came from the file the operator named (not a symlink to somewhere else, not a
+# path escaping the root) and that it is going to the repository they declared
+# (never a remote inferred from a local checkout). ~0.2s.
+# MIGRATED to TypeScript (TASK-018). tests/a2bp-inputs/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# FEATURE-001 §3b — `drift` reports whether the LOCAL blueprint checkout is behind
+# its remote, because otherwise "✓ all files match the blueprint HEAD" can mean
+# "you match a six-week-old copy". Two failure modes are worse than the staleness
+# it reports, and both are covered here: reporting "current" when the probe
+# failed (false reassurance), and blocking — drift runs at every agent wake with
+# no TTY, so a prompt or an unbounded network call hangs the wake. ~2.5s.
+# tests/staleness/test.sh — the probe's VERDICTS (offer bounds, unknown-never-
+# current) — RESTORED 2026-08-02. Those bounds guard something severe: a
+# fast-forward into a dirty or diverged checkout. They were CI-only because the
+# gate sat at ~29 s of a hard 30 s ceiling and this was called "a forced choice,
+# not a preference". The ceiling is gone, so the choice is no longer forced.
+# MIGRATED to TypeScript (TASK-018). tests/staleness/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# MIGRATED to TypeScript (TASK-018). tests/staleness/drift-integration.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# FEATURE-001 — the assembly. Layered suites prove each part; this proves the whole
+# command, and carries the single most important assertion in the feature: the
+# blueprint's working tree and its main branch are never written to. a2bp used to
+# `cp` straight into that tree, which is how BUG-002 and A-09 fanned out to every
+# project. ~1.1s.
+# MIGRATED to TypeScript (TASK-018). tests/a2bp-e2e/test.sh is gone, so this stage is
+# gone with it. No `[ -f ]` guard: it would pipe_skip "suite absent" forever.
+
+# A-05 — bootstrap must ship tracked template content only: no .env/SONAR_TOKEN,
+# no logs/, and none of the blueprint's own tracked work items. ~1s.
+# MIGRATED to TypeScript (TASK-018) — see the note on drift-in-blueprint above.
+# Equivalence proven by mutation first, and note the same wrinkle template-source
+# has: the fixture is built from `git archive HEAD`, so EVERY mutant here has to
+# be committed to exist at all. Deleting the `.blueprint-root export-ignore` line
+# and committing it turns #1 red in both runners.
+
+# A-14 — bootstrap must INHERIT the operator's git identity, never write one,
+# and must fail before creating anything when no identity is resolvable.
+# MIGRATED to TypeScript (TASK-018) — see the note on drift-in-blueprint above.
+# Equivalence proven by mutation first: replacing the
+# `unset AGENT_SIGNAL_FILE AGENT_STATE_HOME` in new-project.sh's seed subshell
+# turns case 6 red in both runners, reporting that bootstrap REPUBLISHED the
+# caller's live baton — BUG-046 itself.
+
+# BUG-028 — the end-to-end one. The three suites above assert what the archive
+# CONTAINS; none of them ever ran the thing a new project runs first. So a
+# derived project shipped for months with a gate that failed at EXIT=1 on day
+# one over the blueprint's own self-test suites, and this repo's gate stayed
+# green throughout because those suites pass at home.
+#
+# It bootstraps a project from HEAD and runs that project's ENTIRE pre-push
+# gate, which made it the slowest suite by far. Since TASK-054 it is release
+# tier (`bootstrap-gate.release.spec.ts`): CI runs it, the local gate does not.
+# MIGRATED to TypeScript (TASK-018) — see the note on drift-in-blueprint above.
+# Equivalence proven by mutation first, and it shares the wrinkle every
+# bootstrap suite has: the fixture is materialised from HEAD with
+# `checkout-index`, so an uncommitted mutant does not exist as far as the suite
+# is concerned and both runners stay green over it. Committed, replacing the
+# `if ! … blueprint files …; then … exit 1; fi` refusal in scripts/new-project.sh
+# with a plain invocation turns #7 red in both runners, on the same assertion
+# and with the same evidence: `set -e` then kills
+# bootstrap with the CLI's own status and prints nothing at all, so the refusal
+# names no cause and the operator has nothing to act on. #7b stays green, which
+# is the point of having both — the empty-list refusal is a different branch.
+
+# ============================================================================
+# DoD handoff checklist — rendered as STAGES, tagged [DoD-Gate] in the feed.
+#
+# The founder's reason, which is stronger than "it checks things": these print,
+# so a run that SKIPPED them is visible. "If I see things moving without this,
+# I know that at least one step was forgotten." The stage COUNT is the checksum
+# — fewer stages than usual means a step did not run — and pipe_skip requires a
+# reason, so a legitimate skip announces itself rather than vanishing.
+#
+# Tagged distinctly because "which steps ran" is only answerable if they are
+# distinguishable from the suite stages around them.
+#
+# Unlocked by TASK-002: every commit subject now starts with its backlog item,
+# so the gate can derive which items this push serves. `push_log_opts` (defined
+# in .githooks/pre-push for the secret scan) gives the outgoing range.
+# ============================================================================
+if [ -f "$BP_CODE_ROOT/scripts/lib/dod-gate.mts" ]; then
+  _dod_ranges="$(push_log_opts)"
+
+  AGENT_FEED_TAG="DoD-Gate"
+
+  _st_dod_rows(){ DOD_GATE_NOTE_FILE="${_PIPE_DIR:+$_PIPE_DIR/note.$_PIPE_N}" node "$BP_CODE_ROOT/scripts/lib/dod-gate.mts" rows "$_dod_ranges"; }
+  pipe_stage "§1b·1 every item has a backlog row" _st_dod_rows
+
+  _st_dod_bugtests(){ DOD_GATE_NOTE_FILE="${_PIPE_DIR:+$_PIPE_DIR/note.$_PIPE_N}" node "$BP_CODE_ROOT/scripts/lib/dod-gate.mts" bugtests "$_dod_ranges"; }
+  pipe_stage "§2 every BUG has a regression test" _st_dod_bugtests
+
+  _st_dod_signal(){ DOD_GATE_NOTE_FILE="${_PIPE_DIR:+$_PIPE_DIR/note.$_PIPE_N}" node "$BP_CODE_ROOT/scripts/lib/dod-gate.mts" signal; }
+  pipe_stage "§7G the live baton is well-formed" _st_dod_signal
+
+  _st_dod_judgement(){ DOD_GATE_NOTE_FILE="${_PIPE_DIR:+$_PIPE_DIR/note.$_PIPE_N}" node "$BP_CODE_ROOT/scripts/lib/dod-gate.mts" judgement; }
+  pipe_stage "§D·F·H judgement — printed, not verified" _st_dod_judgement
+
+  AGENT_FEED_TAG="GATE"
+else
+  # Fails LOUD rather than silently dropping four stages: a shorter run is
+  # exactly the signal the founder watches for, so it must carry its reason.
+  pipe_skip "DoD checklist" "scripts/lib/dod-gate.mts absent — run: blueprint pull scripts/lib/dod-gate.mts"
+fi
+
+# --- TASK-018: the TypeScript suites ----------------------------------------
+#
+# ONE vitest process, rendered as one stage PER SUITE.
+#
+# Forty-two separate invocations would mean forty-two Node startups and would
+# discard the parallelism that is the whole point. But collapsing them into a
+# single "vitest" stage breaks two things that matter: tests/bootstrap-gate #3
+# requires a derived project's gate to pass >= 25 stages as an explicit
+# non-vacuity guard, and `slowest: vitest 200s` names nothing anyone can act
+# on. scripts/run-ts-suites.sh bridges the two through pipeline.sh's batch API
+# (PLAN-TASK-018 §7.3).
+#
+# The expected suite list comes from the *.spec.ts files on disk, never from
+# vitest's own output — otherwise every guard reduces to trusting the runner, and
+# a suite dropped from the include glob vanishes with the gate still green.
+# Verified by breaking it: narrowing the glob produces both a named per-suite
+# failure and a runner-contradicts-its-report failure. (It came from
+# tests/SUITES.md until TASK-020 deleted that table; `find` is the same property
+# from a source that is the tests rather than a description of them.)
+#
+# Placed here, at the END of the managed region, deliberately. It is the only
+# stage that needs a toolchain the rest of the gate does not, so a machine
+# missing it fails one clearly-named stage rather than poisoning earlier ones.
+#
+# TASK-053: a text-only push (.githooks/pre-push decides it) skips the three
+# code stages with a reason and runs only the suites that judge documents.
+: "${_PP_TEXT_ONLY:=0}"
+if [ "$_PP_TEXT_ONLY" = "1" ] && [ -f "$BP_CODE_ROOT/scripts/run-ts-suites.sh" ]; then
+  # shellcheck source=scripts/run-ts-suites.sh
+  . "$BP_CODE_ROOT/scripts/run-ts-suites.sh"
+  pipe_skip "shellcheck · TASK-033" "text-only push: no shell script changed"
+  pipe_skip "typecheck · TASK-031" "text-only push: no TypeScript changed"
+  pipe_skip "vitest · TASK-018" "text-only push: only the document suites run"
+  ts_docs_stage "$BP_CODE_ROOT"
+elif [ -f "$BP_CODE_ROOT/scripts/run-ts-suites.sh" ]; then
+  # shellcheck source=scripts/run-ts-suites.sh
+  . "$BP_CODE_ROOT/scripts/run-ts-suites.sh"
+  # TASK-033: lint the tracked shell scripts. It needs no Node and takes about a
+  # second, and it blocks when ShellCheck is missing. The same function runs in
+  # CI (.github/workflows/security.yml), and tests/ts-bridge #6 and #7 prove both.
+  sh_lint_stage "$BP_CODE_ROOT"
+  # TASK-031: typecheck tests/ first. vitest strips types without checking
+  # them, so without this a type error pushes green. The same function runs in
+  # CI (.github/workflows/security.yml), and tests/ts-bridge #4 and #5 prove both.
+  ts_typecheck_stage "$BP_CODE_ROOT"
+  # BUG-066: the CODE root, not `pwd`. This argument is what the bridge uses to
+  # find tests/vitest.config.ts and the *.spec.ts population.
+  ts_suites_stage "$BP_CODE_ROOT"
+else
+  pipe_skip "shellcheck · TASK-033" "scripts/run-ts-suites.sh absent — run: blueprint pull scripts/run-ts-suites.sh"
+  pipe_skip "typecheck · TASK-031" "scripts/run-ts-suites.sh absent — run: blueprint pull scripts/run-ts-suites.sh"
+  pipe_skip "vitest · TASK-018" "scripts/run-ts-suites.sh absent — run: blueprint pull scripts/run-ts-suites.sh"
+fi
+# BLUEPRINT:END
+#
+# --- YOUR PROJECT GUARDS GO BELOW THIS LINE ---------------------------------
+#
+# Everything from here down is project-owned and survives every `blueprint
+# pull` untouched. Copy shapes from .githooks/pre-push-project.example.

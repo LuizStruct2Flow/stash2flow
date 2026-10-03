@@ -1,0 +1,41 @@
+{
+  // TASK-067 — the tsconfig for scripts/**/*.mts, the enablement half of
+  // "shell to TypeScript, organically" (docs/done/PLAN-TASK-067-shell-to-typescript.md).
+  // No script has migrated yet; this makes the rule ENFORCEABLE, not retroactive.
+  //
+  // .mts, not .ts: a plain .ts under scripts/ needs a scripts/package.json
+  // marked "type":"module" to be treated as ESM (measured: TS1295/TS1470
+  // without it), and that file would be a second MANAGED package.json in a
+  // directory derived projects also use. .mts carries its own module kind, so
+  // no package.json is needed here at all.
+  //
+  // "@types/node borrowed from tests/node_modules" (the review synthesis):
+  // scripts/ ships no node_modules of its own — these are zero-runtime-
+  // dependency scripts that must run before `npm ci` — so typeRoots reaches
+  // sideways into the harness's own install rather than duplicating it.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    // Node's own type stripping refuses non-erasable constructs (enums,
+    // parameter properties, `<T>` casts, …) — this makes tsc refuse the same
+    // things, so a typecheck pass means the file also RUNS on plain node.
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"],
+    "typeRoots": ["../tests/node_modules/@types"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["**/*.mts"]
+}

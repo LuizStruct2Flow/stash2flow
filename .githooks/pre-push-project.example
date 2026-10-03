@@ -1,0 +1,55 @@
+#!/bin/sh
+# Project-specific pre-push guards — a MENU OF SHAPES to copy FROM.
+#
+# APPEND what you need to .githooks/pre-push-project, AFTER its BLUEPRINT:END
+# marker. Do NOT copy this file over it: `pre-push-project` ships already
+# populated, wiring the regression suites that guard the blueprint-managed
+# machinery your project runs (blueprint pull/drift/a2bp, signal-set.sh, the
+# feed, the hooks, the gate renderer). Overwriting it takes all of them off your
+# push path in one command, and the gate keeps printing PASSED over the
+# remainder — which is BUG-004 and A-22 exactly, so it would not look like a
+# mistake (BUG-028).
+#
+# The MARKERS are what split ownership (BUG-029). Between BLUEPRINT:BEGIN and
+# BLUEPRINT:END the blueprint owns the file and `blueprint pull` replaces the
+# region — that is how a suite added upstream arrives with something to invoke
+# it. After BLUEPRINT:END the project owns it and pull preserves it
+# byte-for-byte. The file used to be excluded from sync wholesale, which kept
+# your guards safe and left every derived gate frozen at its bootstrap commit.
+#
+# Editing INSIDE the region loses the edit at the next pull. If the change is
+# generic, send it up instead: `blueprint a2bp .githooks/pre-push-project`.
+#
+# Examples (uncomment and adapt):
+
+# --- Placeholder / config drift guard ---
+# for HTML_TARGET in frontend/index.html frontend/index.de.html; do
+#   if grep -q "PLACEHOLDER_NEVER_REPLACED" "$HTML_TARGET"; then
+#     echo "❌ $HTML_TARGET has unresolved placeholder."
+#     exit 1
+#   fi
+# done
+
+# --- Favicon / head invariant ---
+# for PUBLIC_HTML in frontend/public/*.html; do
+#   if ! grep -q 'rel="icon"' "$PUBLIC_HTML"; then
+#     echo "❌ $PUBLIC_HTML is missing the favicon."
+#     exit 1
+#   fi
+# done
+
+# --- Release-notes guard ---
+# RANGE=origin/main..HEAD
+# CHANGED=$(git diff --name-only $RANGE 2>/dev/null || true)
+# HTML_CHANGED=$(echo "$CHANGED" | grep -E '^frontend/public/[^/]+\.html$' | grep -v 'release-notes.html' || true)
+# if [ -n "$HTML_CHANGED" ]; then
+#   NOTES_CHANGED=$(echo "$CHANGED" | grep -E '^(docs/RELEASE-NOTES\.md|frontend/public/release-notes\.html)$' || true)
+#   if [ -z "$NOTES_CHANGED" ]; then
+#     if git log $RANGE --pretty=%B 2>/dev/null | grep -q '\[no-release-notes\]'; then
+#       echo "  (release-notes guard skipped: [no-release-notes] in commit message)"
+#     else
+#       echo "❌ Release notes not updated for a user-visible change."
+#       exit 1
+#     fi
+#   fi
+# fi

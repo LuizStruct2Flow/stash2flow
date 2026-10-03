@@ -1,0 +1,145 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.js.map
+
+# Rendered presentations
+docs/*.pdf
+
+# Office lock files — created while a workbook is open, never content
+~$*
+.~lock.*#
+
+# Environment files — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code (ignore everything except shared team skills)
+# settings.json is gitignored for public-publishability — it reveals the
+# founder's personal toolchain. If your project needs cross-machine
+# permission sync, do it via a private path outside the repo, not via
+# the public repo.
+.claude/
+
+# Per-engineer agent roster. Works like .env: AGENT_ROSTER.example.md is the
+# tracked template, AGENT_ROSTER.md is your personal copy. Each engineer runs a
+# different fleet (different agents, subscriptions, quotas), so the live roster
+# must not be shared or overwritten by a blueprint sync.
+#   cp AGENT_ROSTER.example.md AGENT_ROSTER.md
+AGENT_ROSTER.md
+
+# Test coverage
+coverage/
+# SonarQube scanner work dir and the ShellCheck import scripts/sonar.sh writes
+.scannerwork/
+
+# BUG-146 — process-tree dumps a harness scenario's waitOrDump writes when a
+# wait times out (tests/harness/dump.ts). CI uploads these as an artefact on
+# failure; a local run should not leave them tracked.
+tests/.timeout-dumps/
+
+# ============================================================
+# PUBLIC-PUBLISHING PRIVACY BLOCK
+# ------------------------------------------------------------
+# struct2flow projects are designed to be publishable on public GitHub
+# without leaking AI configurations or operational state. The rules
+# below partition the worktree into PUBLIC (tracked, pushable) and
+# PRIVATE (local-only). Anything that reveals the founder's identity,
+# AI workflow, or operational state lives PRIVATE.
+#
+# Lifecycle artifacts under docs/ (BACKLOG.md, BUGS.md, SLICE-*/PLAN.md,
+# FEATURES.md, ACCEPTANCE_TESTS.md, requirements/, waiting-acceptance/,
+# done/, mocks/, all folder README.md) are PUBLIC by default. Inside docs/,
+# only review records (docs/**/CODEX_REVIEW.md) are PRIVATE — see below.
+#
+# Before pushing to a public remote, read docs/PUBLISHING.md (tracked, like
+# the rest of the framework's own documents) for the §1b index preflight and
+# §3a fresh-repo allowlist publish flow.
+# ============================================================
+
+# --- struct2flow / multi-AI methodology ---
+# These files WERE private, and deliberately are not any more: founder decision
+# 2026-09-16, "all six, no exceptions" (TASK-048). /CLAUDE.md, /AGENTS.md,
+# /AGENT_SIGNAL.md, docs/DoD.md, docs/PUBLISHING.md and docs/doing/HANDOVER.md
+# are the framework's own documents — identical in every project by
+# construction, since project specifics live in project_config_*.md. Excluding
+# them protected nothing project-specific and cost every doc link into them:
+# a link a clone cannot resolve, which is the limitation BUG-125 had to accept.
+# /GEMINI.md, added by TASK-084, is one of them too.
+#
+# What IS private now has a home of its own: agents.internal.md (TASK-046),
+# which the project owns and may track or ignore as it chooses.
+#
+# The entries below stay private, and for unchanged reasons: review records,
+# and the five project_config_*.md — A-27 put the threat model, the adversary
+# assumptions and the infra account IDs in two of them.
+docs/**/CODEX_REVIEW.md
+/project_config_overview.md
+/project_config_paths.md
+/project_config_dod.md
+
+# BUG-009 — the patterns above are ANCHORED with a leading slash on purpose.
+# They name files at the repository ROOT. Written bare, a gitignore pattern
+# matches at every depth, so `templates/project_config_*.md` — the seed source —
+# was silently skipped by `git add` and a PR went out with an empty templates/.
+# `git add` reports nothing when it skips an ignored path, so the only signal was
+# CI failing on a missing template. Keep the slashes.
+
+# A-27: security + infra were omitted while docs/PUBLISHING.md's preflight has
+# always required ALL FIVE `project_config_*.md` to be ignored. They are the two
+# most sensitive of the set — the threat model, adversary assumptions and
+# incident playbook, and the infra account IDs and state backends — so on a
+# derived project's first public push they were exactly the wrong two to leak.
+# (In the blueprint itself all five stay tracked as templates: git ignores
+# .gitignore for already-tracked paths, which is how the other three already
+# behave.)
+/project_config_security.md
+/project_config_infra.md
+
+# struct2flow agent-protocol scripts (Codex dispatcher etc.).
+# Project-specific scripts that ship publicly go in scripts/ with
+# names that don't match these.
+scripts/signal-watch.sh
+scripts/start-codex-signal-watch.mts
+scripts/new-project.sh
+
+# Bootstrap provenance — points at the founder's local blueprint path
+# and the source commit SHA. Created by scripts/new-project.sh on
+# bootstrap.
+.blueprint-source
+
+# Project-specific ignores: add below in your project's own .gitignore extension.
+# Do NOT edit them between the blueprint markers — they'd come back on next sync.
+
+# Agent activity feed logs (scripts/agent-activity.sh)
+logs/
+
+# Subagent deferral slots (scripts/log-activity.mts) — one directory per in-flight
+# deferred bookend, plus the lock they are reserved under. At the project root
+# because `bp_state_root` resolves there and the slot set must not follow
+# AGENT_STATE_HOME. Transient: a slot is reclaimed when its owner dies, never
+# content. Unignored, it left every project that dispatched a subagent with a
+# permanently dirty `git status` (BUG-131).
+subagent-defer/
+
+# Agent scratch space — throwaway probes, debug harnesses, commit-message
+# drafts. Kept INSIDE the repo so the work is visible next to the code that
+# prompted it, rather than hidden in a system temp dir. Never committed.
+# Bootstrap ships `git archive HEAD` (A-05), so nothing here can leak into a
+# derived project.
+.scratch/
