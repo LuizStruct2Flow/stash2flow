@@ -1,7 +1,8 @@
 # Plan: [FEATURE-001](BACKLOG.md) media index
 
 **Status:** draft with the founder. Decided on 2026-10-03: TypeScript (D1), the
-glossary rulings G1–G15 as recommended (D2), public repo (D12), private spec (D22).
+glossary rulings G1–G15 as recommended (D2), public repo (D12), private spec (D22),
+the founder's order of sources decides the keeper (D24).
 Open: the four names in §1.3 and the rest of §5, which wait until he has read the
 spec again. Then it goes to the three-provider plan review.
 **Source of truth:** the spec, `docs/SPEC-media-index.md`. It is private: gitignored, kept only on the founder's machine (`L42` = spec line 42).
@@ -320,8 +321,10 @@ totals are committed) and for the founder's acceptance.
 - The same photo as JPG in OneDrive and HEIC in iCloud Photos lands in one near group *(AC3)*
 - A resized or WhatsApp-compressed copy joins the near group
 - Different photos are not grouped
-- The keeper is suggested by: highest resolution, then complete EXIF, then iCloud Photos, then oldest *(wording waits for D24)*
-- A suggested keeper stays a suggestion until the founder has chosen *(D24)*
+- The keeper is suggested from the founder's order of sources *(D24)*
+- Inside the winning source, ties go to the highest resolution, then complete EXIF, then the oldest *(D24)*
+- The founder can change the keeper of a duplicate group in the duplicate report *(D24)*
+- A suggested keeper stays a suggestion until the founder marks the group reviewed *(D24)*
 - Nothing is ever deleted or moved automatically
 - The duplicate report shows thumbnails and paths side by side *(AC6)*
 - Files in a shared account are flagged as also belonging to someone else
@@ -410,7 +413,7 @@ other mailboxes · reverse geocoding and `--near` · moving non-keepers into
 | D21 | Slice order: e-mail at 5 (before descriptions and duplicates). | Keep: the first use case may live only in an e-mail attachment. |
 | D22 | **Decided (founder, 2026-10-03): the spec is private and gitignored.** A clone therefore has the plan and the feature files but not the spec. | The feature files of slice 0 become the public statement of what the system does, so they must be complete without the spec. |
 | D23 | **Which e-mails are kept track of.** Founder, 2026-10-03: only the ones that are personal or have relevant content; about 95% are expected to be advertisement. The spec's first-run filter (L84, every message with an attachment) would take in advertisements, because their logos count as attachments. Open: (a) the rule that tells an advertisement from the rest; (b) whether the body of a personal message is indexed, or only its attachments (L79–80 index bodies for official senders and keywords only). | (a) A message is **relevant** when its sender is an official sender, it matches a keyword, or it carries a PDF attachment. It is **personal** when Gmail does not file it under Promotions, Social, Spam or Trash and it has no unsubscribe header. Everything else is an **advertisement**: nothing is stored, it is only counted. Pictures inside the message text are never attachments. Slice 5 first reports the counts per rule on the real mailboxes and the founder checks a sample of what is left out, before the rule is fixed. (b) Attachments only, as the spec says; his call. |
-| D24 | **Who decides the keeper.** Founder, 2026-10-03: "All content that will be deduplicated I have to choose the location that wins", and "No content will be deleted without my go". The second is already the spec's rule (L174) and stands. The first changes the keeper: the spec suggests it by resolution, EXIF, iCloud Photos, age (L173). Open: (a) does he choose once, as an order of preference that applies to every duplicate group, or group by group in the duplicate report? (b) is the thing that wins a **location** (`onedrive`, `icloud_photos`) or a **source** (a location plus an account)? With two accounts in one location, a location cannot settle it. | (a) Both, the first feeding the second: he sets the order once in configuration, the report shows the keeper that order gives, and he can change it per group. Nothing counts as chosen until he marks the group reviewed (`dup_groups.reviewed`, L164). The spec's resolution and EXIF rules only break ties inside the winning source. (b) Source. |
+| D24 | **Decided (founder, 2026-10-03): as recommended on both points; what wins is a source.** Who decides the keeper. Founder, 2026-10-03: "All content that will be deduplicated I have to choose the location that wins", and "No content will be deleted without my go". The second is already the spec's rule (L174) and stands. The first changes the keeper: the spec suggests it by resolution, EXIF, iCloud Photos, age (L173). Open: (a) does he choose once, as an order of preference that applies to every duplicate group, or group by group in the duplicate report? (b) is the thing that wins a **location** (`onedrive`, `icloud_photos`) or a **source** (a location plus an account)? With two accounts in one location, a location cannot settle it. | (a) Both, the first feeding the second: he sets the order once in configuration, the report shows the keeper that order gives, and he can change it per group. Nothing counts as chosen until he marks the group reviewed (`dup_groups.reviewed`, L164). The spec's resolution and EXIF rules only break ties inside the winning source. (b) Source. |
 
 ---
 
