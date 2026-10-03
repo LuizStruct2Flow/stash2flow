@@ -44,9 +44,12 @@ harder to sort, so the cost of not sorting is not constant. It compounds.
 
 ### Your own number
 
-The one figure that can be measured is yours. Once the app has read your
-sources, it can tell you what share of your storage is duplicates and mail you
-never wanted. That number is yours alone; it never leaves your network.
+The one figure that can be measured is yours. The app measures your digital
+life before and after: when it first reads your sources it records how many
+files and how many bytes you have, in how many places, and what share is
+duplicates and mail you never wanted. After you have organized and cleaned up,
+it shows the same figures again. Those numbers are yours alone; they never
+leave your network.
 
 ## How it gets you there
 
