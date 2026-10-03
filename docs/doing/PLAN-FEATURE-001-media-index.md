@@ -1,7 +1,9 @@
 # Plan: [FEATURE-001](BACKLOG.md) media index
 
-**Status:** first draft for the founder. Nothing here is decided until he rules on
-§1 (language) and §5 (open decisions); then it goes to the three-provider plan review.
+**Status:** draft with the founder. Decided on 2026-10-03: TypeScript (D1), the
+glossary rulings G1–G15 as recommended (D2), public repo (D12), private spec (D22).
+Open: the four names in §1.3 and the rest of §5, which wait until he has read the
+spec again. Then it goes to the three-provider plan review.
 **Source of truth:** the spec, `docs/SPEC-media-index.md`. It is private: gitignored, kept only on the founder's machine (`L42` = spec line 42).
 **Scope of this commit:** plan and backlog row only. No production code, no test code, no config edits.
 
@@ -67,7 +69,7 @@ a missing word is raised as a question to the founder.
 | summary notification | The message sent when a run finishes | L192 |
 | place | Where a photo was taken | L8, L101 |
 
-### 1.2 Conflicts in the spec — one question each
+### 1.2 Conflicts in the spec — agreed as recommended (founder, 2026-10-03)
 
 | # | Conflict | Question | Recommendation |
 |---|---|---|---|
@@ -161,8 +163,8 @@ already looks for.
 
 ### 2.4 Dependency rule, enforced mechanically
 
-- A layering lint in the gate's lint stage (`import-linter` for Python,
-  `eslint-plugin-boundaries` for TypeScript): domain imports nothing outward;
+- A layering lint in the gate's lint stage (`eslint-plugin-boundaries`): domain
+  imports nothing outward;
   application imports domain and ports only; adapters are imported only by the two
   entry points; `osxphotos` is importable only from the iCloud Photos adapter (this is
   also how "never read the Photos library package directly" is held).
@@ -180,9 +182,27 @@ already looks for.
 | AWS CDK | Server setup scripted in `infra/` (D11) | No cloud resources exist. |
 | CloudWatch observability recipe | "Local app" recipe: logs on the server, queryable `runs`, notification | Nothing runs in AWS. |
 | CodeCommit | Public GitHub repository | Founder's choice; the spec and all account data stay out of the repo (D12). |
-| Node/TypeScript | **Open: D1** | |
+| Node/TypeScript | Node/TypeScript | No deviation (D1). |
 
-### 2.6 Language and runtime — open (D1)
+### 2.6 Language and runtime — decided: all TypeScript (founder, 2026-10-03)
+
+The Python libraries the spec names were examples. Server and collector are one
+TypeScript package, so the gate works as shipped and phash has one implementation.
+Two things stay outside TypeScript as installed programs the adapters call, not as
+libraries in this codebase: `osxphotos` (command-line, on the Mac) and a local model
+server for descriptions.
+
+| Need | Candidate, to be proven in slice 1 | Known risk |
+|---|---|---|
+| PDF text layer, page rendering | `mupdf` or `pdfjs-dist` | none known |
+| EXIF | `exifr` | none known |
+| phash | `sharp` plus one small hash function | HEIC is not in `sharp`'s prebuilt binaries; needs a separate decoder |
+| OCR | Tesseract, a PaddleOCR model through ONNX Runtime for Node, or a local vision model; chosen by the benchmark (D3) | quality on poor Portuguese and German scans |
+| Embeddings (CLIP, multilingual text) | `@huggingface/transformers` in Node | speed of the first full run, not measured |
+| Description | local model server over HTTP | none known |
+| iCloud Photos | `osxphotos` as a command-line tool | must be installed on the Mac |
+
+The options as they were weighed (record):
 
 | Option | For | Against |
 |---|---|---|
@@ -190,9 +210,9 @@ already looks for.
 | **B. TypeScript core, Python behind ports** (OCR, CLIP, phash as local Python services; Python collector) | Core matches the default and the gate as-is. | Two languages and toolchains. The collector must be Python anyway, so server and collector no longer share the run and hashing code; phash exists twice or always crosses a process boundary. More moving parts on the server. |
 | **C. All TypeScript** (models via local HTTP servers, `osxphotos` as a command-line tool, a JS phash) | One language, gate as-is. | OCR and CLIP still need a Python service; HEIC decoding in Node on Linux is fragile; leaves the libraries the spec chose. |
 
-**Recommendation: A.** Most of the work is in adapters whose libraries are Python, and
-sharing one package between server and collector removes a whole class of mismatch.
-Cost: gate wiring in slice 1 and one request to the blueprint for Python test names.
+The draft recommended A; the founder chose C. C's "against" column is what slice 1
+has to prove wrong: an OCR engine good enough on the real scans, and HEIC decoding on
+the server, both from TypeScript.
 
 ---
 
@@ -201,7 +221,7 @@ Cost: gate wiring in slice 1 and one request to the blueprint for Python test na
 ### 3.1 Specifications (BDD)
 
 - **Format:** Gherkin `.feature` files, written in the agreed glossary, one file per
-  area. Runner fits D1 (`pytest-bdd` for A; `@cucumber/cucumber` for B/C).
+  area. Runner: `@cucumber/cucumber`.
 - **Where:** `features/` at the repo root, a root of its own (not under `docs/`,
   `scripts/`, or a subdirectory of `tests/`). `BP_TEST_ROOTS` becomes
   `backend/src features` (§6).
@@ -362,8 +382,8 @@ other mailboxes · reverse geocoding and `--near` · moving non-keepers into
 
 | # | Decision | Recommendation |
 |---|---|---|
-| D1 | Language and runtime (§2.6). | A: all Python. |
-| D2 | Glossary: G1–G15 and N1–N4 (§1). | As recommended per row; N1–N4 are his to name. |
+| D1 | **Decided (founder, 2026-10-03): all TypeScript** (§2.6). | — |
+| D2 | **G1–G15 decided (founder, 2026-10-03): as recommended.** Still open: the names N1–N4 (§1.3). | N1–N4 are his to name. |
 | D3 | OCR engine, description LLM, embedding models. The spec says benchmark first (L104). | Slice 1 benchmarks OCR on real scans on the server; the LLM and embedding models are chosen the same way at slices 6, 7 and 10. Candidates must run on the server's hardware. |
 | D4 | **A file can be in an exact and a near group at once, but `files.dup_group_id` holds one group** (L153 vs L163). | One group per file: files with the same image are one group; it is `exact` when all bytes match, otherwise `near`. |
 | D5 | **Exact = "same sha256 (or md5)"** (L171): which decides? | sha256 decides; md5 is stored because it is required (L95). |
@@ -400,7 +420,7 @@ other mailboxes · reverse geocoding and `--near` · moving non-keepers into
 | `project_config_paths.md` | Repository layout; `BP_TEST_ROOTS` | `backend/`, `features/`, `infra/`; `BP_TEST_ROOTS: backend/src features` |
 | | `BP_CI` | Per D12 |
 | | External integrations | Microsoft Graph, Google Drive API, Gmail API |
-| `project_config_dod.md` | Pre-push gate commands | Per D1 |
+| `project_config_dod.md` | Pre-push gate commands | The shipped npm stages, plus the specifications stage |
 | | Coverage mode | Greenfield, ≥90% on domain and application |
 | | Test architecture | The non-deterministic stages and fixtures of §3.4 |
 | | Project-specific quality gates | "Specifications before code" (§3.2) |
