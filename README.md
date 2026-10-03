@@ -51,7 +51,28 @@ duplicates and mail you never wanted. After you have organized and cleaned up,
 it shows the same figures again. Those numbers are yours alone; they never
 leave your network.
 
+The first measured case will be the author's own: his baseline and what is
+left afterwards, published here by him once there is something to show.
+
 ## How it gets you there
+
+```mermaid
+flowchart LR
+  subgraph S[Your sources]
+    A[Cloud drives]
+    B[Photo libraries]
+    C[Mailboxes]
+  end
+  S --> O[Organized]
+  O --> D[Deduplicated]
+  D --> X[Cleansed]
+  X --> DB[(One organized<br/>database)]
+  S -. new content, every 30 days .-> O
+```
+
+Many sources go in, one organized database comes out. It is constantly
+updated, and it never grows fat: whatever arrives later goes through the same
+path before it is kept.
 
 1. **Index.** Read every source, keep a copy on your own server, make
    everything searchable by its text, and group duplicates.
