@@ -336,9 +336,12 @@ totals are committed) and for the founder's acceptance.
 - A message from an official sender has its body indexed
 - A message matching a keyword has its body indexed
 - An ordinary message body is not indexed
+- An advertisement is not indexed, and neither are its attachments *(D23)*
+- A picture inside a message's text, such as a logo, is not an attachment *(D23)*
+- The run summary counts the advertisements that were left out *(D23)*
 - An attachment's file_date is the date received
 - An attachment's open_link opens its Gmail thread
-- The first run covers full history: messages with attachments plus official senders
+- The first run covers full history: messages with attachments plus official senders, leaving out advertisements
 
 **Photos**
 - Photos are found by month
@@ -374,7 +377,8 @@ go green.
 
 **Named non-slices** (not built in this item): MCP server · Apache AGE · IMAP and
 other mailboxes · reverse geocoding and `--near` · moving non-keepers into
-`_to_review/` (D6) · enabling a second Mac's collector (configuration only, when needed).
+`_to_review/` (D6) · enabling a second Mac's collector (configuration only, when needed)
+· cleaning up unnecessary content, parked as [FEATURE-002](../backlog/BACKLOG.md).
 
 ---
 
@@ -404,6 +408,7 @@ other mailboxes · reverse geocoding and `--near` · moving non-keepers into
 | D20 | Who may call the API besides collectors (CLI, the report page in a browser)? L197 only names collectors. | Everything authenticates; one token per client; HTTPS on the LAN. |
 | D21 | Slice order: e-mail at 5 (before descriptions and duplicates). | Keep: the first use case may live only in an e-mail attachment. |
 | D22 | **Decided (founder, 2026-10-03): the spec is private and gitignored.** A clone therefore has the plan and the feature files but not the spec. | The feature files of slice 0 become the public statement of what the system does, so they must be complete without the spec. |
+| D23 | **Which e-mails are kept track of.** Founder, 2026-10-03: only the ones that are personal or have relevant content; about 95% are expected to be advertisement. The spec's first-run filter (L84, every message with an attachment) would take in advertisements, because their logos count as attachments. Open: (a) the rule that tells an advertisement from the rest; (b) whether the body of a personal message is indexed, or only its attachments (L79–80 index bodies for official senders and keywords only). | (a) A message is **relevant** when its sender is an official sender, it matches a keyword, or it carries a PDF attachment. It is **personal** when Gmail does not file it under Promotions, Social, Spam or Trash and it has no unsubscribe header. Everything else is an **advertisement**: nothing is stored, it is only counted. Pictures inside the message text are never attachments. Slice 5 first reports the counts per rule on the real mailboxes and the founder checks a sample of what is left out, before the rule is fixed. (b) Attachments only, as the spec says; his call. |
 
 ---
 
