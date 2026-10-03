@@ -2,7 +2,8 @@
 
 **Status:** draft with the founder. Decided on 2026-10-03: TypeScript (D1), the
 glossary rulings G1–G15 as recommended (D2), public repo (D12), private spec (D22),
-the founder's order of sources decides the keeper (D24).
+the founder's order of sources decides the keeper (D24), a source runs by itself only
+30 days after its last finished run (D25).
 Open: the four names in §1.3 and the rest of §5, which wait until he has read the
 spec again. Then it goes to the three-provider plan review.
 **Source of truth:** the spec, `docs/SPEC-media-index.md`. It is private: gitignored, kept only on the founder's machine (`L42` = spec line 42).
@@ -305,8 +306,10 @@ totals are committed) and for the founder's acceptance.
 - Downloads are gone from the temp directory after processing
 - File names are stored in NFC
 - The founder can start a run himself at any time *(D25)*
-- Every run schedules the next one 30 days later *(D25)*
-- A run starts by itself only when 30 days have passed since the last run *(D25)*
+- Every finished run schedules the next run of its source 30 days later *(D25)*
+- A run that failed or was interrupted does not move the date *(D25)*
+- Running one source does not postpone the others *(D25)*
+- A run starts by itself only when 30 days have passed since the source's last finished run *(D25)*
 - A Mac that was asleep when its run was due runs when it wakes
 - A summary notification reports new files, new duplicates and errors
 
@@ -417,7 +420,7 @@ other mailboxes · reverse geocoding and `--near` · moving non-keepers into
 | D22 | **Decided (founder, 2026-10-03): the spec is private and gitignored.** A clone therefore has the plan and the feature files but not the spec. | The feature files of slice 0 become the public statement of what the system does, so they must be complete without the spec. |
 | D23 | **Which e-mails are kept track of.** Founder, 2026-10-03: only the ones that are personal or have relevant content; about 95% are expected to be advertisement. The spec's first-run filter (L84, every message with an attachment) would take in advertisements, because their logos count as attachments. Open: (a) the rule that tells an advertisement from the rest; (b) whether the body of a personal message is indexed, or only its attachments (L79–80 index bodies for official senders and keywords only). | (a) A message is **relevant** when its sender is an official sender, it matches a keyword, or it carries a PDF attachment. It is **personal** when Gmail does not file it under Promotions, Social, Spam or Trash and it has no unsubscribe header. Everything else is an **advertisement**: nothing is stored, it is only counted. Pictures inside the message text are never attachments. Slice 5 first reports the counts per rule on the real mailboxes and the founder checks a sample of what is left out, before the rule is fixed. (b) Attachments only, as the spec says; his call. |
 | D24 | **Decided (founder, 2026-10-03): as recommended on both points; what wins is a source.** Who decides the keeper. Founder, 2026-10-03: "All content that will be deduplicated I have to choose the location that wins", and "No content will be deleted without my go". The second is already the spec's rule (L174) and stands. The first changes the keeper: the spec suggests it by resolution, EXIF, iCloud Photos, age (L173). Open: (a) does he choose once, as an order of preference that applies to every duplicate group, or group by group in the duplicate report? (b) is the thing that wins a **location** (`onedrive`, `icloud_photos`) or a **source** (a location plus an account)? With two accounts in one location, a location cannot settle it. | (a) Both, the first feeding the second: he sets the order once in configuration, the report shows the keeper that order gives, and he can change it per group. Nothing counts as chosen until he marks the group reviewed (`dup_groups.reviewed`, L164). The spec's resolution and EXIF rules only break ties inside the winning source. (b) Source. |
-| D25 | **Decided (founder, 2026-10-03): runs are started by him; each run schedules the next for 30 days later, so a run only starts by itself when he has not run one in that time.** This replaces the spec's fixed day of the month (L190). Open: (a) is the 30 days counted per source or for all sources together? (b) does a run that failed or was interrupted move the date? | (a) Per source, from the `last_run_at` the spec already stores (L131), so running one source by hand does not postpone the others. (b) No: only a finished run moves the date. |
+| D25 | **Decided (founder, 2026-10-03): runs are started by him; each run schedules the next for 30 days later, so a run only starts by itself when he has not run one in that time.** This replaces the spec's fixed day of the month (L190). Also decided: the 30 days are counted per source, from the `last_run_at` the spec already stores (L131), so running one source by hand does not postpone the others. And only a finished run moves the date, not one that failed or was interrupted. | — |
 
 ---
 
