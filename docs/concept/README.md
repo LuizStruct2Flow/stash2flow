@@ -5,9 +5,9 @@ uses, the rules it follows and how it is built. Each document covers one
 concern and can be read by itself.
 
 **How to read them.** Start with the mission. After that, read whichever
-document answers your question. A concept that is defined elsewhere is written
-as a hashtag, such as [#keeper](domain-language.md#keeper). The hashtag is a
-link to the one place where that concept is defined; follow it to go deeper,
+document answers your question. A concept that is defined elsewhere is linked
+to its definition, such as the [keeper](domain-language.md#keeper). The link
+goes to the one place where that concept is defined; follow it to go deeper,
 but you should not need to in order to understand the sentence. Every hashtag
 is listed at the end of this page.
 

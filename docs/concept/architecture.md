@@ -1,9 +1,10 @@
 # Architecture
 
 How the code of stash2flow is organized: its layers, what belongs in each, how
-the server and the Mac collector share code, and where the models run. Read
-this before writing or reviewing code. It describes structure, not behaviour;
-behaviour is in [how-it-works.md](how-it-works.md).
+the [server](domain-language.md#server) and the Mac
+[collector](domain-language.md#collector) share code, and where the models run.
+Read this before writing or reviewing code. It describes structure, not
+behaviour; behaviour is in [how-it-works.md](how-it-works.md).
 
 ## Hexagonal layering
 
@@ -18,9 +19,10 @@ adapters  →  ports  →  application (use-cases)  →  domain
 - **Domain**: the rules. No input or output; it imports nothing but itself.
 - **Application**: the use-cases. Depends on the domain and the ports.
 - **Ports**: what the use-cases need from the outside world, as interfaces.
-- **Adapters**: the real things behind the ports, such as a provider's API or
-  the database, and the things that drive the app, such as the API and the
-  command line.
+- **Adapters**: the real things behind the ports, such as a
+  [provider](domain-language.md#provider)'s API or the database, and the things
+  that drive the app, such as the [API](domain-language.md#api) and the command
+  line.
 
 This is the layering the project's
 [stack defaults](../../STACK_DEFAULTS.md) prescribe.
@@ -31,10 +33,10 @@ This is the layering the project's
 
 | Layer | Contents |
 |---|---|
-| Domain | The file and its identity; the source; the run; the duplicate group. The rules: what counts as unchanged, exact and near matching, the keeper suggestion, kind and has_text, the choice of file_date, the normal form of names, the doc_type vocabulary, which e-mails are indexed (whitelist and blacklist), and which pipeline steps a file still needs. |
-| Application | Run a source (full, incremental, resumable; marks vanished files) · accept file records · process a file through the pipeline · process existing files for a step on request · group duplicates and suggest keepers · change a keeper, mark a group reviewed · sort senders · search · find photos · build the duplicate report · summarise a run. |
-| Ports | See [#ports-and-adapters](#ports-and-adapters). |
-| Adapters | See [#ports-and-adapters](#ports-and-adapters). |
+| Domain | The [file](domain-language.md#file) and its identity; the [source](domain-language.md#source); the [run](domain-language.md#run); the [duplicate group](domain-language.md#duplicate-group). The rules: what counts as unchanged, [exact](domain-language.md#exact) and [near](domain-language.md#near) matching, the [keeper](domain-language.md#keeper) suggestion, [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text), the choice of [file_date](domain-language.md#file_date), the normal form of names, the [doc_type](domain-language.md#doc_type) vocabulary, which [e-mails](domain-language.md#e-mail) are indexed ([whitelist](domain-language.md#whitelist) and [blacklist](domain-language.md#blacklist)), and which [pipeline](domain-language.md#pipeline) steps a file still needs. |
+| Application | Run a [source](domain-language.md#source) (full, incremental, resumable; marks [vanished](domain-language.md#vanished) files) · accept [file records](domain-language.md#file-record) · process a [file](domain-language.md#file) through the [pipeline](domain-language.md#pipeline) · process existing files for a step on request · group [duplicates](domain-language.md#duplicate) and suggest [keepers](domain-language.md#keeper) · change a keeper, mark a group [reviewed](domain-language.md#reviewed) · sort [senders](domain-language.md#sender) · search · find photos · build the [duplicate report](domain-language.md#duplicate-report) · summarise a [run](domain-language.md#run). |
+| Ports | See [ports and adapters](#ports-and-adapters). |
+| Adapters | See [ports and adapters](#ports-and-adapters). |
 
 ## Ports and adapters
 
@@ -45,58 +47,69 @@ No port is added before a slice of the
 
 | Port | What it does | Adapters | First needed in slice |
 |---|---|---|---|
-| Reading a source (no agreed word yet) | lists a source, reports changes since a cursor, hands over bytes | Google Drive, OneDrive, Gmail, iCloud Drive (a folder), iCloud Photos (`osxphotos`); a fake | 2 |
-| What a run talks to (no agreed word yet) | narrow: all that running a source needs, see [#one-use-case-two-programs](#one-use-case-two-programs) | onto the index (server); an API client (collector); a fake | 2; cursor and checkpoint in 3 |
-| Index | wide, server only: files, OCR text, embeddings, duplicate groups, runs, pipeline progress, senders | PostgreSQL; an in-memory fake | 2 |
+| Reading a [source](domain-language.md#source) (no agreed word yet) | lists a source, reports changes since a [cursor](domain-language.md#cursor), hands over [bytes](domain-language.md#bytes) | Google Drive, OneDrive, Gmail, iCloud Drive (a folder), iCloud Photos (`osxphotos`); a fake | 2 |
+| What a [run](domain-language.md#run) talks to (no agreed word yet) | narrow: all that running a [source](domain-language.md#source) needs, see [one use-case, two programs](#one-use-case-two-programs) | onto the index ([server](domain-language.md#server)); an [API](domain-language.md#api) client ([collector](domain-language.md#collector)); a fake | 2; [cursor](domain-language.md#cursor) and [checkpoint](domain-language.md#checkpoint) in 3 |
+| Index | wide, [server](domain-language.md#server) only: [files](domain-language.md#file), [OCR text](domain-language.md#ocr-text), [embeddings](domain-language.md#embedding), [duplicate groups](domain-language.md#duplicate-group), [runs](domain-language.md#run), pipeline progress, [senders](domain-language.md#sender) | PostgreSQL; an in-memory fake | 2 |
 | OCR | page image to text | the engine chosen in slice 1; a fake that replays fixtures | 2 |
-| File reading | metadata, phash, PDF text layer and page rendering, thumbnail | image and PDF libraries | 2 |
-| Store of local copies (no agreed word yet) | keeps each file's bytes, addressed by sha256 | a directory on the server | 2 |
-| Token store | keeps the providers' access tokens | an encrypted file on the server | 2 |
+| File reading | metadata, [phash](domain-language.md#phash), PDF [text layer](domain-language.md#text-layer) and page rendering, thumbnail | image and PDF libraries | 2 |
+| Store of local copies (no agreed word yet) | keeps each [file](domain-language.md#file)'s [bytes](domain-language.md#bytes), addressed by [sha256](domain-language.md#md5-and-sha256) | a directory on the [server](domain-language.md#server) | 2 |
+| Token store | keeps the [providers](domain-language.md#provider)' access tokens | an encrypted file on the [server](domain-language.md#server) | 2 |
 | Clock | the time | the system | 2 |
-| Description | OCR text to description, doc_type, doc_date, person, issuer | the local model server; a fake | 6 |
-| Text embedding | OCR text and query text to a vector | a model inside the app's process; a fake | 7 |
+| Description | [OCR text](domain-language.md#ocr-text) to [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer) | the local model server; a fake | 6 |
+| Text embedding | [OCR text](domain-language.md#ocr-text) and query text to a vector | a model inside the app's process; a fake | 7 |
 | Image embedding | a photo to a vector, **and query text to a vector in the same model**; the text-embedding port is no substitute | a model inside the app's process; a fake | 10 |
-| Notification | sends the summary notification | depends on the channel chosen | 11 |
+| Notification | sends the [summary notification](domain-language.md#summary-notification) | depends on the channel chosen | 11 |
 
-The driving side: the API (taking file records, search, the duplicate report
-with its two changes), the command line `stash`, and the scheduler's entry
-point.
+The driving side: the [API](domain-language.md#api) (taking
+[file records](domain-language.md#file-record), search, the
+[duplicate report](domain-language.md#duplicate-report) with its two changes),
+the command line `stash`, and the [scheduler](domain-language.md#scheduler)'s
+entry point.
 
-The words still missing are listed in
-[domain-language.md](domain-language.md#words-still-to-name).
+The words still missing are listed under
+[words still to name](domain-language.md#words-still-to-name).
 
 ## One use-case, two programs
 
 `#one-use-case-two-programs`
 
-The server and the collector are one package with two entry points. Both wire
-the **same** "run a source" use-case and the **same** hashing code, with
-different adapters:
+The [server](domain-language.md#server) and the
+[collector](domain-language.md#collector) are one package with two entry
+points. Both wire the **same** "[run](domain-language.md#run) a
+[source](domain-language.md#source)" use-case and the **same** hashing code,
+with different adapters:
 
 | | Server | Collector |
 |---|---|---|
-| Sources read | OneDrive, Google Drive, Gmail | iCloud Photos, iCloud Drive |
-| What the run talks to | straight onto the index | an API client, to the server's API |
-| OCR, embeddings, description | yes | no |
+| [Sources](domain-language.md#source) read | OneDrive, Google Drive, Gmail | iCloud Photos, iCloud Drive |
+| What the [run](domain-language.md#run) talks to | straight onto the index | an [API](domain-language.md#api) client, to the [server](domain-language.md#server)'s API |
+| OCR, [embeddings](domain-language.md#embedding), [description](domain-language.md#description) | yes | no |
 
-What a run talks to has five operations and nothing else:
+What a [run](domain-language.md#run) talks to has five operations and nothing
+else:
 
-1. take a batch of file records together with the position reached;
-2. give a source's stored cursor and checkpoint;
-3. answer, per file record, whether the file is unchanged;
-4. mark vanished files;
-5. record a run's start, finish and errors.
+1. take a batch of [file records](domain-language.md#file-record) together with
+   the position reached;
+2. give a [source](domain-language.md#source)'s stored
+   [cursor](domain-language.md#cursor) and
+   [checkpoint](domain-language.md#checkpoint);
+3. answer, per [file record](domain-language.md#file-record), whether the
+   [file](domain-language.md#file) is unchanged;
+4. mark [vanished](domain-language.md#vanished) [files](domain-language.md#file);
+5. record a [run](domain-language.md#run)'s start, finish and errors.
 
 | Question | Answer |
 |---|---|
-| Where does a collector's cursor live? | On the server, with the source, like every other. The collector keeps no state. |
-| Who decides "unchanged"? | One domain rule, applied on the server when the file record arrives. The puller or collector never decides. The rule is [#unchanged-files](how-it-works.md#unchanged-files). |
-| When may a cursor or checkpoint advance? | After the server has stored the batch and its position together and acknowledged. |
+| Where does a [collector](domain-language.md#collector)'s [cursor](domain-language.md#cursor) live? | On the [server](domain-language.md#server), with the [source](domain-language.md#source), like every other. The collector keeps no state. |
+| Who decides "unchanged"? | One domain rule, applied on the [server](domain-language.md#server) when the [file record](domain-language.md#file-record) arrives. The [puller](domain-language.md#puller) or [collector](domain-language.md#collector) never decides. The rule is [unchanged files](how-it-works.md#unchanged-files). |
+| When may a [cursor](domain-language.md#cursor) or [checkpoint](domain-language.md#checkpoint) advance? | After the [server](domain-language.md#server) has stored the batch and its position together and acknowledged. |
 | A batch delivered twice? | Changes nothing. |
-| How do a collector's bytes reach the server? | The collector uploads them to the API for every new or changed file. The server never calls a Mac. |
+| How do a [collector](domain-language.md#collector)'s [bytes](domain-language.md#bytes) reach the [server](domain-language.md#server)? | The collector uploads them to the [API](domain-language.md#api) for every new or changed [file](domain-language.md#file). The server never calls a Mac. |
 
-The phash is computed by one implementation on both sides. That is what lets
-the same photo, read on a Mac and read on the server, land in one near group.
+The [phash](domain-language.md#phash) is computed by one implementation on both
+sides. That is what lets the same photo, read on a Mac and read on the
+[server](domain-language.md#server), land in one [near](domain-language.md#near)
+group.
 
 ## Dependency rule
 
@@ -135,10 +148,10 @@ check.
 The model server's address must be loopback or in a private range, including
 the range VPNs use. Any other address is refused at start. There is no key and
 no switch for a model outside the network:
-[#local-models-only](principles.md#local-models-only).
+[local models only](principles.md#local-models-only).
 
 Models are never called in the gate. See
-[#pinned-stages](testing.md#pinned-stages).
+[pinned stages](testing.md#pinned-stages).
 
 ## Directory layout
 
@@ -174,20 +187,22 @@ This app differs, each time for a stated reason:
 
 | Default | This project | Why |
 |---|---|---|
-| AWS Lambda, serverless | A self-hosted server | No document text or image may leave the user's network, and the local models need that machine. |
+| AWS Lambda, serverless | A self-hosted [server](domain-language.md#server) | No document text or image may leave the user's network, and the local models need that machine. |
 | DynamoDB | PostgreSQL with pgvector, unaccent and pg_trgm | Full-text, fuzzy, vector and hash matching in one system. |
 | Hosted model APIs | Local models only | Privacy; no billable path. |
-| React or Next with Amplify | In the index item, one server-rendered page: the duplicate report. | One page does not warrant a frontend. The frontend is its own item, [FEATURE-003](../doing/BACKLOG.md). |
+| React or Next with Amplify | In the index item, one server-rendered page: the [duplicate report](domain-language.md#duplicate-report). | One page does not warrant a frontend. The frontend is its own item, [FEATURE-003](../doing/BACKLOG.md). |
 | AWS CDK | Server setup scripted in `infra/` | No cloud resources exist. |
-| CloudWatch observability | The "local app" recipe: logs on the server, runs that can be queried, a notification | Nothing runs in AWS. |
+| CloudWatch observability | The "local app" recipe: logs on the [server](domain-language.md#server), [runs](domain-language.md#run) that can be queried, a notification | Nothing runs in AWS. |
 | CodeCommit | A public GitHub repository | The founder's choice. |
 
 ## Language choice
 
 `#language-choice`
 
-Everything is TypeScript. The server and the collector are one TypeScript
-package, so the gate works as shipped and the phash has one implementation.
+Everything is TypeScript. The [server](domain-language.md#server) and the
+[collector](domain-language.md#collector) are one TypeScript package, so the
+gate works as shipped and the [phash](domain-language.md#phash) has one
+implementation.
 
 Two programs stay outside the package, installed separately and called by
 adapters: `osxphotos` (command-line, on the Mac) and the local model server.
@@ -200,12 +215,13 @@ Candidates, to be proven in slice 1 before anything is built on them:
 
 | Need | Candidate | Known risk |
 |---|---|---|
-| PDF text layer, page rendering | `mupdf` or `pdfjs-dist` | none known |
+| PDF [text layer](domain-language.md#text-layer), page rendering | `mupdf` or `pdfjs-dist` | none known |
 | Photo metadata | `exifr` | none known |
-| phash | `sharp` plus one small hash function | HEIC is not in `sharp`'s prebuilt binaries; it needs a separate decoder, on Linux and on the Mac |
-| OCR | as in [#where-models-run](#where-models-run); chosen by the benchmark | quality on poor Portuguese and German scans |
-| Embeddings | as in [#where-models-run](#where-models-run) | files per hour on the first full run, not measured |
+| [phash](domain-language.md#phash) | `sharp` plus one small hash function | HEIC is not in `sharp`'s prebuilt binaries; it needs a separate decoder, on Linux and on the Mac |
+| OCR | as in [where models run](#where-models-run); chosen by the benchmark | quality on poor Portuguese and German [scans](domain-language.md#scan) |
+| [Embeddings](domain-language.md#embedding) | as in [where models run](#where-models-run) | [files](domain-language.md#file) per hour on the first full run, not measured |
 | iCloud Photos | `osxphotos` as a command-line program | must be installed on the Mac |
 
 Slice 1 has to prove the two doubts about TypeScript wrong: an OCR engine good
-enough on real scans, and HEIC decoding on both machines.
+enough on real [scans](domain-language.md#scan), and HEIC decoding on both
+machines.
