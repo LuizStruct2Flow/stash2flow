@@ -148,16 +148,6 @@ asset_date. Known limit: a wrongly read doc_date hides the
 **Recommendation.** Hidden by default and shown with a flag. The answer says
 how many were left out.
 
-### Question: several persons
-
-`#question-several-persons`
-
-**Question.** A document or a photo can concern several
-[persons](domain-language.md#person). Does an [asset](domain-language.md#asset)
-hold one person or several?
-
-**Recommendation.** Several persons per [asset](domain-language.md#asset).
-
 ## Pipeline and models
 
 Background: [pipeline steps](how-it-works.md#pipeline-steps).
@@ -371,8 +361,9 @@ descriptions and duplicates. Keep that order?
 ## Frontend and later steps
 
 Background: [the four steps](mission.md#four-steps). A frontend is coming as its
-own item, [FEATURE-003](../doing/BACKLOG.md). It is not built in the index, but it touches the index in
-three places.
+own item, [FEATURE-003](../doing/BACKLOG.md). It is not built in the index, but it touches the index.
+What is already settled about organizing is in
+[how assets are organized and found](how-it-works.md#how-assets-are-organized-and-found).
 
 ### Question: duplicate report and frontend
 
@@ -386,21 +377,34 @@ anyway?
 choices it stores ([keeper](domain-language.md#keeper),
 [reviewed](domain-language.md#reviewed)) do not change.
 
-### Question: taxonomy step
+### Question: which step builds what
 
-`#question-taxonomy-step`
+`#question-which-step-builds-what`
 
-**Question.** Sorting an [asset](domain-language.md#asset) into the taxonomy would
-be a [pipeline](domain-language.md#pipeline) step next to the
-[description](domain-language.md#description), and may replace
-[doc_type](domain-language.md#doc_type) and
-[person](domain-language.md#person). Does it?
+**Question.** Which of the [four steps](mission.md#four-steps) builds which part
+of organizing: the index or the frontend?
 
-**Recommendation.** Decide it with the frontend's plan, before the slice that
-builds [descriptions](domain-language.md#description) starts, because that is
-where [doc_type](domain-language.md#doc_type) and
-[person](domain-language.md#person) are built. A new step can already be run
-over [assets](domain-language.md#asset) that are indexed.
+**Recommendation.** The index finds the [persons](domain-language.md#person):
+they come with a document's [description](domain-language.md#description) and
+from the photo library. The [taxonomy](domain-language.md#taxonomy), the
+[contexts](domain-language.md#context) and the
+[tags](domain-language.md#tag) the [user](domain-language.md#user) makes belong
+to the frontend. Settle it before the slice of the index that builds
+descriptions.
+
+### Question: how an asset gets its context
+
+`#question-how-an-asset-gets-its-context`
+
+**Question.** How does an [asset](domain-language.md#asset) get its
+[context](domain-language.md#context)? The [user](domain-language.md#user)
+cannot confirm every asset one by one.
+
+**Recommendation.** By rules first, from where the
+[asset](domain-language.md#asset) came from: its
+[source](domain-language.md#source), its folder, its
+[sender](domain-language.md#sender). A local model proposes a
+[context](domain-language.md#context) only for what the rules do not cover.
 
 ### Question: API for the frontend
 
@@ -417,10 +421,15 @@ the command line. Does the index need to build anything extra for that?
 `#question-frontier-model-for-the-taxonomy`
 
 **Question.** The founder wants a frontier model to help create a good
-taxonomy. How may it help when no document text leaves the
-[user](domain-language.md#user)'s network?
+[taxonomy](domain-language.md#taxonomy). How may it help when no text of an
+[asset](domain-language.md#asset) leaves the [user](domain-language.md#user)'s
+network?
 
-**Recommendation.** None yet. To be settled before the frontend is planned.
+**Recommendation.** The [user](domain-language.md#user) designs the
+[taxonomy](domain-language.md#taxonomy) in a conversation with a frontier
+model, outside the app, from what he knows about his own life. The result is
+private configuration. Local models then assign
+[assets](domain-language.md#asset) to it.
 
 ### Question: clean copy format
 

@@ -182,7 +182,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] Every [match](domain-language.md#match) carries a [source_link](domain-language.md#source_link)
 - [3] A [vanished](domain-language.md#vanished) [asset](domain-language.md#asset) is left out of the answer, and the answer says how many were left out *(provisional: [open question: vanished in search](open-questions.md#question-vanished-in-search))*
 - [6] Search filters by [doc_type](domain-language.md#doc_type)
-- [6] Search filters by [person](domain-language.md#person)
+- [6] Search filters by [person](domain-language.md#person), and a document with two persons is found under each of them
 - [6] Search filters by date range *(provisional: [open question: date filter](open-questions.md#question-date-filter))*
 - [7] A query in another language finds the document: English words find a Portuguese receipt
 

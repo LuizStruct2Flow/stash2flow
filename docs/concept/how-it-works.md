@@ -4,7 +4,7 @@ What happens to an asset from the moment a [source](domain-language.md#source) i
 read until the [user](domain-language.md#user) finds it in a search or sees it
 in the [duplicate report](domain-language.md#duplicate-report). Read this to
 understand the app's behaviour; it describes the index, the first of the
-[four steps](mission.md#four-steps).
+[four steps](mission.md#four-steps), and says where the frontend adds to it.
 
 ## Runs
 
@@ -179,7 +179,7 @@ Every [asset](domain-language.md#asset) goes through the same
    proper names verbatim. It also
    extracts the [doc_date](domain-language.md#doc_date), the
    [doc_type](domain-language.md#doc_type), the
-   [person](domain-language.md#person) and the
+   [persons](domain-language.md#person) the document is about and the
    [issuer](domain-language.md#issuer). The doc_type always comes from the
    vocabulary: `id`, `tax`, `invoice`, `contract`, `certificate`,
    `bank_statement`, `insurance`, `medical`, `receipt`, `letter`, `other`.
@@ -231,17 +231,13 @@ when [assets](domain-language.md#asset) are already indexed. So:
 | About | What is kept |
 |---|---|
 | Each [source](domain-language.md#source) | [location](domain-language.md#location), [account](domain-language.md#account), [reader](domain-language.md#reader), [cursor](domain-language.md#cursor), [checkpoint](domain-language.md#checkpoint), whether it is enabled, when its last [run](domain-language.md#run) finished, its rank in the [order of sources](domain-language.md#order-of-sources) |
-| Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer); coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject and thread; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
+| Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [issuer](domain-language.md#issuer); its [persons](domain-language.md#person), which are [tags](domain-language.md#tag), so there can be several; coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject and thread; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
 | Text | the [OCR text](domain-language.md#ocr-text) per page, searchable without accents and tolerant of misreadings |
 | [Embeddings](domain-language.md#embedding) | per [asset](domain-language.md#asset), with the name of the model that made them |
 | Each [duplicate group](domain-language.md#duplicate-group) | [exact](domain-language.md#exact) or [near](domain-language.md#near), the [keeper](domain-language.md#keeper), [reviewed](domain-language.md#reviewed) or not |
 | Each [run](domain-language.md#run) | start, finish, counts of new, changed and [vanished](domain-language.md#vanished) [assets](domain-language.md#asset), errors |
 | The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, the [whitelist](domain-language.md#whitelist) and the [blacklist](domain-language.md#blacklist) |
 | The [baseline](domain-language.md#baseline) | see [measuring before and after](mission.md#measuring-before-and-after) |
-
-Whether an [asset](domain-language.md#asset) can have several
-[persons](domain-language.md#person) is open:
-[open question: several persons](open-questions.md#question-several-persons).
 
 ## Duplicates
 
@@ -327,6 +323,61 @@ moved aside is open:
 How the report relates to the coming frontend is open too:
 [open question: duplicate report and frontend](open-questions.md#question-duplicate-report-and-frontend).
 
+## How assets are organized and found
+
+`#how-assets-are-organized-and-found`
+
+An [asset](domain-language.md#asset) is described from three independent
+angles:
+
+| Angle | What it says about an asset | How many | Examples |
+|---|---|---|---|
+| [context](domain-language.md#context) | the overall situation in the [user](domain-language.md#user)'s life in which the [asset](domain-language.md#asset) is embedded | one or more | personal, professional, a family album |
+| [tag](domain-language.md#tag) | who or what the [asset](domain-language.md#asset) is about | several | a [person](domain-language.md#person), a [place](domain-language.md#place) such as a country, a tag the [user](domain-language.md#user) made |
+| [doc_type](domain-language.md#doc_type) | what kind of document it is | one, and only for an [asset](domain-language.md#asset) of [kind](domain-language.md#kind) `document` | `tax`, `invoice`, `contract` |
+
+- The [contexts](domain-language.md#context) form a tree, the
+  [taxonomy](domain-language.md#taxonomy). It is the one structure that
+  organizes the [assets](domain-language.md#asset), and the
+  [user](domain-language.md#user) shapes it. A team is a context, not a list of
+  [persons](domain-language.md#person).
+- [Tags](domain-language.md#tag) cut across the
+  [taxonomy](domain-language.md#taxonomy): they find
+  [assets](domain-language.md#asset) outside of it. An asset can have several
+  [persons](domain-language.md#person), such as a photo with several people or
+  a document relevant for two people.
+- The [context](domain-language.md#context) says which part of the
+  [user](domain-language.md#user)'s life an
+  [asset](domain-language.md#asset) belongs to; the
+  [doc_type](domain-language.md#doc_type) says which kind of paper it is. The
+  same fact is never held in both.
+- Browsing is a combination, not one fixed path: the
+  [user](domain-language.md#user) narrows by
+  [context](domain-language.md#context), [tag](domain-language.md#tag) and
+  [doc_type](domain-language.md#doc_type) in any order.
+- What a photo shows is not a [tag](domain-language.md#tag). No model writes a
+  tag for everything it sees. A photo of a beach is found by search, which
+  compares the [user](domain-language.md#user)'s words with what the photo
+  shows, through its [embedding](domain-language.md#embedding). Tags are for
+  what search cannot know or what the user decides deliberately.
+
+Who builds what:
+
+- **The index** builds the [doc_type](domain-language.md#doc_type), the
+  [persons](domain-language.md#person) (they come with a document's
+  [description](domain-language.md#description) and from the photo library),
+  and the search over text and over what a photo shows.
+- **The frontend** brings the [taxonomy](domain-language.md#taxonomy), the
+  [contexts](domain-language.md#context), the
+  [tags](domain-language.md#tag) the [user](domain-language.md#user) makes, and
+  browsing.
+
+This split still waits for a ruling:
+[open question: which step builds what](open-questions.md#question-which-step-builds-what).
+How an [asset](domain-language.md#asset) gets its
+[context](domain-language.md#context) is open too:
+[open question: how an asset gets its context](open-questions.md#question-how-an-asset-gets-its-context).
+
 ## Search
 
 `#search`
@@ -337,7 +388,10 @@ command line, `stash`.
 | Command | Finds |
 |---|---|
 | `stash search "<words>"` | [assets](domain-language.md#asset) by their text |
-| `stash search --doc-type tax --person <name> --from 2005 --to 2015` | documents by type, [person](domain-language.md#person) and date range |
+| `stash search --doc-type tax --person <name> --from 2005 --to 2015` | documents by [doc_type](domain-language.md#doc_type), [person](domain-language.md#person) and date range |
+
+A [person](domain-language.md#person) is a [tag](domain-language.md#tag), so a
+document with several persons is found under each of them.
 
 How text search behaves:
 

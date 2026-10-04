@@ -52,14 +52,14 @@ The app gets there in four items, in this order:
 | Step | Item | What it does | State |
 |---|---|---|---|
 | 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a [local copy](domain-language.md#local-copy) of each [asset](domain-language.md#asset) on the [server](domain-language.md#server), makes everything searchable by its text, and groups [duplicates](domain-language.md#duplicate). | Planned, no code yet |
-| 2. Organize | [FEATURE-003](../doing/BACKLOG.md) | A frontend where everything is arranged by a taxonomy the [user](domain-language.md#user) shapes, plus a search over all content. | To be planned |
+| 2. Organize | [FEATURE-003](../doing/BACKLOG.md) | A frontend where every [asset](domain-language.md#asset) is arranged in a [taxonomy](domain-language.md#taxonomy) the [user](domain-language.md#user) shapes and carries [tags](domain-language.md#tag) that find it outside the taxonomy, plus a search over all content. | To be planned |
 | 3. Clean copy | [FEATURE-004](../backlog/BACKLOG.md) | Writes the organized content to one place the [user](domain-language.md#user) chooses, and keeps it current. | Parked until the frontend is accepted |
 | 4. Clean up | [FEATURE-002](../backlog/BACKLOG.md) | Removes what is unnecessary from the [sources](domain-language.md#source), only with the [user](domain-language.md#user)'s go and only when verified copies exist. | Parked until the clean copy exists |
 
 The rest of the concept documents describe step 1, the index. It has four
 goals:
 
-1. **Find documents fast** by their text, type, [person](domain-language.md#person) and date. The first use
+1. **Find documents fast** by their text, [doc_type](domain-language.md#doc_type), [persons](domain-language.md#person) and date. The first use
    case: find an official receipt filed more than ten years ago, whose file
    name says nothing and whose scan date is unknown.
 2. **Find photos fast** by date and by what they show. The [place](domain-language.md#place) of a photo is
@@ -69,7 +69,8 @@ goals:
 4. **Stay current.** A [source](domain-language.md#source) is read again by itself 30 days after its last
    finished [run](domain-language.md#run).
 
-How the index does this is in [how-it-works.md](how-it-works.md). The steps
+How the index does this is in [how-it-works.md](how-it-works.md), and so is
+[how assets are organized and found](how-it-works.md#how-assets-are-organized-and-found). The steps
 that come after it leave open points in the index; they are listed in
 [open-questions.md](open-questions.md#frontend-and-later-steps).
 

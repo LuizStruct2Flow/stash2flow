@@ -32,7 +32,7 @@ scenarios marked with the slice's number.
 | 3 | **Second [run](../concept/domain-language.md#run) costs nothing.** Run again: nothing downloaded. Interrupt and resume. Remove an [asset](../concept/domain-language.md#asset) and see it kept, marked as [vanished](../concept/domain-language.md#vanished). See a run's state and errors. | Resuming, unchanged and changed assets, vanished assets, run errors. | [Cursor](../concept/domain-language.md#cursor), [checkpoint](../concept/domain-language.md#checkpoint), the unchanged rule, vanished assets and run records ([unchanged assets](../concept/how-it-works.md#unchanged-assets)); the record of each asset's [completed steps](../concept/domain-language.md#completed-steps). |
 | 4 | **All [server](../concept/domain-language.md#server) file [sources](../concept/domain-language.md#source).** Every OneDrive and Google Drive [account](../concept/domain-language.md#account) searchable; videos indexed. | Videos. | Adapter: OneDrive. Further accounts by configuration. |
 | 5 | **[E-mail](../concept/domain-language.md#e-mail).** The first e-mail [run](../concept/domain-language.md#run) lists the [senders](../concept/domain-language.md#sender) with counts and hints; he sorts them into [whitelist](../concept/domain-language.md#whitelist) and [blacklist](../concept/domain-language.md#blacklist); the next run makes the whitelisted senders' [attachments](../concept/domain-language.md#attachment) searchable, and their bodies if so ruled. It comes early because official receipts often exist only as attachments. | All e-mail scenarios. | Adapter: Gmail, reporting the sender and the [provider](../concept/domain-language.md#provider)'s hints per e-mail. Whitelist and blacklist, stored in the database, kept through the command line ([senders decide](../concept/sources.md#senders-decide)). The [baseline](../concept/domain-language.md#baseline)'s count of blacklisted messages. |
-| 6 | **[Descriptions](../concept/domain-language.md#description) and filters.** `stash search --doc-type tax --person <name> --from 2005 --to 2015`; each document shows its one-line description. [Assets](../concept/domain-language.md#asset) already indexed get their description on request. | Description, [doc_type](../concept/domain-language.md#doc_type), [kind](../concept/domain-language.md#kind); search filters; a step run over existing assets. | Port and adapter: description, at the local model server. Processing existing assets for a step on request ([steps added later](../concept/how-it-works.md#steps-added-later)). |
+| 6 | **[Descriptions](../concept/domain-language.md#description) and filters.** `stash search --doc-type tax --person <name> --from 2005 --to 2015`; each document shows its one-line description. [Assets](../concept/domain-language.md#asset) already indexed get their description on request. | Description, [doc_type](../concept/domain-language.md#doc_type), [persons](../concept/domain-language.md#person) (several per asset), [kind](../concept/domain-language.md#kind); search filters; a step run over existing assets. | Port and adapter: description, at the local model server. Processing existing assets for a step on request ([steps added later](../concept/how-it-works.md#steps-added-later)). |
 | 7 | **Search across languages.** English words find a Portuguese receipt. | The cross-language search scenario. | Port and adapter: text [embedding](../concept/domain-language.md#embedding); pgvector. |
 | 8 | **[Duplicates](../concept/domain-language.md#duplicate).** `stash dups --report` opens the page with thumbnails, [keepers](../concept/domain-language.md#keeper) suggested from his [order of sources](../concept/domain-language.md#order-of-sources), [shared-account](../concept/domain-language.md#shared-account) assets flagged. He changes a keeper and marks a group [reviewed](../concept/domain-language.md#reviewed) there. | All duplicate scenarios but the one that needs a Mac. | Grouping; the order of sources (kept with each [source](../concept/domain-language.md#source), set through the command line); the report page with its two changes, authentication and stored choices; a group keeps its id when [assets](../concept/domain-language.md#asset) join it ([choosing the keeper](../concept/how-it-works.md#choosing-the-keeper)). The [baseline](../concept/domain-language.md#baseline)'s duplicate share. |
 | 9 | **Mac [collector](../concept/domain-language.md#collector).** iCloud Drive and iCloud Photos from a Mac; the collector uploads the [bytes](../concept/domain-language.md#bytes) of every [asset](../concept/domain-language.md#asset) it reports. | Collectors; a full [run](../concept/domain-language.md#run) over all [sources](../concept/domain-language.md#source); the JPG and HEIC [near](../concept/domain-language.md#near) group; what is kept from iCloud Photos. | The collector's entry point. Adapters: iCloud Drive, iCloud Photos, and the [API](../concept/domain-language.md#api) client for the [ledger](../concept/domain-language.md#ledger); uploads on the API ([the Mac collector](../concept/sources.md#mac-collector)). |
@@ -43,8 +43,8 @@ Two things must be true before a slice starts:
 
 - before slice 2: the [server](../concept/domain-language.md#server)'s disk is
   encrypted ([disk encryption](../concept/infrastructure.md#disk-encryption));
-- before slice 6: the taxonomy question of the frontend is ruled
-  ([open question: taxonomy step](../concept/open-questions.md#question-taxonomy-step)).
+- before slice 6: it is ruled what the index builds and what the frontend builds
+  ([open question: which step builds what](../concept/open-questions.md#question-which-step-builds-what)).
 
 ## Not in this item
 
@@ -64,7 +64,12 @@ Named so nobody builds them by accident:
   ([open question: moving non-keepers](../concept/open-questions.md#question-moving-non-keepers)).
 - Enabling a second Mac's [collector](../concept/domain-language.md#collector):
   configuration only, when needed.
-- The frontend, [FEATURE-003](BACKLOG.md).
+- The frontend, [FEATURE-003](BACKLOG.md), and with it the
+  [taxonomy](../concept/domain-language.md#taxonomy), the
+  [contexts](../concept/domain-language.md#context), the
+  [tags](../concept/domain-language.md#tag) the
+  [user](../concept/domain-language.md#user) makes, and browsing
+  ([how assets are organized and found](../concept/how-it-works.md#how-assets-are-organized-and-found)).
 - The clean copy, [FEATURE-004](../backlog/BACKLOG.md).
 - Cleaning up unnecessary content, [FEATURE-002](../backlog/BACKLOG.md).
 
