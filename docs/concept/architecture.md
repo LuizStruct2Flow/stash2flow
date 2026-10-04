@@ -90,7 +90,7 @@ What a run talks to has five operations and nothing else:
 | Question | Answer |
 |---|---|
 | Where does a collector's cursor live? | On the server, with the source, like every other. The collector keeps no state. |
-| Who decides "unchanged"? | One domain rule, applied on the server when the file record arrives. The reader never decides. The rule is [#unchanged-files](how-it-works.md#unchanged-files). |
+| Who decides "unchanged"? | One domain rule, applied on the server when the file record arrives. The puller or collector never decides. The rule is [#unchanged-files](how-it-works.md#unchanged-files). |
 | When may a cursor or checkpoint advance? | After the server has stored the batch and its position together and acknowledged. |
 | A batch delivered twice? | Changes nothing. |
 | How do a collector's bytes reach the server? | The collector uploads them to the API for every new or changed file. The server never calls a Mac. |

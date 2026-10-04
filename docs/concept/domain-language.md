@@ -72,8 +72,8 @@ What starts a source's run by itself, 30 days after its last finished run.
 
 `#source`
 
-One configured place files come from: a location plus an account, read by an
-owner. Example: one Google Drive of one account is a source; the mailbox of the
+One configured place files come from: a location plus an account, read by one
+reader. Example: one Google Drive of one account is a source; the mailbox of the
 same account is another.
 
 ### Location
@@ -97,12 +97,15 @@ Whose login the source is read with.
 An account that belongs to more than one person. Its files are flagged as also
 belonging to someone else, so the user never treats them as his alone.
 
-### Owner
+### Reader
 
-`#owner`
+`#reader`
 
-Which machine reads the source: the server, or a collector by name. Owner means
-only the machine, never a person.
+The machine that reads a source: the server, or a Mac that runs a collector.
+Example: a cloud drive's reader is the server; a photo library that only a Mac
+can open has that Mac as its reader.
+
+Named by the founder on 4 October 2026. The word "owner" is not used for this.
 
 ### Order of sources
 
@@ -459,7 +462,7 @@ the user changes a keeper and marks a group reviewed.
 | scan, for a pass over a source | run | A scan is a scanned paper. |
 | document, photo, attachment as units | file | The file is the only unit. Document and photo are its kind. |
 | cloud | source, location, provider | "Cloud" is not a term. |
-| owner, for a person | shared account | Owner is only the machine that reads a source. |
+| owner, for the machine that reads a source | reader | "Owner" reads as a person. The machine is the reader. |
 | type | kind, doc_type, ext | "Type" meant three things. |
 | deleted | vanished | The app never deletes. |
 | backend, or the machine's model name | server | One word for the machine. |

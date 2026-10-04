@@ -15,7 +15,7 @@ It has three parts:
 |---|---|---|
 | location | which kind of place | `gdrive` |
 | account | whose login it is read with | one Google account |
-| owner | which machine reads it | the server, or a collector by name |
+| reader | which machine reads it | the server, or a Mac that runs a collector |
 
 Sources are configured centrally on the server. A source is stored with its
 position in the provider's change feed, whether it is enabled, when its last
