@@ -221,13 +221,6 @@ The link that opens the [asset](#asset) in its [source](#source). Example: the w
 file in a cloud drive, or the link to an e-mail's thread. It does not point at
 the [local copy](#local-copy) on the [server](#server).
 
-### Place
-
-`#place`
-
-Where a photo was taken. Not to be confused with [location](#location), which is the kind of
-[source](#source).
-
 ### asset_date
 
 `#asset_date`
@@ -410,25 +403,11 @@ Whether the [asset](#asset) has enough [OCR text](#ocr-text) to count as having 
 
 One English line about an [asset](#asset) of [kind](#kind) `document`.
 
-### doc_type
-
-`#doc_type`
-
-What type of document it is, from a fixed English vocabulary such as `tax` or
-`invoice`. On the command line the flag is `--doc-type`.
-
 ### doc_date
 
 `#doc_date`
 
 The date printed on the document.
-
-### Person
-
-`#person`
-
-Who the [asset](#asset) is about or shows, from a list the [user](#user) keeps. The same word is
-used for a person on a document and a person recognised in a photo.
 
 ### Issuer
 
@@ -441,6 +420,66 @@ The institution that issued the document.
 `#embedding`
 
 A vector for a photo or for [OCR text](#ocr-text). It lets a search find things by meaning.
+
+## How assets are organized
+
+An [asset](#asset) is described from three independent angles: its
+[contexts](#context), its [tags](#tag) and its [doc_type](#doc_type).
+
+### Context
+
+`#context`
+
+The overall situation in the [user](#user)'s life in which an [asset](#asset) is embedded.
+An asset has one or more contexts. Examples: personal, professional, a family
+album. A team is a context, not a list of [persons](#person). The contexts form the
+[taxonomy](#taxonomy).
+
+### Taxonomy
+
+`#taxonomy`
+
+The one structure that organizes the [assets](#asset): the tree of [contexts](#context). The
+[user](#user) shapes it.
+
+### Tag
+
+`#tag`
+
+Who or what an [asset](#asset) is about. An asset can have several tags. Tags cut
+across the [taxonomy](#taxonomy): they find assets outside of it. A tag is a
+[person](#person), a [place](#place) or a tag the [user](#user) made.
+
+What a photo shows is not a tag. A photo of a beach is found by search, which
+compares the [user](#user)'s words with what the photo shows. A tag is for what search
+cannot know or what the user decides deliberately.
+
+### Person
+
+`#person`
+
+A kind of [tag](#tag): someone the [asset](#asset) is about or shows, from a list the
+[user](#user) keeps. An asset can have several persons: a photo with several people,
+or a document relevant for two people. The same word is used for a person on a
+document and a person recognised in a photo.
+
+### Place
+
+`#place`
+
+A kind of [tag](#tag): a place the [asset](#asset) is about, for example a country. For a
+photo it is where the photo was taken. Not to be confused with
+[location](#location), which is the kind of [source](#source).
+
+### doc_type
+
+`#doc_type`
+
+What kind of document it is, from a fixed English vocabulary such as `tax` or
+`invoice`. An [asset](#asset) of [kind](#kind) `document` has one; no other asset has any.
+The [context](#context) says which part of the [user](#user)'s life an asset belongs to and
+the doc_type says which kind of paper it is, so the same fact is never held in
+both. On the command line the flag is `--doc-type`.
 
 ## Duplicates
 

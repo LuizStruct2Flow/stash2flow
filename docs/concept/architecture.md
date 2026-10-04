@@ -55,7 +55,7 @@ No port is added before a slice of the
 | [Stash](domain-language.md#stash) | keeps each [asset](domain-language.md#asset)'s [local copy](domain-language.md#local-copy), addressed by [sha256](domain-language.md#md5-and-sha256) | a directory on the [server](domain-language.md#server) | 2 |
 | Token store | keeps the [providers](domain-language.md#provider)' access tokens | an encrypted file on the [server](domain-language.md#server) | 2 |
 | Clock | the time | the system | 2 |
-| Description | [OCR text](domain-language.md#ocr-text) to [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer) | the local model server; a fake | 6 |
+| Description | [OCR text](domain-language.md#ocr-text) to [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [persons](domain-language.md#person), [issuer](domain-language.md#issuer) | the local model server; a fake | 6 |
 | Text embedding | [OCR text](domain-language.md#ocr-text) and query text to a vector | a model inside the app's process; a fake | 7 |
 | Image embedding | a photo to a vector, **and query text to a vector in the same model**; the text-embedding port is no substitute | a model inside the app's process; a fake | 10 |
 | Notification | sends the [summary notification](domain-language.md#summary-notification) | depends on the channel chosen | 11 |

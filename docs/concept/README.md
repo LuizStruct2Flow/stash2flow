@@ -19,7 +19,7 @@ is listed at the end of this page.
 | [domain-language.md](domain-language.md) | The agreed words, one by one. |
 | [principles.md](principles.md) | The rules that hold everywhere: nothing deleted without a go, the user decides, privacy, local copies, open source. |
 | [sources.md](sources.md) | Where files come from: sources, accounts, the Mac collector, and how e-mail is handled. |
-| [how-it-works.md](how-it-works.md) | What happens to a file: runs, the pipeline steps, duplicates, search, the duplicate report. |
+| [how-it-works.md](how-it-works.md) | What happens to a file: runs, the pipeline steps, duplicates, how assets are organized and found, search, the duplicate report. |
 | [architecture.md](architecture.md) | How the code is organized: layers, ports and adapters, where models run, the language choice. |
 | [testing.md](testing.md) | Specifications first and why, the test layers, fixtures, the draft scenario titles. |
 | [infrastructure.md](infrastructure.md) | The server, the database, the model server, backup, disk encryption, authentication. |
@@ -55,6 +55,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#collector](domain-language.md#collector)
 - [#completed-steps](domain-language.md#completed-steps)
 - [#config-this-item-will-fill](../doing/PLAN-FEATURE-001-media-index.md#config-this-item-will-fill)
+- [#context](domain-language.md#context)
 - [#continuous-integration](testing.md#continuous-integration)
 - [#cursor](domain-language.md#cursor)
 - [#database](infrastructure.md#database)
@@ -85,6 +86,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#four-steps](mission.md#four-steps)
 - [#has_text](domain-language.md#has_text)
 - [#hexagonal-layering](architecture.md#hexagonal-layering)
+- [#how-assets-are-organized-and-found](how-it-works.md#how-assets-are-organized-and-found)
 - [#identity-of-an-asset](sources.md#identity-of-an-asset)
 - [#issuer](domain-language.md#issuer)
 - [#keeper](domain-language.md#keeper)
@@ -140,6 +142,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-duplicate-report-and-frontend](open-questions.md#question-duplicate-report-and-frontend)
 - [#question-e-mail-slice-order](open-questions.md#question-e-mail-slice-order)
 - [#question-frontier-model-for-the-taxonomy](open-questions.md#question-frontier-model-for-the-taxonomy)
+- [#question-how-an-asset-gets-its-context](open-questions.md#question-how-an-asset-gets-its-context)
 - [#question-kind-rules](open-questions.md#question-kind-rules)
 - [#question-moving-non-keepers](open-questions.md#question-moving-non-keepers)
 - [#question-near-matching-pdfs](open-questions.md#question-near-matching-pdfs)
@@ -148,8 +151,6 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-photo-originals](open-questions.md#question-photo-originals)
 - [#question-public-repository-check](open-questions.md#question-public-repository-check)
 - [#question-server-setup](open-questions.md#question-server-setup)
-- [#question-several-persons](open-questions.md#question-several-persons)
-- [#question-taxonomy-step](open-questions.md#question-taxonomy-step)
 - [#question-two-collectors-one-source](open-questions.md#question-two-collectors-one-source)
 - [#question-unknown-senders](open-questions.md#question-unknown-senders)
 - [#question-vanished-in-search](open-questions.md#question-vanished-in-search)
@@ -157,6 +158,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-which-assets-get-ocr](open-questions.md#question-which-assets-get-ocr)
 - [#question-which-hash-decides-exact](open-questions.md#question-which-hash-decides-exact)
 - [#question-which-models](open-questions.md#question-which-models)
+- [#question-which-step-builds-what](open-questions.md#question-which-step-builds-what)
 - [#question-whitelist-and-official-senders](open-questions.md#question-whitelist-and-official-senders)
 - [#read-only-on-sources](principles.md#read-only-on-sources)
 - [#reader](domain-language.md#reader)
@@ -185,6 +187,8 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#stash](domain-language.md#stash)
 - [#steps-added-later](how-it-works.md#steps-added-later)
 - [#summary-notification](domain-language.md#summary-notification)
+- [#tag](domain-language.md#tag)
+- [#taxonomy](domain-language.md#taxonomy)
 - [#tdd-inside-a-slice](testing.md#tdd-inside-a-slice)
 - [#test-layers](testing.md#test-layers)
 - [#text-layer](domain-language.md#text-layer)
