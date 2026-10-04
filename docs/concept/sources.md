@@ -157,7 +157,7 @@ exist only as [e-mail](domain-language.md#e-mail)
   [file_date](domain-language.md#file_date) is the date the
   [e-mail](domain-language.md#e-mail) was received.
 - An [attachment](domain-language.md#attachment)'s
-  [open_link](domain-language.md#open_link) opens its
+  [source_link](domain-language.md#source_link) opens its
   [e-mail](domain-language.md#e-mail) thread in the mailbox's web page.
 - The [sender](domain-language.md#sender), the subject and the thread are kept
   with the [file](domain-language.md#file).
