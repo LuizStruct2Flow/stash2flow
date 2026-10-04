@@ -63,7 +63,7 @@ are read from the oldest to the newest.
 The rules that make this safe:
 
 - The server stores a batch of file records and the position reached in one
-  step, then acknowledges. The reader moves on only after the acknowledgement.
+  step, then acknowledges. The puller or collector moves on only after the acknowledgement.
 - So the cursor and the checkpoint move only when every file record up to them
   is stored.
 - A batch delivered twice changes nothing, because file records are stored by
@@ -184,7 +184,7 @@ indexed. So:
 
 | About | What is kept |
 |---|---|
-| Each source | location, account, owner, cursor, checkpoint, whether it is enabled, when its last run finished, its rank in the order of sources |
+| Each source | location, account, reader, cursor, checkpoint, whether it is enabled, when its last run finished, its rank in the order of sources |
 | Each file | its identity; path, name and ext; size and modification time; file_date and where it came from; the hashes; kind and has_text; description, doc_type, doc_date, person, issuer; coordinates, dimensions, page count; open_link; for an attachment the sender, subject and thread; the raw metadata; which machine sent it; its duplicate group; when it was first and last seen, and when it vanished |
 | Text | the OCR text per page, searchable without accents and tolerant of misreadings |
 | Embeddings | per file, with the name of the model that made them |

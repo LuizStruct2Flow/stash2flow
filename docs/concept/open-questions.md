@@ -268,10 +268,10 @@ Background: [#mac-collector](sources.md#mac-collector).
 `#question-two-collectors-one-source`
 
 **Question.** Two Macs can only see the same file if both read the same source,
-but a source has one owner. What happens when a second collector reports it?
+but a source has one reader. What happens when a second collector reports it?
 
-**Recommendation.** A source is unique by location and account. The owner says
-who normally reads it. File records from another collector for the same source
+**Recommendation.** A source is unique by location and account. The reader is
+the machine that normally reads it. File records from another collector for the same source
 update the same row, and collected_by records who sent them.
 
 ### Question: photo originals
