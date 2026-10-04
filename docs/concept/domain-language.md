@@ -42,7 +42,8 @@ The person who runs the app and makes its choices: the [order of sources](#order
 `#server`
 
 The one local machine that runs the database, the [API](#api), the [pullers](#puller), the [workers](#worker)
-and the [scheduler](#scheduler). It also keeps the local copies of the [files](#file).
+and the [scheduler](#scheduler). It also keeps the [local copies](#local-copy) of the
+[files](#file), in the [stash](#stash).
 
 ### API
 
@@ -117,18 +118,29 @@ source gives the [keeper](#keeper). What is ranked is a source, not a [location]
 The company's [API](#api) behind a [location](#location). Example: the provider behind `gdrive` is
 Google's Drive API.
 
+### Fetching
+
+`#fetching`
+
+What a [puller](#puller) and a [collector](#collector) both do with a [source](#source): list what is
+there, report what changed, and bring the [bytes](#bytes). A puller fetches a cloud
+source on the [server](#server); a collector fetches the sources that need a Mac.
+
 ### Puller
 
 `#puller`
 
-The program on the [server](#server) that reads one cloud [source](#source) through its [provider](#provider).
+The program on the [server](#server) that [fetches](#fetching) one cloud [source](#source) through its
+[provider](#provider). It needs no Mac.
 
 ### Collector
 
 `#collector`
 
-The program on a Mac that reads the [sources](#source) that need macOS. A [puller](#puller) and a
-collector are different programs.
+The program on a Mac that [fetches](#fetching) the [sources](#source) that need macOS. A [puller](#puller)
+and a collector are different programs that do the same thing in different
+places: the puller runs on the [server](#server); the collector runs on a Mac and sends
+what it fetched to the server through the [API](#api).
 
 ### collected_by
 
@@ -166,6 +178,21 @@ photo has in the photo library.
 
 What a [file](#file) consists of. The word is always bytes, never "content".
 
+### Local copy
+
+`#local-copy`
+
+The copy of a [file](#file)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
+in the [stash](#stash).
+
+### Stash
+
+`#stash`
+
+The place on the [server](#server) where the [local copies](#local-copy) are kept. A local copy is
+addressed by its [sha256](#md5-and-sha256), so the same [bytes](#bytes) arriving from two
+[sources](#source) are kept once.
+
 ### ext
 
 `#ext`
@@ -191,7 +218,7 @@ A scanned paper, and nothing else. One pass over a [source](#source) is a [run](
 
 The link that opens the [file](#file) in its [source](#source). Example: the web address of a
 file in a cloud drive, or the link to an e-mail's thread. It does not point at
-the [local copy](principles.md#local-copy) on the [server](#server).
+the [local copy](#local-copy) on the [server](#server).
 
 ### Place
 
@@ -292,6 +319,16 @@ the [cursor](#cursor).
 
 A [file](#file) that is no longer in its [source](#source). The row stays, and its `deleted_at` is
 set. The word is vanished, because the app never deletes.
+
+### Ledger
+
+`#ledger`
+
+What a [run](#run) talks to: it takes the [file records](#file-record), keeps the [cursor](#cursor) and
+the [checkpoint](#checkpoint), says which [files](#file) are unchanged, and marks [vanished](#vanished) files.
+It is the record of what a run saw and where it stopped. Example: a [puller](#puller)
+talks to the ledger on the [server](#server) itself; a [collector](#collector) talks to it through
+the [API](#api).
 
 ### Summary notification
 
@@ -450,6 +487,16 @@ suggestion.
 The web page that shows [duplicate groups](#duplicate-group) with thumbnails side by side, where
 the [user](#user) changes a [keeper](#keeper) and marks a group [reviewed](#reviewed).
 
+## Search
+
+### Match
+
+`#match`
+
+One entry in a search answer: a [file](#file) that matches the search. Example: a
+search for words printed on a receipt answers with one match for each file
+whose text holds those words.
+
 ## Words we do not use
 
 `#words-we-do-not-use`
@@ -466,34 +513,13 @@ the [user](#user) changes a [keeper](#keeper) and marks a group [reviewed](#revi
 | content | [bytes](#bytes) | One word. |
 | dup, dups | [duplicate](#duplicate) | `dups` is only a command's name. |
 | near, for geography | [place](#place) | Near is for [duplicates](#duplicate). Searching photos near a place is not part of the index item. |
-| temp directory | (see below) | [Files](#file) are no longer fetched and thrown away: the [server](#server) keeps a [local copy](principles.md#local-copy). |
+| temp directory | [stash](#stash) | [Files](#file) are no longer fetched and thrown away: the [server](#server) keeps a [local copy](#local-copy) of each. |
 
 ## Words still to name
 
 Concepts that have no agreed word yet. Each is described in plain language
 here and wherever else it appears. The founder names them; the place where he
 rules is [open-questions.md](open-questions.md#words).
-
-### What a puller and a collector have in common
-
-Both contain the thing that lists one [source](#source), reports its changes since the
-[cursor](#cursor), and hands over [bytes](#bytes). That thing has no word.
-
-Candidates: **puller** for both · **source reader** · no shared word, just
-"source" as the name of the interface.
-
-Question: [open question: name for reading a source](open-questions.md#question-name-for-reading-a-source).
-
-### What a run talks to
-
-When a [source](#source) is run, something takes the [file records](#file-record), keeps the [cursor](#cursor) and
-the [checkpoint](#checkpoint), says which [files](#file) are unchanged, and marks [vanished](#vanished) files. That
-something has no word.
-
-Candidates: **ingest**, stretched beyond taking file records · two things,
-**ingest** and **cursor** · no word, named after the use-case.
-
-Question: [open question: name for what a run talks to](open-questions.md#question-name-for-what-a-run-talks-to).
 
 ### How far a file is through the pipeline
 
@@ -503,18 +529,3 @@ Candidates: **processed steps** · **pipeline state** · one timestamp per step
 and no collective word.
 
 Question: [open question: name for pipeline progress](open-questions.md#question-name-for-pipeline-progress).
-
-### One entry in a search answer
-
-Candidates: **result** · **match**.
-
-Question: [open question: name for a search entry](open-questions.md#question-name-for-a-search-entry).
-
-### Where the local copies are kept
-
-The place on the [server](#server) that holds the local copy of every [file](#file), addressed by
-[sha256](#md5-and-sha256). It used to be the temp directory, which no longer describes it.
-
-Candidates: none proposed yet.
-
-Question: [open question: name for the store of local copies](open-questions.md#question-name-for-the-store-of-local-copies).

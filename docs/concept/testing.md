@@ -84,7 +84,7 @@ Outside-in:
 
 Then each real adapter gets a **contract test**: the same test runs against the
 fake and against the real adapter, so the fake cannot drift. The contract test
-for what a [run](domain-language.md#run) talks to includes a batch delivered
+for the [ledger](domain-language.md#ledger) includes a batch delivered
 twice, and an interruption between storing a batch and acknowledging it.
 
 ## Test layers
@@ -173,14 +173,14 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
   it, and is fixed when that is ruled.
 - *new* means the title follows from the decision that the
   [server](domain-language.md#server) keeps a
-  [local copy](principles.md#local-copy) and has not been reviewed yet.
+  [local copy](domain-language.md#local-copy) and has not been reviewed yet.
 
 **Search**
 
 - [2] A [scan](domain-language.md#scan) with no [text layer](domain-language.md#text-layer) is found by its [OCR text](domain-language.md#ocr-text)
 - [2] Search ignores accents: "certidao" finds "Certidão"
 - [2] Search tolerates OCR misreadings: "recibo" finds a page read as "rec1bo"
-- [2] Every entry in a search answer carries an [source_link](domain-language.md#source_link)
+- [2] Every [match](domain-language.md#match) carries a [source_link](domain-language.md#source_link)
 - [3] A [vanished](domain-language.md#vanished) [file](domain-language.md#file) is left out of the answer, and the answer says how many were left out *(provisional: [open question: vanished in search](open-questions.md#question-vanished-in-search))*
 - [6] Search filters by [doc_type](domain-language.md#doc_type)
 - [6] Search filters by [person](domain-language.md#person)
@@ -191,8 +191,8 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 - [2] The [user](domain-language.md#user) can start a [run](domain-language.md#run) at any time
 - [2] † A run never writes to a [source](domain-language.md#source)
-- [2] † The [server](domain-language.md#server) keeps a local copy of every [file](domain-language.md#file) it indexes *(new)*
-- [2] † The same [bytes](domain-language.md#bytes) arriving from two [sources](domain-language.md#source) are stored once *(new)*
+- [2] † The [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of every [file](domain-language.md#file) it indexes *(new)*
+- [2] † The same [bytes](domain-language.md#bytes) arriving from two [sources](domain-language.md#source) are kept once in the [stash](domain-language.md#stash) *(new)*
 - [2] † [File](domain-language.md#file) names are stored in NFC
 - [3] An interrupted [run](domain-language.md#run) resumes where it stopped
 - [3] A second [run](domain-language.md#run) with no changes downloads nothing and processes nothing

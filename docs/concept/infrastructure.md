@@ -114,7 +114,7 @@ How the encrypted file gets from a Linux server to iCloud is open:
 `#disk-encryption`
 
 The [server](domain-language.md#server)'s disk holds a
-[local copy](principles.md#local-copy) of every private document, so it must be
+[local copy](domain-language.md#local-copy) of every private document, so it must be
 encrypted.
 
 **Today it is not.** No real document is indexed until that is solved. The
@@ -140,7 +140,8 @@ Who else must authenticate, and how, is open:
 What the [server](domain-language.md#server) holds and must protect:
 
 - tax ids and identity documents, in the
-  [OCR text](domain-language.md#ocr-text) and in the local copies;
+  [OCR text](domain-language.md#ocr-text) and in the
+  [local copies](domain-language.md#local-copy);
 - [e-mail](domain-language.md#e-mail) text and
   [senders](domain-language.md#sender);
 - photos with coordinates and [persons](domain-language.md#person);

@@ -143,8 +143,9 @@ Every [file](domain-language.md#file) goes through the same
    [file](domain-language.md#file) stops here.
 3. **[Bytes](domain-language.md#bytes).** The
    [file](domain-language.md#file)'s bytes are brought to the
-   [server](domain-language.md#server) and kept as its
-   [local copy](principles.md#local-copy).
+   [server](domain-language.md#server) and kept in the
+   [stash](domain-language.md#stash) as its
+   [local copy](domain-language.md#local-copy).
 4. **Hashes.** [md5 and sha256](domain-language.md#md5-and-sha256) on the
    [bytes](domain-language.md#bytes); the
    [provider hash](domain-language.md#provider-hash) is stored too.
@@ -222,7 +223,7 @@ when [files](domain-language.md#file) are already indexed. So:
   [Description](domain-language.md#description) and text
   [embedding](domain-language.md#embedding) need only the stored
   [OCR text](domain-language.md#ocr-text); everything else reads the
-  [local copy](principles.md#local-copy).
+  [local copy](domain-language.md#local-copy).
 
 ## What the index holds
 
@@ -347,10 +348,10 @@ How text search behaves:
 - Accents are ignored: "certidao" finds "Certidão".
 - OCR misreadings are tolerated: "recibo" finds a page read as "rec1bo".
 - A query in another language finds the document: English words find a
-  Portuguese receipt. This combines the text match with the
+  Portuguese receipt. This combines matching the text with the
   [embedding](domain-language.md#embedding) of the
   [OCR text](domain-language.md#ocr-text).
-- Every entry in the answer carries an
+- Every [match](domain-language.md#match) carries a
   [source_link](domain-language.md#source_link).
 
 Open points: which date the date range filters on
