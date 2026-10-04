@@ -68,7 +68,8 @@ Other mailboxes, read over IMAP, are not part of the index item.
 `#mac-collector`
 
 The [collector](domain-language.md#collector) is the same code on every Mac.
-Each one is configured with the [sources](domain-language.md#source) it owns.
+Each one is configured with the [sources](domain-language.md#source) it
+[fetches](domain-language.md#fetching).
 One Mac is enough; a second Mac's collector stays disabled unless it has sources
 the first does not, and enabling it is configuration only.
 
@@ -81,7 +82,7 @@ the first does not, and enabling it is configuration only.
   [bytes](domain-language.md#bytes) of every
   [file](domain-language.md#file) it reports as new or changed, so the
   [server](domain-language.md#server) can keep its
-  [local copy](principles.md#local-copy).
+  [local copy](domain-language.md#local-copy).
 - The [server](domain-language.md#server) never calls a Mac, because a Mac may
   be asleep. The [collector](domain-language.md#collector) always calls the
   server.

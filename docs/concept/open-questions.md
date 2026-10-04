@@ -15,35 +15,6 @@ Concepts with no agreed word. They are described in
 [words still to name](domain-language.md#words-still-to-name), with their
 candidates. The feature files cannot be written before these are named.
 
-### Question: name for reading a source
-
-`#question-name-for-reading-a-source`
-
-**Question.** What is the word for what a [puller](domain-language.md#puller)
-and a [collector](domain-language.md#collector) have in common: the thing that
-lists one [source](domain-language.md#source), reports its changes and hands
-over [bytes](domain-language.md#bytes)?
-
-**Candidates.** "puller" for both · "source reader" · no shared word.
-
-**Recommendation.** None. The word is the founder's to choose.
-
-### Question: name for what a run talks to
-
-`#question-name-for-what-a-run-talks-to`
-
-**Question.** What is the word for the thing a
-[run](domain-language.md#run) talks to: it takes the
-[file records](domain-language.md#file-record), keeps the
-[cursor](domain-language.md#cursor) and the
-[checkpoint](domain-language.md#checkpoint), says which
-[files](domain-language.md#file) are unchanged and marks
-[vanished](domain-language.md#vanished) files?
-
-**Candidates.** "ingest" · two things, "ingest" and "cursor" · no word.
-
-**Recommendation.** None. The word is the founder's to choose.
-
 ### Question: name for pipeline progress
 
 `#question-name-for-pipeline-progress`
@@ -54,28 +25,6 @@ over [bytes](domain-language.md#bytes)?
 
 **Candidates.** "processed steps" · "pipeline state" · one timestamp per step
 and no collective word.
-
-**Recommendation.** None. The word is the founder's to choose.
-
-### Question: name for a search entry
-
-`#question-name-for-a-search-entry`
-
-**Question.** What is one entry in a search answer called?
-
-**Candidates.** "result" · "match".
-
-**Recommendation.** None. The word is the founder's to choose.
-
-### Question: name for the store of local copies
-
-`#question-name-for-the-store-of-local-copies`
-
-**Question.** What is the word for the place on the
-[server](domain-language.md#server) where the local copies are kept? It used to
-be the temp directory, which is no longer true.
-
-**Candidates.** None proposed yet.
 
 **Recommendation.** None. The word is the founder's to choose.
 
@@ -96,7 +45,7 @@ beside it?
 **Recommendation.** One list. A whitelisted [sender](domain-language.md#sender)'s
 [attachments](domain-language.md#attachment) and message body are both indexed.
 [Keywords](domain-language.md#official-sender-and-keyword) then no longer decide
-anything; a keyword match becomes one more hint when sorting senders.
+anything; a keyword that is found becomes one more hint when sorting senders.
 
 ### Question: unknown senders
 
@@ -274,14 +223,15 @@ the founder's review.
 
 ## Local copies
 
-Background: [local copy](principles.md#local-copy).
+Background: [a local copy of every file](principles.md#a-local-copy-of-every-file).
 
 ### Question: videos
 
 `#question-videos`
 
 **Question.** Videos may be large. Does the
-[server](domain-language.md#server) keep a local copy of them too? Until this is
+[server](domain-language.md#server) keep a
+[local copy](domain-language.md#local-copy) of them too? Until this is
 ruled, a video keeps only its metadata and
 [provider hash](domain-language.md#provider-hash).
 

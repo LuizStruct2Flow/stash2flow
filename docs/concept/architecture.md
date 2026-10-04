@@ -47,12 +47,12 @@ No port is added before a slice of the
 
 | Port | What it does | Adapters | First needed in slice |
 |---|---|---|---|
-| Reading a [source](domain-language.md#source) (no agreed word yet) | lists a source, reports changes since a [cursor](domain-language.md#cursor), hands over [bytes](domain-language.md#bytes) | Google Drive, OneDrive, Gmail, iCloud Drive (a folder), iCloud Photos (`osxphotos`); a fake | 2 |
-| What a [run](domain-language.md#run) talks to (no agreed word yet) | narrow: all that running a [source](domain-language.md#source) needs, see [one use-case, two programs](#one-use-case-two-programs) | onto the index ([server](domain-language.md#server)); an [API](domain-language.md#api) client ([collector](domain-language.md#collector)); a fake | 2; [cursor](domain-language.md#cursor) and [checkpoint](domain-language.md#checkpoint) in 3 |
+| [Fetching](domain-language.md#fetching) | lists a [source](domain-language.md#source), reports changes since a [cursor](domain-language.md#cursor), brings the [bytes](domain-language.md#bytes) | Google Drive, OneDrive, Gmail, iCloud Drive (a folder), iCloud Photos (`osxphotos`); a fake | 2 |
+| [Ledger](domain-language.md#ledger) | narrow: all that a [run](domain-language.md#run) needs, see [one use-case, two programs](#one-use-case-two-programs) | onto the index ([server](domain-language.md#server)); an [API](domain-language.md#api) client ([collector](domain-language.md#collector)); a fake | 2; [cursor](domain-language.md#cursor) and [checkpoint](domain-language.md#checkpoint) in 3 |
 | Index | wide, [server](domain-language.md#server) only: [files](domain-language.md#file), [OCR text](domain-language.md#ocr-text), [embeddings](domain-language.md#embedding), [duplicate groups](domain-language.md#duplicate-group), [runs](domain-language.md#run), pipeline progress, [senders](domain-language.md#sender) | PostgreSQL; an in-memory fake | 2 |
 | OCR | page image to text | the engine chosen in slice 1; a fake that replays fixtures | 2 |
 | File reading | metadata, [phash](domain-language.md#phash), PDF [text layer](domain-language.md#text-layer) and page rendering, thumbnail | image and PDF libraries | 2 |
-| Store of local copies (no agreed word yet) | keeps each [file](domain-language.md#file)'s [bytes](domain-language.md#bytes), addressed by [sha256](domain-language.md#md5-and-sha256) | a directory on the [server](domain-language.md#server) | 2 |
+| [Stash](domain-language.md#stash) | keeps each [file](domain-language.md#file)'s [local copy](domain-language.md#local-copy), addressed by [sha256](domain-language.md#md5-and-sha256) | a directory on the [server](domain-language.md#server) | 2 |
 | Token store | keeps the [providers](domain-language.md#provider)' access tokens | an encrypted file on the [server](domain-language.md#server) | 2 |
 | Clock | the time | the system | 2 |
 | Description | [OCR text](domain-language.md#ocr-text) to [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer) | the local model server; a fake | 6 |
@@ -66,7 +66,7 @@ The driving side: the [API](domain-language.md#api) (taking
 the command line `stash`, and the [scheduler](domain-language.md#scheduler)'s
 entry point.
 
-The words still missing are listed under
+Pipeline progress has no agreed word yet; it is listed under
 [words still to name](domain-language.md#words-still-to-name).
 
 ## One use-case, two programs
@@ -81,12 +81,11 @@ with different adapters:
 
 | | Server | Collector |
 |---|---|---|
-| [Sources](domain-language.md#source) read | OneDrive, Google Drive, Gmail | iCloud Photos, iCloud Drive |
-| What the [run](domain-language.md#run) talks to | straight onto the index | an [API](domain-language.md#api) client, to the [server](domain-language.md#server)'s API |
+| [Sources](domain-language.md#source) [fetched](domain-language.md#fetching) | OneDrive, Google Drive, Gmail | iCloud Photos, iCloud Drive |
+| [Ledger](domain-language.md#ledger) | straight onto the index | an [API](domain-language.md#api) client, to the [server](domain-language.md#server)'s API |
 | OCR, [embeddings](domain-language.md#embedding), [description](domain-language.md#description) | yes | no |
 
-What a [run](domain-language.md#run) talks to has five operations and nothing
-else:
+The [ledger](domain-language.md#ledger) has five operations and nothing else:
 
 1. take a batch of [file records](domain-language.md#file-record) together with
    the position reached;

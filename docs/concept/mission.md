@@ -51,7 +51,7 @@ The app gets there in four items, in this order:
 
 | Step | Item | What it does | State |
 |---|---|---|---|
-| 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a local copy of each [file](domain-language.md#file) on the [server](domain-language.md#server), makes everything searchable by its text, and groups [duplicates](domain-language.md#duplicate). | Planned, no code yet |
+| 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a [local copy](domain-language.md#local-copy) of each [file](domain-language.md#file) on the [server](domain-language.md#server), makes everything searchable by its text, and groups [duplicates](domain-language.md#duplicate). | Planned, no code yet |
 | 2. Organize | [FEATURE-003](../doing/BACKLOG.md) | A frontend where everything is arranged by a taxonomy the [user](domain-language.md#user) shapes, plus a search over all content. | To be planned |
 | 3. Clean copy | [FEATURE-004](../backlog/BACKLOG.md) | Writes the organized content to one place the [user](domain-language.md#user) chooses, and keeps it current. | Parked until the frontend is accepted |
 | 4. Clean up | [FEATURE-002](../backlog/BACKLOG.md) | Removes what is unnecessary from the [sources](domain-language.md#source), only with the [user](domain-language.md#user)'s go and only when verified copies exist. | Parked until the clean copy exists |

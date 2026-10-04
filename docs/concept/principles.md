@@ -74,11 +74,12 @@ refused when the app starts. See
 A consequence: the app has no billable path. Someone who wants a hosted model
 writes that adapter himself, and it then needs budget caps and spend logging.
 
-## Local copy
+## A local copy of every file
 
-`#local-copy`
+`#a-local-copy-of-every-file`
 
-The [server](domain-language.md#server) keeps a local copy of every
+The [server](domain-language.md#server) keeps a
+[local copy](domain-language.md#local-copy) of every
 [file](domain-language.md#file) it indexes.
 
 The reason is where the [user](domain-language.md#user) wants to end up: once
@@ -88,13 +89,15 @@ exists elsewhere, so the copies start with the index.
 
 What follows from it:
 
-- The copies are kept in one store on the
+- The [local copies](domain-language.md#local-copy) are kept in the
+  [stash](domain-language.md#stash) on the
   [server](domain-language.md#server), addressed by
   [sha256](domain-language.md#md5-and-sha256), so the same
   [bytes](domain-language.md#bytes) arriving from two
   [sources](domain-language.md#source) are stored once.
-- Later [pipeline](domain-language.md#pipeline) steps read from the local copy.
-  No [file](domain-language.md#file) is downloaded twice.
+- Later [pipeline](domain-language.md#pipeline) steps read from the
+  [local copy](domain-language.md#local-copy). No
+  [file](domain-language.md#file) is downloaded twice.
 - A Mac [collector](domain-language.md#collector) uploads the
   [bytes](domain-language.md#bytes) of every [file](domain-language.md#file) it
   reports. It does not wait to be asked.
