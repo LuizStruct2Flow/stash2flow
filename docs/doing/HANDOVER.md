@@ -48,20 +48,20 @@ public repository, so before the first push grep the tracked files for the
 founder's account data (names, addresses, folder and machine names) and confirm
 `docs/SPEC-*.md` is ignored.
 
-**The index plan is waiting on the founder, not on an agent.**
-`PLAN-FEATURE-001-media-index.md` has been reviewed by the PO and three
-architects and revised once. Two things are not in the plan's body yet:
+**The concept is waiting on the founder, not on an agent.** It lives in
+`docs/concept/`, one document per concern, linked by hashtags; the plan
+`PLAN-FEATURE-001-media-index.md` holds only the slices. Everything he still
+has to rule on is in `docs/concept/open-questions.md`.
 
-- **D30 (local copies) was decided after the revision.** Only its decision row
-  says so. §2.3, the temp directory, the "bytes on request" port and several
-  scenarios still describe the old "no mirror" design. Revise them in one pass,
-  together with the founder's remaining rulings, before slice 0.
-- **Only one reviewer saw the revised plan.** The Codex architect re-checked his
-  own findings. The PO, the Claude architect and the Kimi architect reviewed the
-  version before it; their findings were applied but not re-checked by them.
+- **The founder reads by hashtag, never by code.** Do not reintroduce numbered
+  decisions, glossary codes or line references in anything he reads.
+- **Nobody has reviewed the concept documents.** The PO and three architects
+  reviewed the earlier single plan. The split into documents, and the rewrite
+  for local copies that came with it, have had no review yet.
 
-Do not start slice 0 (feature files) before the founder has named the unnamed
-concepts in plan §1.3: the feature files must use his words.
+Do not start slice 0 (feature files) before the founder has named the concepts
+listed under "Words still to name" in `docs/concept/domain-language.md`: the
+feature files must use his words.
 
 **The frontend item is not planned.** Its two open questions (how a frontier
 model may help with the taxonomy; whether the taxonomy replaces `doc_type` and
