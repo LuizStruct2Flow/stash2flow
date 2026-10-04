@@ -74,6 +74,48 @@ refused when the app starts. See
 A consequence: the app has no billable path. Someone who wants a hosted model
 writes that adapter himself, and it then needs budget caps and spend logging.
 
+## Deterministic code first
+
+`#deterministic-code-first`
+
+The app works with deterministic, tested code. A model is used for three things
+only: to understand an [asset](domain-language.md#asset), to classify it, and
+to help develop the [taxonomy](domain-language.md#taxonomy). Everything else is
+code that gives the same answer every time and is covered by tests.
+
+Whoever proposes a model for a piece of work first answers one question: why
+can deterministic code not do this? If code can do it, code does it.
+
+Where a model is used, and why code cannot do it:
+
+| Work | Why not code |
+|---|---|
+| Reading the text of a scan ([OCR text](domain-language.md#ocr-text)) | Turning pixels into text has no rule set. |
+| Writing the [description](domain-language.md#description) and finding the [doc_type](domain-language.md#doc_type), the [issuer](domain-language.md#issuer) and the [persons](domain-language.md#person) | It means understanding free text in several languages. Rules would need a pattern for every issuer and every layout. |
+| Choosing the [doc_date](domain-language.md#doc_date) | Code can find every date printed on a page. Which one is the document's own date needs understanding. |
+| [Embeddings](domain-language.md#embedding), for search by meaning and by what a photo shows | Similarity of meaning cannot be written as rules. |
+| Proposing a [context](domain-language.md#context) for an asset that no rule covers | Rules from the [source](domain-language.md#source), the folder and the [sender](domain-language.md#sender) come first. A model proposes only for what is left. |
+| Helping develop the taxonomy | It is a judgement about one person's life. |
+
+What a model never does:
+
+- **It never decides an action.** What is removed, which
+  [keeper](domain-language.md#keeper) wins and whether a
+  [duplicate group](domain-language.md#duplicate-group) is
+  [reviewed](domain-language.md#reviewed) are the
+  [user](domain-language.md#user)'s decisions, carried out by code.
+- **It never does what a rule can do.** [Fetching](domain-language.md#fetching),
+  the hashes, [exact](domain-language.md#exact) and
+  [near](domain-language.md#near) duplicates, [kind](domain-language.md#kind),
+  the [asset_date](domain-language.md#asset_date), the
+  [whitelist](domain-language.md#whitelist) and
+  [blacklist](domain-language.md#blacklist), when a
+  [run](domain-language.md#run) starts, and the
+  [baseline](domain-language.md#baseline) are all code.
+- **Its output is checked by code.** A doc_type outside the vocabulary, a
+  description longer than one line, a person who is not on the user's list or a
+  date that is not printed in the text is refused.
+
 ## A local copy of every asset
 
 `#a-local-copy-of-every-asset`

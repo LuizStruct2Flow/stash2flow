@@ -61,6 +61,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#database](infrastructure.md#database)
 - [#dependency-rule](architecture.md#dependency-rule)
 - [#description](domain-language.md#description)
+- [#deterministic-code-first](principles.md#deterministic-code-first)
 - [#deviations-from-the-stack-defaults](architecture.md#deviations-from-the-stack-defaults)
 - [#digital-trash](mission.md#digital-trash)
 - [#directory-layout](architecture.md#directory-layout)
