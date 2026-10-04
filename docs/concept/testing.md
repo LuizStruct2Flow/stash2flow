@@ -51,9 +51,8 @@ wording and coverage, before slice 1 starts.
 | proves | The harness loads. Every step of every scenario has exactly one step definition. The pending check's four rules bite. The number of scenarios and of pending scenarios, counted per slice. |
 | cannot prove | That a scenario is red for the right reason: a skeleton fails whatever the code does. That proof comes in the scenario's own slice, where the step bodies are written first against the fakes and seen failing on their assertion before the code. |
 
-Slice 0 does not start before the founder has named the concepts in
-[words still to name](domain-language.md#words-still-to-name), because the
-feature files must use his words.
+The feature files use only the words in the
+[domain language](domain-language.md).
 
 ## Pending check
 
@@ -153,7 +152,7 @@ The index is accepted when these six hold:
    [text layer](domain-language.md#text-layer).
 3. The same photo as a JPG in a cloud drive and as a HEIC in iCloud Photos
    lands in the same [near](domain-language.md#near) group.
-4. The same [file](domain-language.md#file) seen by two Macs is one row, not
+4. The same [asset](domain-language.md#asset) seen by two Macs is one row, not
    two.
 5. A second [run](domain-language.md#run) with no changes finishes in minutes,
    downloads nothing and processes nothing again.
@@ -181,7 +180,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] Search ignores accents: "certidao" finds "Certidão"
 - [2] Search tolerates OCR misreadings: "recibo" finds a page read as "rec1bo"
 - [2] Every [match](domain-language.md#match) carries a [source_link](domain-language.md#source_link)
-- [3] A [vanished](domain-language.md#vanished) [file](domain-language.md#file) is left out of the answer, and the answer says how many were left out *(provisional: [open question: vanished in search](open-questions.md#question-vanished-in-search))*
+- [3] A [vanished](domain-language.md#vanished) [asset](domain-language.md#asset) is left out of the answer, and the answer says how many were left out *(provisional: [open question: vanished in search](open-questions.md#question-vanished-in-search))*
 - [6] Search filters by [doc_type](domain-language.md#doc_type)
 - [6] Search filters by [person](domain-language.md#person)
 - [6] Search filters by date range *(provisional: [open question: date filter](open-questions.md#question-date-filter))*
@@ -191,38 +190,38 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 - [2] The [user](domain-language.md#user) can start a [run](domain-language.md#run) at any time
 - [2] † A run never writes to a [source](domain-language.md#source)
-- [2] † The [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of every [file](domain-language.md#file) it indexes *(new)*
+- [2] † The [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of every [asset](domain-language.md#asset) it indexes *(new)*
 - [2] † The same [bytes](domain-language.md#bytes) arriving from two [sources](domain-language.md#source) are kept once in the [stash](domain-language.md#stash) *(new)*
-- [2] † [File](domain-language.md#file) names are stored in NFC
+- [2] † File names are stored in NFC
 - [3] An interrupted [run](domain-language.md#run) resumes where it stopped
 - [3] A second [run](domain-language.md#run) with no changes downloads nothing and processes nothing
-- [3] A [file](domain-language.md#file) that shows a newer date but has the same hash is recognised as already read and is not processed again
-- [3] A changed [file](domain-language.md#file) is processed again
-- [3] A [file](domain-language.md#file) that [vanished](domain-language.md#vanished) from its [source](domain-language.md#source) keeps its row and gets deleted_at
-- [3] A [file](domain-language.md#file) that fails is recorded in the [run](domain-language.md#run)'s errors and the run goes on
+- [3] An [asset](domain-language.md#asset) that shows a newer date but has the same hash is recognised as already read and is not processed again
+- [3] A changed [asset](domain-language.md#asset) is processed again
+- [3] An [asset](domain-language.md#asset) that [vanished](domain-language.md#vanished) from its [source](domain-language.md#source) keeps its row and gets deleted_at
+- [3] An [asset](domain-language.md#asset) that fails is recorded in the [run](domain-language.md#run)'s errors and the run goes on
 - [3] The [user](domain-language.md#user) can see a [run](domain-language.md#run)'s state and its errors
-- [3] † A [source](domain-language.md#source)'s [cursor](domain-language.md#cursor) moves only when every [file record](domain-language.md#file-record) up to it is stored
+- [3] † A [source](domain-language.md#source)'s [cursor](domain-language.md#cursor) moves only when every [asset record](domain-language.md#asset-record) up to it is stored
 - [9] A full [run](domain-language.md#run) over all [sources](domain-language.md#source) finishes
 - [11] A [run](domain-language.md#run) starts by itself only when 30 days have passed since the [source](domain-language.md#source)'s last finished run
 - [11] A [source](domain-language.md#source) with no finished [run](domain-language.md#run) does not start by itself
 - [11] A [run](domain-language.md#run) that failed or was interrupted does not move the date
 - [11] Running one [source](domain-language.md#source) does not postpone the others
 - [11] A Mac that was asleep when its [run](domain-language.md#run) was due runs when it wakes
-- [11] A [summary notification](domain-language.md#summary-notification) reports new [files](domain-language.md#file), new [duplicates](domain-language.md#duplicate) and errors
+- [11] A [summary notification](domain-language.md#summary-notification) reports new [assets](domain-language.md#asset), new [duplicates](domain-language.md#duplicate) and errors
 
 **Pipeline**
 
 - [2] A PDF with a [text layer](domain-language.md#text-layer) is not sent to OCR
-- [2] Every image and every PDF without a [text layer](domain-language.md#text-layer) gets OCR *(provisional: [open question: which files get OCR](open-questions.md#question-which-files-get-ocr))*
+- [2] Every image and every PDF without a [text layer](domain-language.md#text-layer) gets OCR *(provisional: [open question: which assets get OCR](open-questions.md#question-which-assets-get-ocr))*
 - [2] [OCR text](domain-language.md#ocr-text) is stored per page in its original language
-- [2] [file_date](domain-language.md#file_date) uses the best available date and records its source
+- [2] [asset_date](domain-language.md#asset_date) uses the best available date and records its source
 - [4] A video gets metadata and its [provider hash](domain-language.md#provider-hash); it is not downloaded and gets no OCR *(provisional: [open question: videos](open-questions.md#question-videos))*
 - [6] [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text) follow the agreed examples *(provisional: [open question: kind rules](open-questions.md#question-kind-rules))*
-- [6] Only a [file](domain-language.md#file) of [kind](domain-language.md#kind) document gets a [description](domain-language.md#description)
+- [6] Only an [asset](domain-language.md#asset) of [kind](domain-language.md#kind) document gets a [description](domain-language.md#description)
 - [6] A [description](domain-language.md#description) is one English line and keeps proper names verbatim
 - [6] [doc_type](domain-language.md#doc_type) always comes from the vocabulary
-- [6] A [file](domain-language.md#file) indexed before a [pipeline](domain-language.md#pipeline) step existed gets that step only when the [user](domain-language.md#user) asks for it
-- [6] † A step run over [files](domain-language.md#file) already indexed downloads nothing *(new)*
+- [6] An [asset](domain-language.md#asset) indexed before a [pipeline](domain-language.md#pipeline) step existed gets that step only when the [user](domain-language.md#user) asks for it
+- [6] † A step run over [assets](domain-language.md#asset) already indexed downloads nothing *(new)*
 
 **Duplicates**
 
@@ -234,27 +233,27 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [8] Inside the winning [source](domain-language.md#source), ties go to the highest resolution, then complete EXIF, then the oldest
 - [8] The [user](domain-language.md#user) can change the [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) in the [duplicate report](domain-language.md#duplicate-report)
 - [8] A suggested [keeper](domain-language.md#keeper) stays a suggestion until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed)
-- [8] A new [file](domain-language.md#file) joining a [reviewed](domain-language.md#reviewed) group puts it back to not reviewed, and the [user](domain-language.md#user)'s earlier [keeper](domain-language.md#keeper) stays as the suggestion
+- [8] A new [asset](domain-language.md#asset) joining a [reviewed](domain-language.md#reviewed) group puts it back to not reviewed, and the [user](domain-language.md#user)'s earlier [keeper](domain-language.md#keeper) stays as the suggestion
 - [8] The [duplicate report](domain-language.md#duplicate-report) shows thumbnails and paths side by side
 - [8] The [duplicate report](domain-language.md#duplicate-report) refuses a change without valid credentials
-- [8] [Files](domain-language.md#file) in a [shared account](domain-language.md#shared-account) are flagged as also belonging to someone else
+- [8] [Assets](domain-language.md#asset) in a [shared account](domain-language.md#shared-account) are flagged as also belonging to someone else
 - [8] † Nothing is ever deleted or moved automatically
 - [9] The same photo as JPG in OneDrive and HEIC in iCloud Photos lands in one [near](domain-language.md#near) group
 
 **Collectors**
 
 - [2] The [API](domain-language.md#api) refuses a call without valid credentials
-- [9] The same [file](domain-language.md#file) seen by both Macs is one row
-- [9] A [collector](domain-language.md#collector) uploads the [bytes](domain-language.md#bytes) of every [file](domain-language.md#file) it reports as new or changed *(new)*
-- [9] † A [collector](domain-language.md#collector) interrupted after sending [file records](domain-language.md#file-record) sends them again and nothing is doubled
+- [9] The same [asset](domain-language.md#asset) seen by both Macs is one row
+- [9] A [collector](domain-language.md#collector) uploads the [bytes](domain-language.md#bytes) of every [asset](domain-language.md#asset) it reports as new or changed *(new)*
+- [9] † A [collector](domain-language.md#collector) interrupted after sending [asset records](domain-language.md#asset-record) sends them again and nothing is doubled
 
 **E-mail**
 
 - [5] Nothing from a [sender](domain-language.md#sender) on the [blacklist](domain-language.md#blacklist) is indexed, [attachments](domain-language.md#attachment) included
-- [5] An [attachment](domain-language.md#attachment) from a [sender](domain-language.md#sender) on the [whitelist](domain-language.md#whitelist) is indexed as a [file](domain-language.md#file) and goes through the same [pipeline](domain-language.md#pipeline)
+- [5] An [attachment](domain-language.md#attachment) from a [sender](domain-language.md#sender) on the [whitelist](domain-language.md#whitelist) is indexed as an [asset](domain-language.md#asset) and goes through the same [pipeline](domain-language.md#pipeline)
 - [5] A no-reply [sender](domain-language.md#sender) is not taken for [advertisement](domain-language.md#advertisement): an invoice from a whitelisted no-reply sender is indexed
 - [5] A picture inside an [e-mail](domain-language.md#e-mail)'s text, such as a logo, is not an [attachment](domain-language.md#attachment)
-- [5] An [attachment](domain-language.md#attachment)'s [file_date](domain-language.md#file_date) is the date received
+- [5] An [attachment](domain-language.md#attachment)'s [asset_date](domain-language.md#asset_date) is the date received
 - [5] An [attachment](domain-language.md#attachment)'s [source_link](domain-language.md#source_link) opens its Gmail thread
 - [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) on the [whitelist](domain-language.md#whitelist) has its body indexed *(provisional: [open question: whitelist and official senders](open-questions.md#question-whitelist-and-official-senders))*
 - [5] Nothing from a [sender](domain-language.md#sender) on neither list is indexed *(provisional: [open question: unknown senders](open-questions.md#question-unknown-senders))*
@@ -270,7 +269,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 **Privacy**
 
-- [2] Processing a [file](domain-language.md#file) uses local models only
+- [2] Processing an [asset](domain-language.md#asset) uses local models only
 - [2] † OAuth tokens are stored encrypted and every scope is read-only
 - [9] † iCloud Photos is read only through osxphotos
 

@@ -16,7 +16,7 @@ is listed at the end of this page.
 | Document | What it covers |
 |---|---|
 | [mission.md](mission.md) | What we want to achieve and why: the mission, digital trash, the four steps, measuring before and after, what the app is not. |
-| [domain-language.md](domain-language.md) | The agreed words, one by one, and the concepts that still have no word. |
+| [domain-language.md](domain-language.md) | The agreed words, one by one. |
 | [principles.md](principles.md) | The rules that hold everywhere: nothing deleted without a go, the user decides, privacy, local copies, open source. |
 | [sources.md](sources.md) | Where files come from: sources, accounts, the Mac collector, and how e-mail is handled. |
 | [how-it-works.md](how-it-works.md) | What happens to a file: runs, the pipeline steps, duplicates, search, the duplicate report. |
@@ -33,13 +33,16 @@ holds the slices and links here for everything else.
 
 Every hashtag, in alphabetical order, with the place it is defined.
 
-- [#a-local-copy-of-every-file](principles.md#a-local-copy-of-every-file)
+- [#a-local-copy-of-every-asset](principles.md#a-local-copy-of-every-asset)
 - [#acceptance](testing.md#acceptance)
 - [#account](domain-language.md#account)
 - [#adding-a-source](sources.md#adding-a-source)
 - [#advertisement](domain-language.md#advertisement)
 - [#agreed-words-only](domain-language.md#agreed-words-only)
 - [#api](domain-language.md#api)
+- [#asset](domain-language.md#asset)
+- [#asset_date](domain-language.md#asset_date)
+- [#asset-record](domain-language.md#asset-record)
 - [#attachment](domain-language.md#attachment)
 - [#authentication](infrastructure.md#authentication)
 - [#backup](infrastructure.md#backup)
@@ -50,6 +53,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#choosing-the-keeper](how-it-works.md#choosing-the-keeper)
 - [#collected_by](domain-language.md#collected_by)
 - [#collector](domain-language.md#collector)
+- [#completed-steps](domain-language.md#completed-steps)
 - [#config-this-item-will-fill](../doing/PLAN-FEATURE-001-media-index.md#config-this-item-will-fill)
 - [#continuous-integration](testing.md#continuous-integration)
 - [#cursor](domain-language.md#cursor)
@@ -75,16 +79,13 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#expected-volume](infrastructure.md#expected-volume)
 - [#ext](domain-language.md#ext)
 - [#fetching](domain-language.md#fetching)
-- [#file](domain-language.md#file)
-- [#file_date](domain-language.md#file_date)
-- [#file-record](domain-language.md#file-record)
 - [#file-types](sources.md#file-types)
 - [#finding-photos](how-it-works.md#finding-photos)
 - [#fixtures](testing.md#fixtures)
 - [#four-steps](mission.md#four-steps)
 - [#has_text](domain-language.md#has_text)
 - [#hexagonal-layering](architecture.md#hexagonal-layering)
-- [#identity-of-a-file](sources.md#identity-of-a-file)
+- [#identity-of-an-asset](sources.md#identity-of-an-asset)
 - [#issuer](domain-language.md#issuer)
 - [#keeper](domain-language.md#keeper)
 - [#kind](domain-language.md#kind)
@@ -141,10 +142,9 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-frontier-model-for-the-taxonomy](open-questions.md#question-frontier-model-for-the-taxonomy)
 - [#question-kind-rules](open-questions.md#question-kind-rules)
 - [#question-moving-non-keepers](open-questions.md#question-moving-non-keepers)
-- [#question-name-for-pipeline-progress](open-questions.md#question-name-for-pipeline-progress)
 - [#question-near-matching-pdfs](open-questions.md#question-near-matching-pdfs)
 - [#question-notification-channel](open-questions.md#question-notification-channel)
-- [#question-one-group-per-file](open-questions.md#question-one-group-per-file)
+- [#question-one-group-per-asset](open-questions.md#question-one-group-per-asset)
 - [#question-photo-originals](open-questions.md#question-photo-originals)
 - [#question-public-repository-check](open-questions.md#question-public-repository-check)
 - [#question-server-setup](open-questions.md#question-server-setup)
@@ -154,7 +154,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-unknown-senders](open-questions.md#question-unknown-senders)
 - [#question-vanished-in-search](open-questions.md#question-vanished-in-search)
 - [#question-videos](open-questions.md#question-videos)
-- [#question-which-files-get-ocr](open-questions.md#question-which-files-get-ocr)
+- [#question-which-assets-get-ocr](open-questions.md#question-which-assets-get-ocr)
 - [#question-which-hash-decides-exact](open-questions.md#question-which-hash-decides-exact)
 - [#question-which-models](open-questions.md#question-which-models)
 - [#question-whitelist-and-official-senders](open-questions.md#question-whitelist-and-official-senders)
@@ -178,7 +178,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#shipped-locations](sources.md#shipped-locations)
 - [#slices](../doing/PLAN-FEATURE-001-media-index.md#slices)
 - [#source](domain-language.md#source)
-- [#source_file_id](domain-language.md#source_file_id)
+- [#source_asset_id](domain-language.md#source_asset_id)
 - [#source_link](domain-language.md#source_link)
 - [#specifications-first](testing.md#specifications-first)
 - [#starting-a-run](how-it-works.md#starting-a-run)
@@ -191,10 +191,10 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#the-user-decides](principles.md#the-user-decides)
 - [#thirty-days](how-it-works.md#thirty-days)
 - [#token-store](infrastructure.md#token-store)
-- [#unchanged-files](how-it-works.md#unchanged-files)
+- [#unchanged-assets](how-it-works.md#unchanged-assets)
 - [#user](domain-language.md#user)
 - [#vanished](domain-language.md#vanished)
-- [#vanished-files](how-it-works.md#vanished-files)
+- [#vanished-assets](how-it-works.md#vanished-assets)
 - [#what-a-source-is](sources.md#what-a-source-is)
 - [#what-goes-where](architecture.md#what-goes-where)
 - [#what-slice-0-proves](testing.md#what-slice-0-proves)

@@ -1,6 +1,6 @@
 # How it works
 
-What happens to a file from the moment a [source](domain-language.md#source) is
+What happens to an asset from the moment a [source](domain-language.md#source) is
 read until the [user](domain-language.md#user) finds it in a search or sees it
 in the [duplicate report](domain-language.md#duplicate-report). Read this to
 understand the app's behaviour; it describes the index, the first of the
@@ -19,14 +19,14 @@ A [run](domain-language.md#run) only reads. It never writes to a
 [source](domain-language.md#source).
 
 For every [run](domain-language.md#run) the [server](domain-language.md#server)
-records when it started and finished, how many [files](domain-language.md#file)
+records when it started and finished, how many [assets](domain-language.md#asset)
 were new, changed and [vanished](domain-language.md#vanished), and its errors.
-A file that fails is recorded in the run's errors and the run goes on. The
+An asset that fails is recorded in the run's errors and the run goes on. The
 [user](domain-language.md#user) can see a run's state and its errors.
 
 When a [run](domain-language.md#run) finishes, a
 [summary notification](domain-language.md#summary-notification) reports new
-[files](domain-language.md#file), new [duplicates](domain-language.md#duplicate)
+[assets](domain-language.md#asset), new [duplicates](domain-language.md#duplicate)
 and errors. Through which channel it is sent is open:
 [open question: notification channel](open-questions.md#question-notification-channel).
 
@@ -73,25 +73,25 @@ the newest.
 The rules that make this safe:
 
 - The [server](domain-language.md#server) stores a batch of
-  [file records](domain-language.md#file-record) and the position reached in one
+  [asset records](domain-language.md#asset-record) and the position reached in one
   step, then acknowledges. The [puller](domain-language.md#puller) or
   [collector](domain-language.md#collector) moves on only after the
   acknowledgement.
 - So the [cursor](domain-language.md#cursor) and the
   [checkpoint](domain-language.md#checkpoint) move only when every
-  [file record](domain-language.md#file-record) up to them is stored.
+  [asset record](domain-language.md#asset-record) up to them is stored.
 - A batch delivered twice changes nothing, because
-  [file records](domain-language.md#file-record) are stored by the
-  [file](domain-language.md#file)'s identity.
+  [asset records](domain-language.md#asset-record) are stored by the
+  [asset](domain-language.md#asset)'s identity.
 
-## Unchanged files
+## Unchanged assets
 
-`#unchanged-files`
+`#unchanged-assets`
 
 A second [run](domain-language.md#run) with no changes downloads nothing and
-processes nothing. Whether a [file](domain-language.md#file) is unchanged is
+processes nothing. Whether an [asset](domain-language.md#asset) is unchanged is
 decided by one rule, applied on the [server](domain-language.md#server) when the
-[file record](domain-language.md#file-record) arrives, against what the index
+[asset record](domain-language.md#asset-record) arrives, against what the index
 already holds:
 
 1. Same [provider hash](domain-language.md#provider-hash): unchanged.
@@ -102,47 +102,47 @@ already holds:
    [server](domain-language.md#server) computes it after fetching the
    [bytes](domain-language.md#bytes).
 
-A [file](domain-language.md#file) that shows a newer date but has the same hash
-is a file already read: its date is updated and no step of the
+An [asset](domain-language.md#asset) that shows a newer date but has the same hash
+is an asset already read: its date is updated and no step of the
 [pipeline](domain-language.md#pipeline) runs again.
-A changed file is processed again. An unchanged file whose pipeline steps are
+A changed asset is processed again. An unchanged asset whose pipeline steps are
 all done costs nothing.
 
 The first [run](domain-language.md#run) fetches every
-[file](domain-language.md#file) once, because the
+[asset](domain-language.md#asset) once, because the
 [sha256](domain-language.md#md5-and-sha256) needs the
-[bytes](domain-language.md#bytes). Later runs skip unchanged files by the
+[bytes](domain-language.md#bytes). Later runs skip unchanged assets by the
 [provider hash](domain-language.md#provider-hash).
 
-## Vanished files
+## Vanished assets
 
-`#vanished-files`
+`#vanished-assets`
 
-A [file](domain-language.md#file) that is no longer in its
+An [asset](domain-language.md#asset) that is no longer in its
 [source](domain-language.md#source) is
 [vanished](domain-language.md#vanished). Its row stays in the index and its
 `deleted_at` is set. Nothing is removed.
 
-Whether [vanished](domain-language.md#vanished) files show up in search is open:
+Whether [vanished](domain-language.md#vanished) assets show up in search is open:
 [open question: vanished in search](open-questions.md#question-vanished-in-search).
 
 ## Pipeline steps
 
 `#pipeline-steps`
 
-Every [file](domain-language.md#file) goes through the same
+Every [asset](domain-language.md#asset) goes through the same
 [pipeline](domain-language.md#pipeline), in this order:
 
 1. **[Discovery](domain-language.md#discovery).**
    [Pullers](domain-language.md#puller) and
    [collectors](domain-language.md#collector) list their
    [sources](domain-language.md#source) and send
-   [file records](domain-language.md#file-record) to the
+   [asset records](domain-language.md#asset-record) to the
    [server](domain-language.md#server).
-2. **Unchanged?** The rule in [unchanged files](#unchanged-files). An unchanged
-   [file](domain-language.md#file) stops here.
+2. **Unchanged?** The rule in [unchanged assets](#unchanged-assets). An unchanged
+   [asset](domain-language.md#asset) stops here.
 3. **[Bytes](domain-language.md#bytes).** The
-   [file](domain-language.md#file)'s bytes are brought to the
+   [asset](domain-language.md#asset)'s bytes are brought to the
    [server](domain-language.md#server) and kept in the
    [stash](domain-language.md#stash) as its
    [local copy](domain-language.md#local-copy).
@@ -160,20 +160,20 @@ Every [file](domain-language.md#file) goes through the same
      [persons](domain-language.md#person) and favorites.
    - The raw metadata of the [source](domain-language.md#source) is kept as it
      is.
-   - From these the [file_date](domain-language.md#file_date) is chosen: the
+   - From these the [asset_date](domain-language.md#asset_date) is chosen: the
      best available date, with a note of where it came from.
 6. **Text.** A PDF with a [text layer](domain-language.md#text-layer) is not
    sent to OCR. Otherwise the pages are rendered and read. The
    [OCR text](domain-language.md#ocr-text) is stored per page in its original
-   language. Exactly which [files](domain-language.md#file) are read is open:
-   [open question: which files get OCR](open-questions.md#question-which-files-get-ocr).
+   language. Exactly which [assets](domain-language.md#asset) are read is open:
+   [open question: which assets get OCR](open-questions.md#question-which-assets-get-ocr).
 7. **[Kind](domain-language.md#kind).** [has_text](domain-language.md#has_text)
    is set from the amount of [OCR text](domain-language.md#ocr-text), and the
-   kind of the [file](domain-language.md#file) is decided.
+   kind of the [asset](domain-language.md#asset) is decided.
    The exact rules are open:
    [open question: kind rules](open-questions.md#question-kind-rules).
-8. **[Description](domain-language.md#description).** Only for a
-   [file](domain-language.md#file) of [kind](domain-language.md#kind)
+8. **[Description](domain-language.md#description).** Only for an
+   [asset](domain-language.md#asset) of [kind](domain-language.md#kind)
    `document`. A local model writes
    one English line from the [OCR text](domain-language.md#ocr-text), keeping
    proper names verbatim. It also
@@ -189,7 +189,7 @@ Every [file](domain-language.md#file) goes through the same
    that works across languages, so English words find a document written in
    another language.
 10. **[Duplicates](domain-language.md#duplicate).** The
-    [file](domain-language.md#file) is grouped with the files that are the same.
+    [asset](domain-language.md#asset) is grouped with the assets that are the same.
     See [below](#duplicates).
 
 **Videos** get their metadata and no OCR. They are not fetched: only their
@@ -209,15 +209,14 @@ Every step that uses a model uses a local one:
 `#steps-added-later`
 
 The [pipeline](domain-language.md#pipeline) grows over time: a step may be added
-when [files](domain-language.md#file) are already indexed. So:
+when [assets](domain-language.md#asset) are already indexed. So:
 
-- Each [file](domain-language.md#file) records which steps it has completed and,
-  for a step done by a model, which model. This record has no agreed word yet:
-  [open question: name for pipeline progress](open-questions.md#question-name-for-pipeline-progress).
-- An ordinary [run](domain-language.md#run) processes a
-  [file](domain-language.md#file) only when it is new or changed.
+- Each [asset](domain-language.md#asset) records its [completed steps](domain-language.md#completed-steps) and,
+  for a step done by a model, which model.
+- An ordinary [run](domain-language.md#run) processes an
+  [asset](domain-language.md#asset) only when it is new or changed.
 - When a step or a model is added, existing
-  [files](domain-language.md#file) get it **only when the
+  [assets](domain-language.md#asset) get it **only when the
   [user](domain-language.md#user) asks**.
 - Nothing is downloaded a second time for this.
   [Description](domain-language.md#description) and text
@@ -232,15 +231,15 @@ when [files](domain-language.md#file) are already indexed. So:
 | About | What is kept |
 |---|---|
 | Each [source](domain-language.md#source) | [location](domain-language.md#location), [account](domain-language.md#account), [reader](domain-language.md#reader), [cursor](domain-language.md#cursor), [checkpoint](domain-language.md#checkpoint), whether it is enabled, when its last [run](domain-language.md#run) finished, its rank in the [order of sources](domain-language.md#order-of-sources) |
-| Each [file](domain-language.md#file) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [file_date](domain-language.md#file_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer); coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject and thread; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
+| Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer); coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject and thread; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
 | Text | the [OCR text](domain-language.md#ocr-text) per page, searchable without accents and tolerant of misreadings |
-| [Embeddings](domain-language.md#embedding) | per [file](domain-language.md#file), with the name of the model that made them |
+| [Embeddings](domain-language.md#embedding) | per [asset](domain-language.md#asset), with the name of the model that made them |
 | Each [duplicate group](domain-language.md#duplicate-group) | [exact](domain-language.md#exact) or [near](domain-language.md#near), the [keeper](domain-language.md#keeper), [reviewed](domain-language.md#reviewed) or not |
-| Each [run](domain-language.md#run) | start, finish, counts of new, changed and [vanished](domain-language.md#vanished) [files](domain-language.md#file), errors |
+| Each [run](domain-language.md#run) | start, finish, counts of new, changed and [vanished](domain-language.md#vanished) [assets](domain-language.md#asset), errors |
 | The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, the [whitelist](domain-language.md#whitelist) and the [blacklist](domain-language.md#blacklist) |
 | The [baseline](domain-language.md#baseline) | see [measuring before and after](mission.md#measuring-before-and-after) |
 
-Whether a [file](domain-language.md#file) can have several
+Whether an [asset](domain-language.md#asset) can have several
 [persons](domain-language.md#person) is open:
 [open question: several persons](open-questions.md#question-several-persons).
 
@@ -248,7 +247,7 @@ Whether a [file](domain-language.md#file) can have several
 
 `#duplicates`
 
-[Files](domain-language.md#file) that are the same form a
+[Assets](domain-language.md#asset) that are the same form a
 [duplicate group](domain-language.md#duplicate-group), across all
 [sources](domain-language.md#source) and [accounts](domain-language.md#account).
 
@@ -261,8 +260,8 @@ Whether a [file](domain-language.md#file) can have several
   [phash](domain-language.md#phash) values, against a threshold that is
   configurable.
 - Different photos are not grouped.
-- A group keeps its id when [files](domain-language.md#file) join it.
-- [Files](domain-language.md#file) in a
+- A group keeps its id when [assets](domain-language.md#asset) join it.
+- [Assets](domain-language.md#asset) in a
   [shared account](domain-language.md#shared-account) are flagged as also
   belonging to someone else.
 - [Near](domain-language.md#near)
@@ -272,8 +271,8 @@ Whether a [file](domain-language.md#file) can have several
 
 Open points: which hash decides [exact](domain-language.md#exact)
 ([open question: hash for exact](open-questions.md#question-which-hash-decides-exact)),
-whether a [file](domain-language.md#file) can be in two groups at once
-([open question: one group per file](open-questions.md#question-one-group-per-file)),
+whether an [asset](domain-language.md#asset) can be in two groups at once
+([open question: one group per asset](open-questions.md#question-one-group-per-asset)),
 and [near](domain-language.md#near) matching of PDFs
 ([open question: near matching of PDFs](open-questions.md#question-near-matching-pdfs)).
 
@@ -288,17 +287,17 @@ The [user](domain-language.md#user)'s
 1. The [user](domain-language.md#user) sets the
    [order of his sources](domain-language.md#order-of-sources) once.
 2. In each [duplicate group](domain-language.md#duplicate-group), the
-   [file](domain-language.md#file) from the highest-ranked
+   [asset](domain-language.md#asset) from the highest-ranked
    [source](domain-language.md#source) is suggested as the
    [keeper](domain-language.md#keeper).
 3. If that [source](domain-language.md#source) has several
-   [files](domain-language.md#file) in the group, the tie goes to the highest
+   [assets](domain-language.md#asset) in the group, the tie goes to the highest
    resolution, then to complete photo metadata, then to the oldest.
 4. The [user](domain-language.md#user) can change the
    [keeper](domain-language.md#keeper) of any group.
 5. Nothing counts as chosen until the [user](domain-language.md#user) marks the
    group [reviewed](domain-language.md#reviewed).
-6. When a new [file](domain-language.md#file) joins a group he already
+6. When a new [asset](domain-language.md#asset) joins a group he already
    [reviewed](domain-language.md#reviewed), the group goes back to not reviewed,
    and his earlier [keeper](domain-language.md#keeper) stays as the suggestion.
 
@@ -312,7 +311,7 @@ database with the [sources](domain-language.md#source), so the backup covers it.
 The [duplicate report](domain-language.md#duplicate-report) is a web page,
 opened with `stash dups --report`. It shows each group with thumbnails and
 paths side by side, the suggested [keeper](domain-language.md#keeper), and the
-flag for [files](domain-language.md#file) in a
+flag for [assets](domain-language.md#asset) in a
 [shared account](domain-language.md#shared-account). The thumbnails are kept on
 the [server](domain-language.md#server).
 
@@ -337,7 +336,7 @@ command line, `stash`.
 
 | Command | Finds |
 |---|---|
-| `stash search "<words>"` | [files](domain-language.md#file) by their text |
+| `stash search "<words>"` | [assets](domain-language.md#asset) by their text |
 | `stash search --doc-type tax --person <name> --from 2005 --to 2015` | documents by type, [person](domain-language.md#person) and date range |
 
 How text search behaves:
@@ -356,7 +355,7 @@ How text search behaves:
 
 Open points: which date the date range filters on
 ([open question: date filter](open-questions.md#question-date-filter)) and
-whether [vanished](domain-language.md#vanished) files are shown
+whether [vanished](domain-language.md#vanished) assets are shown
 ([open question: vanished in search](open-questions.md#question-vanished-in-search)).
 
 ## Finding photos

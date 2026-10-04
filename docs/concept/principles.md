@@ -12,13 +12,13 @@ No content is deleted or moved without the [user](domain-language.md#user)'s go.
 The app never deletes or moves anything by itself.
 
 - The index only reports. It groups [duplicates](domain-language.md#duplicate)
-  and suggests which [file](domain-language.md#file) to keep; it removes
+  and suggests which [asset](domain-language.md#asset) to keep; it removes
   nothing.
-- A file that is gone from its [source](domain-language.md#source) is not
+- An asset that is gone from its [source](domain-language.md#source) is not
   deleted from the index either. Its row stays and is marked as
   [vanished](domain-language.md#vanished).
 - When the app later cleans up [sources](domain-language.md#source)
-  ([FEATURE-002](../backlog/BACKLOG.md)), a [file](domain-language.md#file) is
+  ([FEATURE-002](../backlog/BACKLOG.md)), an [asset](domain-language.md#asset) is
   removed from a source only after explicit confirmation, and only when its
   [bytes](domain-language.md#bytes) are verified, by hash, both on the
   [server](domain-language.md#server) and in the clean copy.
@@ -37,7 +37,7 @@ The choices that are the [user](domain-language.md#user)'s:
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
 | The [whitelist](domain-language.md#whitelist) and [blacklist](domain-language.md#blacklist) of [senders](domain-language.md#sender) | Reports hints about each sender. The [user](domain-language.md#user) sorts. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
-| Running a new [pipeline](domain-language.md#pipeline) step over [files](domain-language.md#file) already indexed | Does it only when asked. |
+| Running a new [pipeline](domain-language.md#pipeline) step over [assets](domain-language.md#asset) already indexed | Does it only when asked. |
 
 ## Private by construction
 
@@ -74,13 +74,13 @@ refused when the app starts. See
 A consequence: the app has no billable path. Someone who wants a hosted model
 writes that adapter himself, and it then needs budget caps and spend logging.
 
-## A local copy of every file
+## A local copy of every asset
 
-`#a-local-copy-of-every-file`
+`#a-local-copy-of-every-asset`
 
 The [server](domain-language.md#server) keeps a
 [local copy](domain-language.md#local-copy) of every
-[file](domain-language.md#file) it indexes.
+[asset](domain-language.md#asset) it indexes.
 
 The reason is where the [user](domain-language.md#user) wants to end up: once
 everything is organized, he cleans his cloud drives and keeps one clean copy. A
@@ -97,9 +97,9 @@ What follows from it:
   [sources](domain-language.md#source) are stored once.
 - Later [pipeline](domain-language.md#pipeline) steps read from the
   [local copy](domain-language.md#local-copy). No
-  [file](domain-language.md#file) is downloaded twice.
+  [asset](domain-language.md#asset) is downloaded twice.
 - A Mac [collector](domain-language.md#collector) uploads the
-  [bytes](domain-language.md#bytes) of every [file](domain-language.md#file) it
+  [bytes](domain-language.md#bytes) of every [asset](domain-language.md#asset) it
   reports. It does not wait to be asked.
 - The [server](domain-language.md#server)'s disk now holds every private
   document, so it must be encrypted:

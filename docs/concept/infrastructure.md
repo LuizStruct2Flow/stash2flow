@@ -32,7 +32,7 @@ running is open:
 
 `#expected-volume`
 
-The app is designed for tens of thousands of [files](domain-language.md#file),
+The app is designed for tens of thousands of [assets](domain-language.md#asset),
 possibly more than 100,000. Slice 1 of the plan measures files per hour for OCR
 and for both embeddings and extends the figure to 100,000 files, so the length
 of the first full [run](domain-language.md#run) is known before it starts.
