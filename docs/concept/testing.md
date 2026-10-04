@@ -14,8 +14,6 @@ files, reviewed by the founder, **before any agent writes code**. It keeps the
 language from drifting into an agent's own dialect. Proving that a test fails
 before the code exists is secondary.
 
-Decided by the founder on 3 October 2026.
-
 How it works:
 
 - **Format.** Gherkin `.feature` files, one per area, in `backend/features/`.

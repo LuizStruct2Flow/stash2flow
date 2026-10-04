@@ -94,8 +94,6 @@ The backup goes to iCloud. It is encrypted before it leaves the server.
 How the encrypted file gets from a Linux server to iCloud is open:
 [#question-backup-transport](open-questions.md#question-backup-transport).
 
-Decided by the founder on 3 October 2026.
-
 ## Disk encryption
 
 `#disk-encryption`

@@ -17,8 +17,6 @@ deliberately not used, and the concepts that still have no agreed word.
 - Nobody but the founder adds a word. A missing word is raised as a question to
   him. Until he answers, the concept is described in plain language.
 
-The founder ruled on the words on 3 October 2026.
-
 ## Language of the app
 
 `#language-of-the-app`
@@ -104,8 +102,6 @@ belonging to someone else, so the user never treats them as his alone.
 The machine that reads a source: the server, or a Mac that runs a collector.
 Example: a cloud drive's reader is the server; a photo library that only a Mac
 can open has that Mac as its reader.
-
-Named by the founder on 4 October 2026. The word "owner" is not used for this.
 
 ### Order of sources
 

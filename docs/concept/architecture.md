@@ -192,8 +192,6 @@ package, so the gate works as shipped and the phash has one implementation.
 Two programs stay outside the package, installed separately and called by
 adapters: `osxphotos` (command-line, on the Mac) and the local model server.
 
-Decided by the founder on 3 October 2026.
-
 ## Libraries to prove
 
 `#libraries-to-prove`

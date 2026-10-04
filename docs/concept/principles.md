@@ -20,8 +20,6 @@ moves anything by itself.
   after explicit confirmation, and only when its bytes are verified, by hash,
   both on the server and in the clean copy.
 
-Decided by the founder on 3 October 2026.
-
 ## The user decides
 
 `#the-user-decides`
@@ -69,8 +67,6 @@ refused when the app starts. See
 A consequence: the app has no billable path. Someone who wants a hosted model
 writes that adapter himself, and it then needs budget caps and spend logging.
 
-Decided by the founder on 3 October 2026.
-
 ## Local copy
 
 `#local-copy`
@@ -93,8 +89,6 @@ What follows from it:
 
 Whether videos are copied too is open, because they may be large:
 [#question-videos](open-questions.md#question-videos).
-
-Decided by the founder on 3 October 2026.
 
 ## Read-only on sources
 
@@ -136,8 +130,6 @@ There is no plug-in system. The ports are the extension point. See
 The copyright line of the licence file is still open:
 [#question-copyright-line](open-questions.md#question-copyright-line).
 
-Decided by the founder on 3 October 2026.
-
 ## Nothing about one installation
 
 `#nothing-about-one-installation`
@@ -161,5 +153,3 @@ the app does, so they must be complete without it.
 
 How this is checked mechanically is open:
 [#question-public-repository-check](open-questions.md#question-public-repository-check).
-
-Decided by the founder on 3 October 2026.

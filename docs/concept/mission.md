@@ -20,8 +20,6 @@ matters, and nothing else.**
 The test for any scope decision: does this help the user end up with one copy,
 organized, of only what matters?
 
-Decided by the founder on 3 October 2026.
-
 ## Digital trash
 
 `#digital-trash`
@@ -97,8 +95,6 @@ wants to make his figures public does that himself.
 
 Which figures exactly is still open:
 [#question-baseline-figures](open-questions.md#question-baseline-figures).
-
-Decided by the founder on 3 October 2026.
 
 ## What the app is not
 

@@ -381,8 +381,7 @@ attachment.
 ## Frontend and later steps
 
 Background: [#four-steps](mission.md#four-steps). A frontend is coming as its
-own item, [FEATURE-003](../doing/BACKLOG.md) (decided by the founder on
-3 October 2026). It is not built in the index, but it touches the index in
+own item, [FEATURE-003](../doing/BACKLOG.md). It is not built in the index, but it touches the index in
 three places.
 
 ### Question: duplicate report and frontend

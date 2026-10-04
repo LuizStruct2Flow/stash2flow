@@ -156,8 +156,6 @@ Rules:
   app's own rule from the two lists.
 - Both lists are stored in the database and kept through the command line.
 
-Decided by the founder on 3 October 2026.
-
 Three points are open:
 
 - whether the whitelist is also the list that decides which message bodies are
