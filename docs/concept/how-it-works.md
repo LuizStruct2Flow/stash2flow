@@ -50,8 +50,6 @@ finished run.
   On a Mac the system's own scheduler (`launchd`) does, and a Mac that was
   asleep when its run was due runs when it wakes.
 
-Decided by the founder on 3 October 2026.
-
 ## Resuming
 
 `#resuming`
@@ -83,9 +81,7 @@ record arrives, against what the index already holds:
    computes it after fetching the bytes.
 
 A file that shows a newer date but has the same hash is a file already read:
-its date is updated and no pipeline step runs again. (Decided by the founder on
-3 October 2026.)
-
+its date is updated and no pipeline step runs again.
 A changed file is processed again. An unchanged file whose pipeline steps are
 all done costs nothing.
 
@@ -245,8 +241,6 @@ The user's [#order-of-sources](domain-language.md#order-of-sources) decides the
 
 The order of sources is stored in the database with the sources, so the backup
 covers it.
-
-Decided by the founder on 3 October 2026.
 
 ## Reviewing duplicates
 
