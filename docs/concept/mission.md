@@ -11,7 +11,7 @@ decision in the other concept documents is judged against this one.
 **One clean, organized and curated copy of your digital life: only what
 matters, and nothing else.**
 
-- **One copy.** Today the same [file](domain-language.md#file) sits in several
+- **One copy.** Today the same [asset](domain-language.md#asset) sits in several
   places. At the end there is one.
 - **Organized.** Everything is arranged so it can be found, by browsing or by
   searching.
@@ -24,7 +24,7 @@ organized, of only what matters?
 
 `#digital-trash`
 
-Digital trash is what the app frees the [user](domain-language.md#user) from: the same [files](domain-language.md#file) in several
+Digital trash is what the app frees the [user](domain-language.md#user) from: the same files in several
 cloud drives, photos in three resolutions, scans with names that say nothing,
 and a mailbox that is mostly [advertisement](domain-language.md#advertisement). We keep it because storage is cheap
 and sorting is not.
@@ -51,7 +51,7 @@ The app gets there in four items, in this order:
 
 | Step | Item | What it does | State |
 |---|---|---|---|
-| 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a [local copy](domain-language.md#local-copy) of each [file](domain-language.md#file) on the [server](domain-language.md#server), makes everything searchable by its text, and groups [duplicates](domain-language.md#duplicate). | Planned, no code yet |
+| 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a [local copy](domain-language.md#local-copy) of each [asset](domain-language.md#asset) on the [server](domain-language.md#server), makes everything searchable by its text, and groups [duplicates](domain-language.md#duplicate). | Planned, no code yet |
 | 2. Organize | [FEATURE-003](../doing/BACKLOG.md) | A frontend where everything is arranged by a taxonomy the [user](domain-language.md#user) shapes, plus a search over all content. | To be planned |
 | 3. Clean copy | [FEATURE-004](../backlog/BACKLOG.md) | Writes the organized content to one place the [user](domain-language.md#user) chooses, and keeps it current. | Parked until the frontend is accepted |
 | 4. Clean up | [FEATURE-002](../backlog/BACKLOG.md) | Removes what is unnecessary from the [sources](domain-language.md#source), only with the [user](domain-language.md#user)'s go and only when verified copies exist. | Parked until the clean copy exists |
@@ -80,7 +80,7 @@ that come after it leave open points in the index; they are listed in
 Nobody knows how much stored data is trash in general, but one case can be
 measured: the [user](domain-language.md#user)'s own. The app measures it before and after.
 
-- **Before.** The first full [run](domain-language.md#run) of each [source](domain-language.md#source) records how many [files](domain-language.md#file) and how
+- **Before.** The first full [run](domain-language.md#run) of each [source](domain-language.md#source) records how many [assets](domain-language.md#asset) and how
   many [bytes](domain-language.md#bytes) that source holds. Once [duplicates](domain-language.md#duplicate) are grouped, it records what
   share of them are duplicates. For [e-mail](domain-language.md#e-mail) it also records how many messages
   come from [senders](domain-language.md#sender) that end up on the

@@ -9,25 +9,6 @@ one.
 The other concept documents mark each open spot with a link to its question
 here.
 
-## Words
-
-Concepts with no agreed word. They are described in
-[words still to name](domain-language.md#words-still-to-name), with their
-candidates. The feature files cannot be written before these are named.
-
-### Question: name for pipeline progress
-
-`#question-name-for-pipeline-progress`
-
-**Question.** What is the word for which
-[pipeline](domain-language.md#pipeline) steps a
-[file](domain-language.md#file) has completed, and with which model?
-
-**Candidates.** "processed steps" · "pipeline state" · one timestamp per step
-and no collective word.
-
-**Recommendation.** None. The word is the founder's to choose.
-
 ## E-mail
 
 Background: [senders decide](sources.md#senders-decide).
@@ -91,16 +72,16 @@ body: the message's id plus "body".
 
 Background: [how duplicates work](how-it-works.md#duplicates).
 
-### Question: one group per file
+### Question: one group per asset
 
-`#question-one-group-per-file`
+`#question-one-group-per-asset`
 
-**Question.** A [file](domain-language.md#file) could be in an
+**Question.** An [asset](domain-language.md#asset) could be in an
 [exact](domain-language.md#exact) group and in a
-[near](domain-language.md#near) group at the same time, but a file can point to
+[near](domain-language.md#near) group at the same time, but an asset can point to
 one group only. Which is it?
 
-**Recommendation.** One group per [file](domain-language.md#file). Files showing
+**Recommendation.** One group per [asset](domain-language.md#asset). Assets showing
 the same image are one group; it is [exact](domain-language.md#exact) when all
 [bytes](domain-language.md#bytes) match, otherwise
 [near](domain-language.md#near).
@@ -111,7 +92,7 @@ the same image are one group; it is [exact](domain-language.md#exact) when all
 
 **Question.** Two hashes are computed on the
 [bytes](domain-language.md#bytes), [md5 and sha256](domain-language.md#md5-and-sha256).
-Which one decides that two [files](domain-language.md#file) are
+Which one decides that two [assets](domain-language.md#asset) are
 [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate)?
 
 **Recommendation.** [sha256](domain-language.md#md5-and-sha256) decides.
@@ -153,16 +134,16 @@ Background: [how search works](how-it-works.md#search).
 use?
 
 **Recommendation.** For documents the [doc_date](domain-language.md#doc_date),
-falling back to the [file_date](domain-language.md#file_date). For photos the
-file_date. Known limit: a wrongly read doc_date hides the
-[file](domain-language.md#file) from a date filter.
+falling back to the [asset_date](domain-language.md#asset_date). For photos the
+asset_date. Known limit: a wrongly read doc_date hides the
+[asset](domain-language.md#asset) from a date filter.
 
 ### Question: vanished in search
 
 `#question-vanished-in-search`
 
 **Question.** Do [vanished](domain-language.md#vanished)
-[files](domain-language.md#file) show up in search?
+[assets](domain-language.md#asset) show up in search?
 
 **Recommendation.** Hidden by default and shown with a flag. The answer says
 how many were left out.
@@ -172,10 +153,10 @@ how many were left out.
 `#question-several-persons`
 
 **Question.** A document or a photo can concern several
-[persons](domain-language.md#person). Does a [file](domain-language.md#file)
+[persons](domain-language.md#person). Does an [asset](domain-language.md#asset)
 hold one person or several?
 
-**Recommendation.** Several persons per [file](domain-language.md#file).
+**Recommendation.** Several persons per [asset](domain-language.md#asset).
 
 ## Pipeline and models
 
@@ -191,21 +172,21 @@ Background: [pipeline steps](how-it-works.md#pipeline-steps).
 
 **Recommendation.** Benchmark first. Slice 1 picks the OCR engine on a sample
 of real [scans](domain-language.md#scan) and measures
-[files](domain-language.md#file) per hour for OCR and both
+files per hour for OCR and both
 [embeddings](domain-language.md#embedding). The description model is picked the
 same way when descriptions are built. Candidates must run on the
 [server](domain-language.md#server)'s hardware.
 
-### Question: which files get OCR
+### Question: which assets get OCR
 
-`#question-which-files-get-ocr`
+`#question-which-assets-get-ocr`
 
-**Question.** OCR runs before the [kind](domain-language.md#kind) of a
-[file](domain-language.md#file) is known. Which files get it?
+**Question.** OCR runs before the [kind](domain-language.md#kind) of an
+[asset](domain-language.md#asset) is known. Which files get it?
 
 **Recommendation.** Every image and every PDF without a
 [text layer](domain-language.md#text-layer); videos never. If the measured
-[files](domain-language.md#file) per hour make the first
+files per hour make the first
 [run](domain-language.md#run) too slow, the founder decides then whether photos
 from iCloud Photos skip OCR.
 
@@ -223,7 +204,7 @@ the founder's review.
 
 ## Local copies
 
-Background: [a local copy of every file](principles.md#a-local-copy-of-every-file).
+Background: [a local copy of every asset](principles.md#a-local-copy-of-every-asset).
 
 ### Question: videos
 
@@ -247,7 +228,7 @@ and the founder decides about videos with real numbers.
 private document so it must be encrypted. When and how is that ensured?
 
 **Recommendation.** Encrypt it before slice 2 of the plan, the first slice
-that keeps [files](domain-language.md#file) on the server.
+that keeps [assets](domain-language.md#asset) on the server.
 
 ## Sources and collectors
 
@@ -258,7 +239,7 @@ Background: [the Mac collector](sources.md#mac-collector).
 `#question-two-collectors-one-source`
 
 **Question.** Two Macs can only see the same
-[file](domain-language.md#file) if both read the same
+[asset](domain-language.md#asset) if both read the same
 [source](domain-language.md#source), but a source has one
 [reader](domain-language.md#reader). What happens when a second
 [collector](domain-language.md#collector) reports it?
@@ -267,7 +248,7 @@ Background: [the Mac collector](sources.md#mac-collector).
 [location](domain-language.md#location) and
 [account](domain-language.md#account). The
 [reader](domain-language.md#reader) is the machine that normally reads it.
-[File records](domain-language.md#file-record) from another
+[Asset records](domain-language.md#asset-record) from another
 [collector](domain-language.md#collector) for the same source update the same
 row, and [collected_by](domain-language.md#collected_by) records who sent them.
 
@@ -354,7 +335,7 @@ public file. Whose?
 [summary notification](domain-language.md#summary-notification) sent?
 
 **Recommendation.** E-mail or a chat webhook; the founder picks. Counts only,
-no [file](domain-language.md#file) names and no text.
+no file names and no text.
 
 ## Measuring
 
@@ -368,11 +349,11 @@ Background: [measuring before and after](mission.md#measuring-before-and-after).
 [baseline](domain-language.md#baseline)?
 
 **Recommendation.** Per [source](domain-language.md#source):
-[files](domain-language.md#file), [bytes](domain-language.md#bytes),
+[assets](domain-language.md#asset), [bytes](domain-language.md#bytes),
 [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate),
 [near](domain-language.md#near) duplicates, and for
 [e-mail](domain-language.md#e-mail) the blacklisted share. Overall: the number
-of sources a file is found in.
+of sources an asset is found in.
 
 ## Order of work
 
@@ -409,7 +390,7 @@ choices it stores ([keeper](domain-language.md#keeper),
 
 `#question-taxonomy-step`
 
-**Question.** Sorting a [file](domain-language.md#file) into the taxonomy would
+**Question.** Sorting an [asset](domain-language.md#asset) into the taxonomy would
 be a [pipeline](domain-language.md#pipeline) step next to the
 [description](domain-language.md#description), and may replace
 [doc_type](domain-language.md#doc_type) and
@@ -419,7 +400,7 @@ be a [pipeline](domain-language.md#pipeline) step next to the
 builds [descriptions](domain-language.md#description) starts, because that is
 where [doc_type](domain-language.md#doc_type) and
 [person](domain-language.md#person) are built. A new step can already be run
-over [files](domain-language.md#file) that are indexed.
+over [assets](domain-language.md#asset) that are indexed.
 
 ### Question: API for the frontend
 
@@ -446,7 +427,7 @@ taxonomy. How may it help when no document text leaves the
 `#question-clean-copy-format`
 
 **Question.** Is the clean copy ([FEATURE-004](../backlog/BACKLOG.md)) plain
-folders and [files](domain-language.md#file) that can be read without the app,
+folders and files that can be read without the app,
 or the app's own store?
 
 **Recommendation.** None yet. To be settled before the clean copy is planned.

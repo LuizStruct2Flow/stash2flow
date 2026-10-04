@@ -4,8 +4,8 @@ The agreed words of stash2flow, each with its meaning. Read this before writing
 or reviewing anything: code, tests, feature files, logs, the command line and
 the API use exactly these words. The words are the founder's.
 
-Each word has its own heading. The last two sections list the words that are
-deliberately not used, and the concepts that still have no agreed word.
+Each word has its own heading. The last section lists the words that are
+deliberately not used.
 
 ## Agreed words only
 
@@ -43,14 +43,14 @@ The person who runs the app and makes its choices: the [order of sources](#order
 
 The one local machine that runs the database, the [API](#api), the [pullers](#puller), the [workers](#worker)
 and the [scheduler](#scheduler). It also keeps the [local copies](#local-copy) of the
-[files](#file), in the [stash](#stash).
+[assets](#asset), in the [stash](#stash).
 
 ### API
 
 `#api`
 
 What the [server](#server) serves to its clients: the [collectors](#collector), the command line and the
-browser. Taking [file records](#file-record) in is one part of the API.
+browser. Taking [asset records](#asset-record) in is one part of the API.
 
 ### Worker
 
@@ -65,13 +65,13 @@ A [server](#server) process that reads text from pages, computes [embeddings](#e
 
 What starts a [source](#source)'s [run](#run) by itself, 30 days after its last finished run.
 
-## Where files come from
+## Where assets come from
 
 ### Source
 
 `#source`
 
-One configured place [files](#file) come from: a [location](#location) plus an [account](#account), read by one
+One configured place [assets](#asset) come from: a [location](#location) plus an [account](#account), read by one
 [reader](#reader). Example: one Google Drive of one account is a source; the mailbox of the
 same account is another.
 
@@ -93,7 +93,7 @@ Whose login the [source](#source) is read with.
 
 `#shared-account`
 
-An [account](#account) that belongs to more than one person. Its [files](#file) are flagged as also
+An [account](#account) that belongs to more than one person. Its [assets](#asset) are flagged as also
 belonging to someone else, so the [user](#user) never treats them as his alone.
 
 ### Reader
@@ -146,43 +146,44 @@ what it fetched to the server through the [API](#api).
 
 `#collected_by`
 
-Which machine sent a [file record](#file-record). It is kept for diagnostics only and is never
-part of a file's identity.
+Which machine sent an [asset record](#asset-record). It is kept for diagnostics only and is never
+part of an [asset](#asset)'s identity.
 
-## Files
+## Assets
 
-### File
+### Asset
 
-`#file`
+`#asset`
 
-The unit that is indexed: one row. It is identified by its [location](#location), its
-[account](#account) and its [source_file_id](#source_file_id). A document, a photo, an [attachment](#attachment) and an
-indexed [message body](#message-body) are all files.
+The unit that is indexed: one row. It is a file (in a cloud drive, a photo
+library or a folder), an [attachment](#attachment) or an [e-mail](#e-mail) (its indexed
+[message body](#message-body)). It is identified by its [location](#location), its
+[account](#account) and its [source_asset_id](#source_asset_id).
 
-### File record
+### Asset record
 
-`#file-record`
+`#asset-record`
 
-What a [puller](#puller) or a [collector](#collector) sends about one [file](#file).
+What a [puller](#puller) or a [collector](#collector) sends about one [asset](#asset).
 
-### source_file_id
+### source_asset_id
 
-`#source_file_id`
+`#source_asset_id`
 
-The [file](#file)'s id inside its [source](#source). Example: the provider's item id, or the id a
+The [asset](#asset)'s id inside its [source](#source). Example: the provider's item id, or the id a
 photo has in the photo library.
 
 ### Bytes
 
 `#bytes`
 
-What a [file](#file) consists of. The word is always bytes, never "content".
+What an [asset](#asset) consists of. The word is always bytes, never "content".
 
 ### Local copy
 
 `#local-copy`
 
-The copy of a [file](#file)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
+The copy of an [asset](#asset)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
 in the [stash](#stash).
 
 ### Stash
@@ -197,14 +198,14 @@ addressed by its [sha256](#md5-and-sha256), so the same [bytes](#bytes) arriving
 
 `#ext`
 
-The [file](#file)'s extension, such as PDF or JPG.
+The file's extension, such as PDF or JPG.
 
 ### Kind
 
 `#kind`
 
-What sort of [file](#file) it is: `document`, `photo`, `screenshot`, `video` or `other`.
-"Document" and "photo" are kinds of a file, not units of their own.
+What sort of [asset](#asset) it is: `document`, `photo`, `screenshot`, `video` or `other`.
+"Document" and "photo" are kinds of an asset, not units of their own.
 
 ### Scan
 
@@ -216,7 +217,7 @@ A scanned paper, and nothing else. One pass over a [source](#source) is a [run](
 
 `#source_link`
 
-The link that opens the [file](#file) in its [source](#source). Example: the web address of a
+The link that opens the [asset](#asset) in its [source](#source). Example: the web address of a
 file in a cloud drive, or the link to an e-mail's thread. It does not point at
 the [local copy](#local-copy) on the [server](#server).
 
@@ -227,11 +228,11 @@ the [local copy](#local-copy) on the [server](#server).
 Where a photo was taken. Not to be confused with [location](#location), which is the kind of
 [source](#source).
 
-### file_date
+### asset_date
 
-`#file_date`
+`#asset_date`
 
-The best available date of the [file](#file). `file_date_source` says where it came
+The best available date of the [asset](#asset). `asset_date_source` says where it came
 from: the photo's own data, the PDF's creation date, the modification time, the
 photo library, or the date an e-mail was received.
 
@@ -272,7 +273,7 @@ An [e-mail](#e-mail) the [user](#user) does not want indexed. It is told by its 
 
 `#attachment`
 
-A PDF or an image attached to an [e-mail](#e-mail). It is indexed as a [file](#file). A picture
+A PDF or an image attached to an [e-mail](#e-mail). It is indexed as an [asset](#asset). A picture
 inside the e-mail's text, such as a logo, is not an attachment.
 
 ### Message body
@@ -317,15 +318,15 @@ the [cursor](#cursor).
 
 `#vanished`
 
-A [file](#file) that is no longer in its [source](#source). The row stays, and its `deleted_at` is
+An [asset](#asset) that is no longer in its [source](#source). The row stays, and its `deleted_at` is
 set. The word is vanished, because the app never deletes.
 
 ### Ledger
 
 `#ledger`
 
-What a [run](#run) talks to: it takes the [file records](#file-record), keeps the [cursor](#cursor) and
-the [checkpoint](#checkpoint), says which [files](#file) are unchanged, and marks [vanished](#vanished) files.
+What a [run](#run) talks to: it takes the [asset records](#asset-record), keeps the [cursor](#cursor) and
+the [checkpoint](#checkpoint), says which [assets](#asset) are unchanged, and marks [vanished](#vanished) assets.
 It is the record of what a run saw and where it stopped. Example: a [puller](#puller)
 talks to the ledger on the [server](#server) itself; a [collector](#collector) talks to it through
 the [API](#api).
@@ -349,26 +350,34 @@ the user had before organizing and cleaning up.
 
 `#pipeline`
 
-The steps every [file](#file) goes through.
+The steps every [asset](#asset) goes through.
+
+### Completed steps
+
+`#completed-steps`
+
+Which [pipeline](#pipeline) steps an [asset](#asset) has completed, and with which model.
+Example: a scanned receipt has completed every step up to its [OCR text](#ocr-text),
+read with one model, and has no [description](#description) yet.
 
 ### Discovery
 
 `#discovery`
 
-The [pipeline](#pipeline) step that lists a [source](#source) and sends [file records](#file-record).
+The [pipeline](#pipeline) step that lists a [source](#source) and sends [asset records](#asset-record).
 
 ### Provider hash
 
 `#provider-hash`
 
-A hash the [provider](#provider) reports for a [file](#file). It is used to see that a file is
+A hash the [provider](#provider) reports for an [asset](#asset). It is used to see that an asset is
 unchanged without fetching its [bytes](#bytes).
 
 ### md5 and sha256
 
 `#md5-and-sha256`
 
-Hashes computed on the [file](#file)'s [bytes](#bytes).
+Hashes computed on the [asset](#asset)'s [bytes](#bytes).
 
 ### phash
 
@@ -393,13 +402,13 @@ Text read from a page, stored per page in its original language.
 
 `#has_text`
 
-Whether the [file](#file) has enough [OCR text](#ocr-text) to count as having text.
+Whether the [asset](#asset) has enough [OCR text](#ocr-text) to count as having text.
 
 ### Description
 
 `#description`
 
-One English line about a [file](#file) of [kind](#kind) `document`.
+One English line about an [asset](#asset) of [kind](#kind) `document`.
 
 ### doc_type
 
@@ -418,7 +427,7 @@ The date printed on the document.
 
 `#person`
 
-Who the [file](#file) is about or shows, from a list the [user](#user) keeps. The same word is
+Who the [asset](#asset) is about or shows, from a list the [user](#user) keeps. The same word is
 used for a person on a document and a person recognised in a photo.
 
 ### Issuer
@@ -439,14 +448,14 @@ A vector for a photo or for [OCR text](#ocr-text). It lets a search find things 
 
 `#duplicate`
 
-A [file](#file) that is the same as another file. The word is always written out.
+An [asset](#asset) that is the same as another asset. The word is always written out.
 `dups` exists only as the name of a command.
 
 ### Duplicate group
 
 `#duplicate-group`
 
-[Files](#file) that are the same. A group is [exact](#exact) or [near](#near).
+[Assets](#asset) that are the same. A group is [exact](#exact) or [near](#near).
 
 ### Exact
 
@@ -465,13 +474,13 @@ only for [duplicates](#duplicate).
 
 `#keeper`
 
-The [file](#file) suggested to keep in a [duplicate group](#duplicate-group).
+The [asset](#asset) suggested to keep in a [duplicate group](#duplicate-group).
 
 ### Non-keeper
 
 `#non-keeper`
 
-Every other [file](#file) in the [group](#duplicate-group).
+Every other [asset](#asset) in the [group](#duplicate-group).
 
 ### Reviewed
 
@@ -493,8 +502,8 @@ the [user](#user) changes a [keeper](#keeper) and marks a group [reviewed](#revi
 
 `#match`
 
-One entry in a search answer: a [file](#file) that matches the search. Example: a
-search for words printed on a receipt answers with one match for each file
+One entry in a search answer: an [asset](#asset) that matches the search. Example: a
+search for words printed on a receipt answers with one match for each asset
 whose text holds those words.
 
 ## Words we do not use
@@ -504,7 +513,7 @@ whose text holds those words.
 | Not this | But this | Why |
 |---|---|---|
 | scan, for a pass over a [source](#source) | [run](#run) | A scan is a scanned paper. |
-| document, photo, [attachment](#attachment) as units | [file](#file) | The file is the only unit. Document and photo are its [kind](#kind). |
+| document, photo, [attachment](#attachment) as units | [asset](#asset) | The asset is the only unit. Document and photo are its [kind](#kind). |
 | cloud | [source](#source), [location](#location), [provider](#provider) | "Cloud" is not a term. |
 | owner, for the machine that reads a [source](#source) | [reader](#reader) | "Owner" reads as a person. The machine is the reader. |
 | type | [kind](#kind), [doc_type](#doc_type), [ext](#ext) | "Type" meant three things. |
@@ -513,19 +522,4 @@ whose text holds those words.
 | content | [bytes](#bytes) | One word. |
 | dup, dups | [duplicate](#duplicate) | `dups` is only a command's name. |
 | near, for geography | [place](#place) | Near is for [duplicates](#duplicate). Searching photos near a place is not part of the index item. |
-| temp directory | [stash](#stash) | [Files](#file) are no longer fetched and thrown away: the [server](#server) keeps a [local copy](#local-copy) of each. |
-
-## Words still to name
-
-Concepts that have no agreed word yet. Each is described in plain language
-here and wherever else it appears. The founder names them; the place where he
-rules is [open-questions.md](open-questions.md#words).
-
-### How far a file is through the pipeline
-
-Which [pipeline](#pipeline) steps a [file](#file) has completed, and with which model.
-
-Candidates: **processed steps** · **pipeline state** · one timestamp per step
-and no collective word.
-
-Question: [open question: name for pipeline progress](open-questions.md#question-name-for-pipeline-progress).
+| temp directory | [stash](#stash) | [Assets](#asset) are no longer fetched and thrown away: the [server](#server) keeps a [local copy](#local-copy) of each. |

@@ -1,6 +1,6 @@
 # Sources
 
-Where [files](domain-language.md#file) come from: which places the app reads,
+Where [assets](domain-language.md#asset) come from: which places the app reads,
 which machine reads each, and how [e-mail](domain-language.md#e-mail) is
 handled. Read this to understand what the app can reach and how a new kind of
 [source](domain-language.md#source) would be added.
@@ -10,7 +10,7 @@ handled. Read this to understand what the app can reach and how a new kind of
 `#what-a-source-is`
 
 A [source](domain-language.md#source) is one configured place
-[files](domain-language.md#file) come from. It has three parts:
+[assets](domain-language.md#asset) come from. It has three parts:
 
 | Part | Meaning | Example |
 |---|---|---|
@@ -27,7 +27,7 @@ when its last [run](domain-language.md#run) finished, and its rank in the
 
 An [account](domain-language.md#account) that belongs to more than one person is
 a [shared account](domain-language.md#shared-account). Its
-[files](domain-language.md#file) are flagged as also belonging to someone else.
+[assets](domain-language.md#asset) are flagged as also belonging to someone else.
 
 ## Shipped locations
 
@@ -59,7 +59,7 @@ Other mailboxes, read over IMAP, are not part of the index item.
   them.
 - **Folders that a desktop program syncs onto a Mac are not used as
   [sources](domain-language.md#source).** Otherwise the same
-  [file](domain-language.md#file) would be indexed twice, through two machines.
+  [asset](domain-language.md#asset) would be indexed twice, through two machines.
 - **A Mac [collector](domain-language.md#collector) exists only for what needs
   macOS**: iCloud Photos and iCloud Drive.
 
@@ -80,7 +80,7 @@ the first does not, and enabling it is configuration only.
   starts.
 - It computes the hashes locally and uploads the
   [bytes](domain-language.md#bytes) of every
-  [file](domain-language.md#file) it reports as new or changed, so the
+  [asset](domain-language.md#asset) it reports as new or changed, so the
   [server](domain-language.md#server) can keep its
   [local copy](domain-language.md#local-copy).
 - The [server](domain-language.md#server) never calls a Mac, because a Mac may
@@ -95,14 +95,14 @@ Two points are open: what happens when two
 and what to do when the photo originals are not stored on the Mac
 ([open question: photo originals](open-questions.md#question-photo-originals)).
 
-## Identity of a file
+## Identity of an asset
 
-`#identity-of-a-file`
+`#identity-of-an-asset`
 
-Identity is never the machine. A [file](domain-language.md#file) is identified
+Identity is never the machine. An [asset](domain-language.md#asset) is identified
 by its [location](domain-language.md#location), its
 [account](domain-language.md#account) and its
-[source_file_id](domain-language.md#source_file_id). So the same file seen
+[source_asset_id](domain-language.md#source_asset_id). So the same asset seen
 from two machines is one row. Which machine sent it is kept only for
 diagnostics.
 
@@ -114,7 +114,7 @@ writes them in another.
 `#file-types`
 
 The app indexes PDF, JPG, PNG, HEIC, TIFF and GIF
-[files](domain-language.md#file). Videos (MOV, MP4) get
+[assets](domain-language.md#asset). Videos (MOV, MP4) get
 their metadata and hashes and no OCR.
 
 ## Reading changes
@@ -133,9 +133,9 @@ that feed is the [cursor](domain-language.md#cursor).
 | `email` | the history list, with a stored history id | none |
 
 The [provider hash](domain-language.md#provider-hash) lets a
-[run](domain-language.md#run) see that a [file](domain-language.md#file) is
+[run](domain-language.md#run) see that an [asset](domain-language.md#asset) is
 unchanged without fetching its [bytes](domain-language.md#bytes). The full rule
-is [unchanged files](how-it-works.md#unchanged-files).
+is [unchanged assets](how-it-works.md#unchanged-assets).
 
 ## E-mail as a source
 
@@ -147,21 +147,21 @@ exist only as [e-mail](domain-language.md#e-mail)
 [source](domain-language.md#source).
 
 - An [attachment](domain-language.md#attachment) (a PDF or an image) is
-  indexed as a [file](domain-language.md#file) and goes through the same
-  [pipeline](domain-language.md#pipeline) as any other file,
+  indexed as an [asset](domain-language.md#asset) and goes through the same
+  [pipeline](domain-language.md#pipeline) as any other asset,
   including grouping with [duplicates](domain-language.md#duplicate) from all
   other [sources](domain-language.md#source).
 - Not every [message body](domain-language.md#message-body) is indexed. That
   would be too much volume and noise, and the mailbox's own search already
   covers it.
 - An [attachment](domain-language.md#attachment)'s
-  [file_date](domain-language.md#file_date) is the date the
+  [asset_date](domain-language.md#asset_date) is the date the
   [e-mail](domain-language.md#e-mail) was received.
 - An [attachment](domain-language.md#attachment)'s
   [source_link](domain-language.md#source_link) opens its
   [e-mail](domain-language.md#e-mail) thread in the mailbox's web page.
 - The [sender](domain-language.md#sender), the subject and the thread are kept
-  with the [file](domain-language.md#file).
+  with the [asset](domain-language.md#asset).
 
 How an [attachment](domain-language.md#attachment)'s id is formed is open:
 [open question: attachment id](open-questions.md#question-attachment-id).
