@@ -231,7 +231,7 @@ when [files](domain-language.md#file) are already indexed. So:
 | About | What is kept |
 |---|---|
 | Each [source](domain-language.md#source) | [location](domain-language.md#location), [account](domain-language.md#account), [reader](domain-language.md#reader), [cursor](domain-language.md#cursor), [checkpoint](domain-language.md#checkpoint), whether it is enabled, when its last [run](domain-language.md#run) finished, its rank in the [order of sources](domain-language.md#order-of-sources) |
-| Each [file](domain-language.md#file) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [file_date](domain-language.md#file_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer); coordinates, dimensions, page count; [open_link](domain-language.md#open_link); for an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject and thread; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
+| Each [file](domain-language.md#file) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [file_date](domain-language.md#file_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [person](domain-language.md#person), [issuer](domain-language.md#issuer); coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject and thread; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
 | Text | the [OCR text](domain-language.md#ocr-text) per page, searchable without accents and tolerant of misreadings |
 | [Embeddings](domain-language.md#embedding) | per [file](domain-language.md#file), with the name of the model that made them |
 | Each [duplicate group](domain-language.md#duplicate-group) | [exact](domain-language.md#exact) or [near](domain-language.md#near), the [keeper](domain-language.md#keeper), [reviewed](domain-language.md#reviewed) or not |
@@ -351,7 +351,7 @@ How text search behaves:
   [embedding](domain-language.md#embedding) of the
   [OCR text](domain-language.md#ocr-text).
 - Every entry in the answer carries an
-  [open_link](domain-language.md#open_link).
+  [source_link](domain-language.md#source_link).
 
 Open points: which date the date range filters on
 ([open question: date filter](open-questions.md#question-date-filter)) and

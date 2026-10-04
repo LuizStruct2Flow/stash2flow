@@ -185,12 +185,13 @@ What sort of [file](#file) it is: `document`, `photo`, `screenshot`, `video` or 
 
 A scanned paper, and nothing else. One pass over a [source](#source) is a [run](#run), not a scan.
 
-### open_link
+### source_link
 
-`#open_link`
+`#source_link`
 
-The link that opens the [file](#file) where it lives. Example: the web address of a file
-in a cloud drive, or the link to an e-mail's thread.
+The link that opens the [file](#file) in its [source](#source). Example: the web address of a
+file in a cloud drive, or the link to an e-mail's thread. It does not point at
+the [local copy](principles.md#local-copy) on the [server](#server).
 
 ### Place
 

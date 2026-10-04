@@ -180,7 +180,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] A [scan](domain-language.md#scan) with no [text layer](domain-language.md#text-layer) is found by its [OCR text](domain-language.md#ocr-text)
 - [2] Search ignores accents: "certidao" finds "Certidão"
 - [2] Search tolerates OCR misreadings: "recibo" finds a page read as "rec1bo"
-- [2] Every entry in a search answer carries an [open_link](domain-language.md#open_link)
+- [2] Every entry in a search answer carries an [source_link](domain-language.md#source_link)
 - [3] A [vanished](domain-language.md#vanished) [file](domain-language.md#file) is left out of the answer, and the answer says how many were left out *(provisional: [open question: vanished in search](open-questions.md#question-vanished-in-search))*
 - [6] Search filters by [doc_type](domain-language.md#doc_type)
 - [6] Search filters by [person](domain-language.md#person)
@@ -255,7 +255,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] A no-reply [sender](domain-language.md#sender) is not taken for [advertisement](domain-language.md#advertisement): an invoice from a whitelisted no-reply sender is indexed
 - [5] A picture inside an [e-mail](domain-language.md#e-mail)'s text, such as a logo, is not an [attachment](domain-language.md#attachment)
 - [5] An [attachment](domain-language.md#attachment)'s [file_date](domain-language.md#file_date) is the date received
-- [5] An [attachment](domain-language.md#attachment)'s [open_link](domain-language.md#open_link) opens its Gmail thread
+- [5] An [attachment](domain-language.md#attachment)'s [source_link](domain-language.md#source_link) opens its Gmail thread
 - [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) on the [whitelist](domain-language.md#whitelist) has its body indexed *(provisional: [open question: whitelist and official senders](open-questions.md#question-whitelist-and-official-senders))*
 - [5] Nothing from a [sender](domain-language.md#sender) on neither list is indexed *(provisional: [open question: unknown senders](open-questions.md#question-unknown-senders))*
 - [5] The [run](domain-language.md#run) summary lists the new [senders](domain-language.md#sender) with a count and the [provider](domain-language.md#provider)'s hints *(provisional: same question)*
