@@ -47,6 +47,14 @@ saved in one organized database that is constantly updated and never grows fat.
 New content goes through the same path every time, so the result is not a
 one-off tidy-up.
 
+Where the path ends, in the founder's words: "one place to look everything",
+"a single source of truth for all my [assets](domain-language.md#asset), that
+keeps all sources clean and thin". The app is that single source of truth, and
+it keeps every [source](domain-language.md#source) clean and thin. Cleaning up
+every mailbox and drive one by one is very hard, so the
+[user](domain-language.md#user) never has to: he looks in the app, in one
+place.
+
 The app gets there in four items, in this order:
 
 | Step | Item | What it does | State |
@@ -54,7 +62,7 @@ The app gets there in four items, in this order:
 | 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a [local copy](domain-language.md#local-copy) of each [asset](domain-language.md#asset) on the [server](domain-language.md#server), makes everything searchable by its text, groups [duplicates](domain-language.md#duplicate), and records which assets are [blacklisted](domain-language.md#blacklist). | Planned, no code yet |
 | 2. Organize | [FEATURE-003](../doing/BACKLOG.md) | A frontend where every [asset](domain-language.md#asset) is arranged in a [taxonomy](domain-language.md#taxonomy) the [user](domain-language.md#user) shapes and carries [tags](domain-language.md#tag) that find it outside the taxonomy, plus a search over all content. | To be planned |
 | 3. Clean copy | [FEATURE-004](../backlog/BACKLOG.md) | Writes the organized content to one place the [user](domain-language.md#user) chooses, and keeps it current. | Parked until the frontend is accepted |
-| 4. Clean up | [FEATURE-002](../backlog/BACKLOG.md) | Moves what could be deleted from the [sources](domain-language.md#source) to the [quarantine](domain-language.md#quarantine). There the [user](domain-language.md#user) restores an [asset](domain-language.md#asset) or deletes it permanently, and what stays for 30 days is deleted, except what a model judged to be trash: that waits until he confirms it. An asset worth keeping is removed from a source only when verified copies exist. | Parked until the clean copy exists |
+| 4. Clean up | [FEATURE-002](../backlog/BACKLOG.md) | Moves what could be deleted from the [sources](domain-language.md#source) to the [quarantine](domain-language.md#quarantine): one for all sources, which the [user](domain-language.md#user) looks through in the app, in one place. There he restores an [asset](domain-language.md#asset) or deletes it permanently, and everything that stays for 30 days is deleted. What a model judged to be trash is listed in the same place and is moved to the quarantine only when he confirms it. An asset worth keeping is removed from a source only when verified copies exist. | Parked until the clean copy exists |
 
 The rest of the concept documents describe step 1, the index. It has four
 goals:

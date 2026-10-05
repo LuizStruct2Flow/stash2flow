@@ -14,23 +14,30 @@ withholds it.
 
 - **Whatever could be deleted is moved to the
   [quarantine](domain-language.md#quarantine) first.** Moving an
-  [asset](domain-language.md#asset) there does not need a go for each asset.
+  [asset](domain-language.md#asset) there does not need a go for each asset,
+  unless a model judged it.
+- **There is one [quarantine](domain-language.md#quarantine) for all
+  [sources](domain-language.md#source).** The
+  [user](domain-language.md#user) looks through it in the app, in one place. He
+  never has to open each mailbox or drive to see what is about to be deleted.
 - **In the [quarantine](domain-language.md#quarantine) the
   [user](domain-language.md#user) decides.** He can look through it, restore an
   [asset](domain-language.md#asset) or delete it permanently. Restoring is his
-  no. Deleting it, or leaving it there, is his go: what stays in the quarantine
-  for 30 days is deleted permanently.
-- **A model's verdict never ends in deletion by itself.** An
-  [asset](domain-language.md#asset)
+  no. Deleting it, or leaving it there, is his go: everything in the quarantine
+  is deleted permanently after 30 days unless it is restored, with no
+  exception.
+- **A model's verdict never moves an [asset](domain-language.md#asset) to the
+  [quarantine](domain-language.md#quarantine) by itself.** An asset
   [blacklisted](domain-language.md#blacklist) by a rule (an
   [advertisement](domain-language.md#advertisement) past its week, an
   [e-mail](domain-language.md#e-mail) whose
-  [mail_label](domain-language.md#mail_label) says spam) leaves the
-  [quarantine](domain-language.md#quarantine) by itself after 30 days. An asset
-  blacklisted because a model judged it
+  [mail_label](domain-language.md#mail_label) says spam) is moved there. An
+  asset blacklisted because a model judged it
   ([spam](domain-language.md#spam) that came through, which no mail_label
-  marks) stays in the quarantine until the
-  [user](domain-language.md#user) confirms it.
+  marks) is listed for the [user](domain-language.md#user), in the same one
+  place, as something a model thinks is trash. When he confirms it, it is moved
+  to the quarantine and follows the 30 days like everything else. So nothing a
+  model judged is on a clock before the user confirmed it.
 - **An [asset](domain-language.md#asset) worth keeping is removed from a
   [source](domain-language.md#source) only when verified copies exist**: its
   [bytes](domain-language.md#bytes) are verified, by hash, both on the
@@ -63,7 +70,7 @@ The choices that are the [user](domain-language.md#user)'s:
 | The [order of sources](domain-language.md#order-of-sources) | Uses it to suggest a [keeper](domain-language.md#keeper) in each [duplicate group](domain-language.md#duplicate-group). |
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
 | Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies rules from where the asset came from. Who keeps the rules is open: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default). |
-| What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as a [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset). After 30 days it deletes what the [user](domain-language.md#user) left there, except an asset blacklisted because a model judged it: that one waits until he confirms it. |
+| What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as an [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) by a rule. After 30 days it deletes what the [user](domain-language.md#user) left there. An asset blacklisted because a model judged it is only listed for him as something a model thinks is trash, and is moved there when he confirms it. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
 | Running a new [pipeline](domain-language.md#pipeline) step over [assets](domain-language.md#asset) already indexed | Does it only when asked. |
 
@@ -134,12 +141,12 @@ What a model never does:
   [reviewed](domain-language.md#reviewed) are the
   [user](domain-language.md#user)'s decisions, carried out by code. An
   [e-mail](domain-language.md#e-mail) a model classified as
-  [spam](domain-language.md#spam) only reaches the
-  [quarantine](domain-language.md#quarantine), and it stays there until the
-  user confirms it: a model's verdict never ends in deletion by itself. Only an
-  [asset](domain-language.md#asset)
-  [blacklisted](domain-language.md#blacklist) by a rule leaves the quarantine
-  by itself after 30 days.
+  [spam](domain-language.md#spam) is only listed for the user as something a
+  model thinks is trash. It is moved to the
+  [quarantine](domain-language.md#quarantine) when he confirms it, and from
+  then on it follows the 30 days like every other
+  [asset](domain-language.md#asset) there: a model's verdict never moves an
+  asset to the quarantine by itself.
 - **It never does what a rule can do.** [Fetching](domain-language.md#fetching),
   the hashes, [exact](domain-language.md#exact) and
   [near](domain-language.md#near) duplicates, [kind](domain-language.md#kind),

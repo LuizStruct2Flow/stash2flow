@@ -145,6 +145,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-duplicate-report-and-frontend](open-questions.md#question-duplicate-report-and-frontend)
 - [#question-e-mail-indexed-fully](open-questions.md#question-e-mail-indexed-fully)
 - [#question-e-mail-slice-order](open-questions.md#question-e-mail-slice-order)
+- [#question-e-mail-with-an-attached-pdf](open-questions.md#question-e-mail-with-an-attached-pdf)
 - [#question-frontier-model-for-the-taxonomy](open-questions.md#question-frontier-model-for-the-taxonomy)
 - [#question-how-an-asset-gets-its-context](open-questions.md#question-how-an-asset-gets-its-context)
 - [#question-kind-rules](open-questions.md#question-kind-rules)

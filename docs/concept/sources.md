@@ -202,7 +202,9 @@ Rules:
   decides: invoices carry one too.
 - **An [e-mail](domain-language.md#e-mail) with an attached PDF is never
   [blacklisted](domain-language.md#blacklist) by its
-  [mail_label](domain-language.md#mail_label) alone.**
+  [mail_label](domain-language.md#mail_label) alone.** Whether it is indexed
+  fully, and which verdict it gets, is open:
+  [open question: e-mail with an attached PDF](open-questions.md#question-e-mail-with-an-attached-pdf).
 - **An [advertisement](domain-language.md#advertisement) is valid for one week
   after it arrived**, whether or not the [user](domain-language.md#user) was
   interested. After that it is [blacklisted](domain-language.md#blacklist).
@@ -219,12 +221,18 @@ Rules:
   [local copy](domain-language.md#local-copy), a
   [description](domain-language.md#description) or any other
   [pipeline](domain-language.md#pipeline) step. They are on their way out.
-- **A model's verdict never ends in deletion by itself.** An
+- **A model's verdict never moves an [e-mail](domain-language.md#e-mail) to
+  the [quarantine](domain-language.md#quarantine) by itself.** An
   [asset](domain-language.md#asset)
-  [blacklisted](domain-language.md#blacklist) by a rule leaves the
-  [quarantine](domain-language.md#quarantine) by itself after 30 days.
-  [Spam](domain-language.md#spam) a model judged stays there until the
-  [user](domain-language.md#user) confirms it.
+  [blacklisted](domain-language.md#blacklist) by a rule is moved there.
+  [Spam](domain-language.md#spam) a model judged is listed for the
+  [user](domain-language.md#user) as something a model thinks is trash; when he
+  confirms it, it is moved to the quarantine and is deleted after 30 days like
+  everything else there.
+- **There is one [quarantine](domain-language.md#quarantine) for all
+  [sources](domain-language.md#source).** The
+  [user](domain-language.md#user) looks through it in the app, in one place,
+  and never has to open each mailbox to see what is about to be deleted.
 - **[Whitelisted](domain-language.md#whitelist) is a default, not a
   guarantee.** A personal [e-mail](domain-language.md#e-mail) from a family
   member is usually whitelisted. Which rules give the default is open:
@@ -238,7 +246,7 @@ Rules:
 The index only records whether an [asset](domain-language.md#asset) is
 [whitelisted](domain-language.md#whitelist),
 [blacklisted](domain-language.md#blacklist) or neither. It never writes to the
-mailbox. Moving a blacklisted [e-mail](domain-language.md#e-mail) to the
+mailbox. Moving an [e-mail](domain-language.md#e-mail) to the
 [quarantine](domain-language.md#quarantine) belongs to clean-up
 ([FEATURE-002](../backlog/BACKLOG.md)), which is parked. The same verdicts
 apply to every asset, not only to e-mail:

@@ -155,11 +155,19 @@ whole.
   [mail_label](domain-language.md#mail_label) alone.
 - The index only records the verdict. It deletes nothing and moves nothing.
 - Whatever could be deleted is moved to the
-  [quarantine](domain-language.md#quarantine), where the
-  [user](domain-language.md#user) restores it or deletes it permanently, and
-  where it is deleted after 30 days. An [asset](domain-language.md#asset)
-  [blacklisted](domain-language.md#blacklist) because a model judged it is the
-  exception: it stays there until the user confirms it. That writes to a
+  [quarantine](domain-language.md#quarantine): one for all
+  [sources](domain-language.md#source), which the
+  [user](domain-language.md#user) looks through in the app, in one place. There
+  he restores an [asset](domain-language.md#asset) or deletes it permanently,
+  and everything in it is deleted after 30 days unless it is restored.
+- An [asset](domain-language.md#asset)
+  [blacklisted](domain-language.md#blacklist) because a model judged it is not
+  moved to the [quarantine](domain-language.md#quarantine) by that verdict. The
+  same one place lists it for the [user](domain-language.md#user) as something
+  a model thinks is trash. When he confirms it, it is moved to the quarantine
+  and follows the 30 days like everything else.
+- Moving an [asset](domain-language.md#asset) to the
+  [quarantine](domain-language.md#quarantine) writes to a
   [source](domain-language.md#source), so it belongs to clean-up
   ([FEATURE-002](../backlog/BACKLOG.md)), which is parked:
   [nothing deleted without a go](principles.md#nothing-deleted-without-a-go).
@@ -167,10 +175,14 @@ whole.
 Open points: which rules make an [asset](domain-language.md#asset) whitelisted
 by default
 ([open question: whitelisted by default](open-questions.md#question-whitelisted-by-default)),
-where the [quarantine](domain-language.md#quarantine) is
+where an asset in the [quarantine](domain-language.md#quarantine) physically
+sits until it is deleted
 ([open question: where the quarantine is](open-questions.md#question-where-the-quarantine-is)),
-and whether a whitelisted asset can still reach it
-([open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine)).
+whether a whitelisted asset can still reach it
+([open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine)),
+and what happens to an [e-mail](domain-language.md#e-mail) with an attached PDF
+whose [mail_label](domain-language.md#mail_label) says promotions or spam
+([open question: e-mail with an attached PDF](open-questions.md#question-e-mail-with-an-attached-pdf)).
 
 ## Pipeline steps
 

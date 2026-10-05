@@ -252,15 +252,17 @@ photo from the user's phone.
 The [assets](#asset) that are trash. An asset on it is **blacklisted**.
 Blacklisted is a verdict on one asset, and it is clear-cut: an
 [advertisement](#advertisement) whose week of validity has passed, and
-[spam](#spam). A blacklisted asset could be deleted, so it is
-moved to the [quarantine](#quarantine).
+[spam](#spam).
 
 An asset is blacklisted in one of two ways:
 
 - **By a rule**: an [advertisement](#advertisement) whose week of validity has
   passed, and an [e-mail](#e-mail) whose [mail_label](#mail_label) says spam.
+  It could be deleted, so it is moved to the [quarantine](#quarantine).
 - **Because a model judged it**: [spam](#spam) that came through, which no
-  [mail_label](#mail_label) marks.
+  [mail_label](#mail_label) marks. It is listed for the [user](#user) as
+  something a model thinks is trash, and it is moved to the
+  [quarantine](#quarantine) only when he confirms it.
 
 An [e-mail](#e-mail) with an attached PDF is never blacklisted by its
 [mail_label](#mail_label) alone.
@@ -269,11 +271,19 @@ An [e-mail](#e-mail) with an attached PDF is never blacklisted by its
 
 `#quarantine`
 
-Where everything that could be deleted is moved. The [user](#user) can look
-through it, restore an [asset](#asset) or delete it permanently. What stays in
-the quarantine for 30 days is deleted permanently, with one exception: an asset
-[blacklisted](#blacklist) because a model judged it stays in the quarantine
-until the user confirms it. Moving an asset there writes
+Where everything that could be deleted is moved. There is one quarantine for
+all [sources](#source), and the [user](#user) looks through it in the app, in
+one place: he never has to open each mailbox or drive to see what is about to
+be deleted. He can restore an [asset](#asset) or delete it permanently.
+Everything in the quarantine is deleted permanently after 30 days unless it is
+restored, with no exception.
+
+An asset [blacklisted](#blacklist) because a model judged it is not in the
+quarantine. The same one place lists it as something a model thinks is trash;
+when the user confirms it, it is moved to the quarantine and follows the 30
+days like everything else.
+
+Moving an asset to the quarantine writes
 to its [source](#source), so the quarantine belongs to clean-up
 ([FEATURE-002](../backlog/BACKLOG.md)), not to the index.
 
