@@ -59,13 +59,18 @@ has to rule on is in `docs/concept/open-questions.md`.
   reviewed the earlier single plan. The split into documents, and the rewrite
   for local copies that came with it, have had no review yet.
 
-Do not start slice 0 (feature files) before the founder has named the concepts
-listed under "Words still to name" in `docs/concept/domain-language.md`: the
-feature files must use his words.
+Every concept has an agreed word now, so slice 0 (feature files) is no longer
+waiting for names. It still waits for the rulings in `open-questions.md` that
+change what the index does.
 
-**The frontend item is not planned.** Its two open questions (how a frontier
-model may help with the taxonomy; whether the taxonomy replaces `doc_type` and
-`person`) must be settled before slice 6 of the index is built.
+**The frontend item is not planned.** Its open questions (how a frontier model
+may help with the taxonomy, how an asset gets its context, which part the index
+builds) must be settled before slice 6 of the index is built.
+
+**Three rules for anything the founder reads**, learned the hard way: link
+every domain word to its definition, at its first mention in each paragraph;
+state a thing and never say who decided it, when, or what it replaced; never
+coin a word.
 
 **`AGENT_SIGNAL.md` carries an uncommitted fix** to the mic-watcher recipe, filed
 to the blueprint as pull request 86. Leave it uncommitted; it resolves when the
