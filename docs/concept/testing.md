@@ -304,14 +304,17 @@ number and no slice of the index makes them green. They are kept here so the
 wording of the [quarantine](domain-language.md#quarantine) is reviewed with the
 rest.
 
-- A [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset) is moved to the [quarantine](domain-language.md#quarantine)
-- Moving an [asset](domain-language.md#asset) to the [quarantine](domain-language.md#quarantine) needs no go for each asset
+- An [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) by a rule is moved to the [quarantine](domain-language.md#quarantine)
+- Moving an [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) by a rule to the [quarantine](domain-language.md#quarantine) needs no go for each asset
 - The [user](domain-language.md#user) can look through the [quarantine](domain-language.md#quarantine)
+- The [quarantine](domain-language.md#quarantine) shows the [assets](domain-language.md#asset) of all [sources](domain-language.md#source) in one place *(new)*
 - The [user](domain-language.md#user) can restore an [asset](domain-language.md#asset) from the [quarantine](domain-language.md#quarantine)
 - The [user](domain-language.md#user) can delete an [asset](domain-language.md#asset) in the [quarantine](domain-language.md#quarantine) permanently
-- An [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) by a rule that stayed in the [quarantine](domain-language.md#quarantine) for 30 days is deleted permanently
-- An [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) because a model judged it stays in the [quarantine](domain-language.md#quarantine) after 30 days, until the [user](domain-language.md#user) confirms it *(new)*
-- [Spam](domain-language.md#spam) a model judged is deleted permanently only after the [user](domain-language.md#user) confirms it in the [quarantine](domain-language.md#quarantine) *(new)*
+- An [asset](domain-language.md#asset) that stayed in the [quarantine](domain-language.md#quarantine) for 30 days is deleted permanently
+- An [asset](domain-language.md#asset) a model judged to be trash is not moved to the [quarantine](domain-language.md#quarantine) before the [user](domain-language.md#user) confirms it *(new)*
+- An [asset](domain-language.md#asset) a model judged to be trash is listed for the [user](domain-language.md#user) in the same place as the [quarantine](domain-language.md#quarantine) *(new)*
+- An [asset](domain-language.md#asset) a model judged to be trash is moved to the [quarantine](domain-language.md#quarantine) once the [user](domain-language.md#user) confirms it, and is deleted after 30 days like any other *(new)*
+- An [asset](domain-language.md#asset) a model judged to be trash that the [user](domain-language.md#user) never confirms is never deleted *(new)*
 - An [asset](domain-language.md#asset) restored from the [quarantine](domain-language.md#quarantine) is not deleted
 - An [asset](domain-language.md#asset) worth keeping is removed from a [source](domain-language.md#source) only when verified copies exist
 - A [non-keeper](domain-language.md#non-keeper) reaches the [quarantine](domain-language.md#quarantine) even when its [keeper](domain-language.md#keeper) is [whitelisted](domain-language.md#whitelist) *(provisional: [open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine))*

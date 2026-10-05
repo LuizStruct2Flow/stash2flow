@@ -43,6 +43,20 @@ between calls. And no id is defined for a
 If it is unstable, use the message's id plus the attachment's part number. For a
 body: the message's id plus "body".
 
+### Question: e-mail with an attached PDF
+
+`#question-e-mail-with-an-attached-pdf`
+
+**Question.** An [e-mail](domain-language.md#e-mail) has an attached PDF and
+its [mail_label](domain-language.md#mail_label) says promotions or spam. It is
+never [blacklisted](domain-language.md#blacklist) by its mail_label alone. Is
+it indexed fully, and which verdict does it get?
+
+**Recommendation.** It is treated like any other
+[e-mail](domain-language.md#e-mail): indexed fully, with a
+[local copy](domain-language.md#local-copy), and with no verdict until
+something else decides.
+
 ## Kept and trash
 
 Background:
@@ -52,17 +66,18 @@ Background:
 
 `#question-where-the-quarantine-is`
 
-**Question.** Where is the [quarantine](domain-language.md#quarantine): a place
-the app keeps, or one the [provider](domain-language.md#provider) already has?
-It must be able to hold an [asset](domain-language.md#asset)
-[blacklisted](domain-language.md#blacklist) because a model judged it until
-the [user](domain-language.md#user) confirms it, which a trash that empties by
-itself does not do.
+**Question.** The [user](domain-language.md#user) sees one
+[quarantine](domain-language.md#quarantine) in the app, for all
+[sources](domain-language.md#source). Where does an
+[asset](domain-language.md#asset) in it physically sit until it is deleted: in
+a place the app keeps, or in one the [provider](domain-language.md#provider)
+already has?
 
-**Recommendation.** Each provider's own trash. It already lets the
-[user](domain-language.md#user) restore an item and deletes it by itself after
-a period; the app then only shows what is in the quarantine. To verify per
-provider before relying on it: that the period is 30 days.
+**Recommendation.** In each [provider](domain-language.md#provider)'s own
+trash. It already lets the [user](domain-language.md#user) restore an item and
+deletes it by itself after a period; the app shows them together, as one
+[quarantine](domain-language.md#quarantine). To verify per provider before
+relying on it: that the period is 30 days.
 
 ### Question: whitelisted by default
 
