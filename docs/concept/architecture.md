@@ -191,7 +191,7 @@ This app differs, each time for a stated reason:
 | React or Next with Amplify | In the index item, one server-rendered page: the [duplicate report](domain-language.md#duplicate-report). | One page does not warrant a frontend. The frontend is its own item, [FEATURE-003](../doing/BACKLOG.md). |
 | AWS CDK | Server setup scripted in `infra/` | No cloud resources exist. |
 | CloudWatch observability | The "local app" recipe: logs on the [server](domain-language.md#server), [runs](domain-language.md#run) that can be queried, a notification | Nothing runs in AWS. |
-| CodeCommit | A public GitHub repository | The founder's choice. |
+| CodeCommit | A public GitHub repository | The app is open source. |
 
 ## Language choice
 

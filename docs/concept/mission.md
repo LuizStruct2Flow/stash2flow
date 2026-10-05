@@ -42,18 +42,17 @@ everything visible and searchable.
 
 `#four-steps`
 
-The founder's picture: many [sources](domain-language.md#source) are organized, deduplicated, cleansed and
-saved in one organized database that is constantly updated and never grows fat.
-New content goes through the same path every time, so the result is not a
+Many [sources](domain-language.md#source) are organized, deduplicated, cleansed
+and saved in one organized database that is constantly updated and never grows
+fat. New content goes through the same path every time, so the result is not a
 one-off tidy-up.
 
-Where the path ends, in the founder's words: "one place to look everything",
-"a single source of truth for all my [assets](domain-language.md#asset), that
-keeps all sources clean and thin". The app is that single source of truth, and
-it keeps every [source](domain-language.md#source) clean and thin. Cleaning up
-every mailbox and drive one by one is very hard, so the
-[user](domain-language.md#user) never has to: he looks in the app, in one
-place.
+The path ends with one place to look for everything. The app is the single
+source of truth for all the [user](domain-language.md#user)'s
+[assets](domain-language.md#asset), and it keeps every
+[source](domain-language.md#source) clean and thin. Cleaning up every mailbox
+and drive one by one is very hard, so the user never has to: he looks in the
+app, in one place.
 
 The app gets there in four items, in this order:
 
