@@ -301,7 +301,7 @@ and the founder decides about videos with real numbers.
 `#question-disk-encryption`
 
 **Question.** The [server](domain-language.md#server)'s disk will hold every
-private document so it must be encrypted. When and how is that ensured?
+private document, so it must be encrypted. When and how is that ensured?
 
 **Recommendation.** Encrypt it before slice 2 of the plan, the first slice
 that keeps [assets](domain-language.md#asset) on the server.
