@@ -35,7 +35,8 @@ deliberately not used.
 `#user`
 
 The person who runs the app and makes its choices: the [order of sources](#order-of-sources), the
-[keeper](#keeper), the [whitelist](#whitelist) and [blacklist](#blacklist), starting a [run](#run).
+[keeper](#keeper), the rules that make an [asset](#asset) [whitelisted](#whitelist) by default, what is
+restored from the [quarantine](#quarantine), starting a [run](#run).
 
 ### Server
 
@@ -156,9 +157,10 @@ part of an [asset](#asset)'s identity.
 `#asset`
 
 The unit that is indexed: one row. It is a file (in a cloud drive, a photo
-library or a folder), an [attachment](#attachment) or an [e-mail](#e-mail) (its indexed
-[message body](#message-body)). It is identified by its [location](#location), its
-[account](#account) and its [source_asset_id](#source_asset_id).
+library or a folder), an [attachment](#attachment) or an [e-mail](#e-mail). It is
+identified by its [location](#location), its [account](#account) and its
+[source_asset_id](#source_asset_id). Every asset is [whitelisted](#whitelist),
+[blacklisted](#blacklist) or neither yet.
 
 ### Asset record
 
@@ -184,7 +186,7 @@ What an [asset](#asset) consists of. The word is always bytes, never "content".
 `#local-copy`
 
 The copy of an [asset](#asset)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
-in the [stash](#stash).
+in the [stash](#stash). An [advertisement](#advertisement) has none.
 
 ### Stash
 
@@ -229,6 +231,39 @@ The best available date of the [asset](#asset). `asset_date_source` says where i
 from: the photo's own data, the PDF's creation date, the modification time, the
 photo library, or the date an e-mail was received.
 
+## What is kept and what is trash
+
+### Whitelist
+
+`#whitelist`
+
+The [assets](#asset) the [user](#user) keeps. An asset on it is **whitelisted**.
+Whitelisted is a verdict on one asset, of any kind and from any
+[source](#source); it is not a list of [senders](#sender). It is a default, not
+a guarantee: rules give it from where the asset came from. Example: a personal
+[e-mail](#e-mail) from a family member is usually whitelisted, and so is a
+photo from the user's phone.
+
+### Blacklist
+
+`#blacklist`
+
+The [assets](#asset) that are trash. An asset on it is **blacklisted**.
+Blacklisted is a verdict on one asset, and it is clear-cut: an
+[advertisement](#advertisement) whose week of validity has passed, and
+[spam](#spam) that came through. A blacklisted asset could be deleted, so it is
+moved to the [quarantine](#quarantine).
+
+### Quarantine
+
+`#quarantine`
+
+Where everything that could be deleted is moved. The [user](#user) can look
+through it, restore an [asset](#asset) or delete it permanently. What stays in
+the quarantine for 30 days is deleted permanently. Moving an asset there writes
+to its [source](#source), so the quarantine belongs to clean-up
+([FEATURE-002](../backlog/BACKLOG.md)), not to the index.
+
 ## Mailboxes
 
 ### E-mail
@@ -241,26 +276,30 @@ One message in a mailbox.
 
 `#sender`
 
-Who an [e-mail](#e-mail) comes from.
-
-### Whitelist
-
-`#whitelist`
-
-The [senders](#sender), kept by the [user](#user), whose [e-mails](#e-mail) are indexed.
-
-### Blacklist
-
-`#blacklist`
-
-The [senders](#sender), kept by the [user](#user), from whom nothing is indexed.
+Who an [e-mail](#e-mail) comes from. A sender is on neither side: the same
+online shop sends an invoice the [user](#user) keeps and an offer he does not.
+Each e-mail is judged by what it is.
 
 ### Advertisement
 
 `#advertisement`
 
-An [e-mail](#e-mail) the [user](#user) does not want indexed. It is told by its [sender](#sender) being on the
-[blacklist](#blacklist), never by a no-reply address.
+An [e-mail](#e-mail) that advertises something, such as an offer from an online
+shop. It is told by the [provider](#provider)'s own labels, never by a no-reply
+address. It is valid for one week after it arrived, whether or not the
+[user](#user) was interested; after that it is [blacklisted](#blacklist). The
+[server](#server) keeps only its [sender](#sender), subject, date and label: no
+[local copy](#local-copy), no [description](#description), no other
+[pipeline](#pipeline) step.
+
+### Spam
+
+`#spam`
+
+An unsolicited [e-mail](#e-mail) the [user](#user) does not want. The
+[provider](#provider) marks most of it as spam. Spam that came through is spam
+the provider did not mark; a model classifies it. Spam is
+[blacklisted](#blacklist).
 
 ### Attachment
 
@@ -273,16 +312,9 @@ inside the e-mail's text, such as a logo, is not an attachment.
 
 `#message-body`
 
-The text of an [e-mail](#e-mail). Which bodies are indexed is open:
-[open question: whitelist and official senders](open-questions.md#question-whitelist-and-official-senders).
-
-### Official sender and keyword
-
-`#official-sender-and-keyword`
-
-Two earlier lists that said which [message bodies](#message-body) are indexed: senders that are
-official institutions, and words to look for. Whether they remain next to the
-[whitelist](#whitelist) is the same open question as for the message body.
+The text of an [e-mail](#e-mail). It is indexed for every e-mail that is
+neither [advertisement](#advertisement) nor [spam](#spam):
+[open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully).
 
 ## Runs
 
@@ -312,7 +344,7 @@ the [cursor](#cursor).
 `#vanished`
 
 An [asset](#asset) that is no longer in its [source](#source). The row stays, and its `deleted_at` is
-set. The word is vanished, because the app never deletes.
+set. The word is vanished, because the index never deletes.
 
 ### Ledger
 
@@ -335,7 +367,8 @@ The message sent when a [run](#run) finishes.
 `#baseline`
 
 The figures recorded at the first full [run](#run) of a [source](#source) and kept unchanged: what
-the user had before organizing and cleaning up.
+the user had before organizing and cleaning up, including how many
+[assets](#asset) were [blacklisted](#blacklist).
 
 ## The pipeline
 
@@ -343,7 +376,8 @@ the user had before organizing and cleaning up.
 
 `#pipeline`
 
-The steps every [asset](#asset) goes through.
+The steps an [asset](#asset) goes through. An [advertisement](#advertisement) is
+recorded and goes through none of the later steps.
 
 ### Completed steps
 
@@ -556,8 +590,8 @@ whose text holds those words.
 | cloud | [source](#source), [location](#location), [provider](#provider) | "Cloud" is not a term. |
 | owner, for the machine that reads a [source](#source) | [reader](#reader) | "Owner" reads as a person. The machine is the reader. |
 | type | [kind](#kind), [doc_type](#doc_type), [ext](#ext) | "Type" meant three things. |
-| deleted | [vanished](#vanished) | The app never deletes. |
-| backend, or the machine's model name | [server](#server) | One word for the machine. |
+| deleted, for an [asset](#asset) that is gone from its [source](#source) | [vanished](#vanished) | The index never deletes. Only what is in the [quarantine](#quarantine) is deleted. |
+| a whitelisted or blacklisted [sender](#sender) | a [whitelisted](#whitelist) or [blacklisted](#blacklist) [asset](#asset) | The verdict is on the asset. The same sender sends what is kept and what is trash. || backend, or the machine's model name | [server](#server) | One word for the machine. |
 | content | [bytes](#bytes) | One word. |
 | dup, dups | [duplicate](#duplicate) | `dups` is only a command's name. |
 | near, for geography | [place](#place) | Near is for [duplicates](#duplicate). Searching photos near a place is not part of the index item. |

@@ -27,7 +27,10 @@ An asset that fails is recorded in the run's errors and the run goes on. The
 When a [run](domain-language.md#run) finishes, a
 [summary notification](domain-language.md#summary-notification) reports new
 [assets](domain-language.md#asset), new [duplicates](domain-language.md#duplicate)
-and errors. Through which channel it is sent is open:
+and errors. For a mailbox it also counts the
+[advertisements](domain-language.md#advertisement) and the
+[spam](domain-language.md#spam) it recorded, and the assets that are now
+[blacklisted](domain-language.md#blacklist). Through which channel it is sent is open:
 [open question: notification channel](open-questions.md#question-notification-channel).
 
 ## Starting a run
@@ -126,11 +129,59 @@ An [asset](domain-language.md#asset) that is no longer in its
 Whether [vanished](domain-language.md#vanished) assets show up in search is open:
 [open question: vanished in search](open-questions.md#question-vanished-in-search).
 
+## Whitelisted, blacklisted or neither
+
+`#whitelisted-blacklisted-or-neither`
+
+Every [asset](domain-language.md#asset), from every
+[source](domain-language.md#source), is
+[whitelisted](domain-language.md#whitelist),
+[blacklisted](domain-language.md#blacklist) or neither yet. The verdict is on
+the asset, never on a [sender](domain-language.md#sender) or a source as a
+whole.
+
+| Verdict | Meaning | How an [asset](domain-language.md#asset) gets it |
+|---|---|---|
+| [whitelisted](domain-language.md#whitelist) | kept | By default, from rules about where the asset came from. A personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from the [user](domain-language.md#user)'s phone. It is a default, not a guarantee. |
+| [blacklisted](domain-language.md#blacklist) | trash | Clear-cut: an [advertisement](domain-language.md#advertisement) that arrived more than one week ago, and [spam](domain-language.md#spam) that came through. |
+| neither | not judged yet | Everything else, for example an invoice from an online shop, or an advertisement in its week of validity. |
+
+- The week of validity of an
+  [advertisement](domain-language.md#advertisement) is a rule in code: one week
+  after it arrived, whether or not the [user](domain-language.md#user) was
+  interested.
+- The index only records the verdict. It deletes nothing and moves nothing.
+- Whatever could be deleted is moved to the
+  [quarantine](domain-language.md#quarantine), where the
+  [user](domain-language.md#user) restores it or deletes it permanently, and
+  where it is deleted after 30 days. That writes to a
+  [source](domain-language.md#source), so it belongs to clean-up
+  ([FEATURE-002](../backlog/BACKLOG.md)), which is parked:
+  [nothing deleted without a go](principles.md#nothing-deleted-without-a-go).
+
+Open points: which rules make an [asset](domain-language.md#asset) whitelisted
+by default
+([open question: whitelisted by default](open-questions.md#question-whitelisted-by-default)),
+where the [quarantine](domain-language.md#quarantine) is
+([open question: where the quarantine is](open-questions.md#question-where-the-quarantine-is)),
+and whether a whitelisted asset can still reach it
+([open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine)).
+
 ## Pipeline steps
 
 `#pipeline-steps`
 
-Every [asset](domain-language.md#asset) goes through the same
+An [e-mail](domain-language.md#e-mail) is first told apart: is it an
+[advertisement](domain-language.md#advertisement),
+[spam](domain-language.md#spam) or neither? The
+[provider](domain-language.md#provider)'s labels decide first, and a model
+classifies only what they leave unclear. An advertisement or spam stops there:
+its [sender](domain-language.md#sender), subject, date and label are recorded,
+and it gets no [local copy](domain-language.md#local-copy) and no further step.
+The rules are in
+[each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
+
+Every other [asset](domain-language.md#asset) goes through the same
 [pipeline](domain-language.md#pipeline), in this order:
 
 1. **[Discovery](domain-language.md#discovery).**
@@ -231,12 +282,13 @@ when [assets](domain-language.md#asset) are already indexed. So:
 | About | What is kept |
 |---|---|
 | Each [source](domain-language.md#source) | [location](domain-language.md#location), [account](domain-language.md#account), [reader](domain-language.md#reader), [cursor](domain-language.md#cursor), [checkpoint](domain-language.md#checkpoint), whether it is enabled, when its last [run](domain-language.md#run) finished, its rank in the [order of sources](domain-language.md#order-of-sources) |
-| Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [issuer](domain-language.md#issuer); its [persons](domain-language.md#person), which are [tags](domain-language.md#tag), so there can be several; coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject and thread; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
+| Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [issuer](domain-language.md#issuer); its [persons](domain-language.md#person), which are [tags](domain-language.md#tag), so there can be several; coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [e-mail](domain-language.md#e-mail) and an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject, thread and the [provider](domain-language.md#provider)'s labels; whether it is [whitelisted](domain-language.md#whitelist), [blacklisted](domain-language.md#blacklist) or neither; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
 | Text | the [OCR text](domain-language.md#ocr-text) per page, searchable without accents and tolerant of misreadings |
 | [Embeddings](domain-language.md#embedding) | per [asset](domain-language.md#asset), with the name of the model that made them |
 | Each [duplicate group](domain-language.md#duplicate-group) | [exact](domain-language.md#exact) or [near](domain-language.md#near), the [keeper](domain-language.md#keeper), [reviewed](domain-language.md#reviewed) or not |
 | Each [run](domain-language.md#run) | start, finish, counts of new, changed and [vanished](domain-language.md#vanished) [assets](domain-language.md#asset), errors |
-| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, the [whitelist](domain-language.md#whitelist) and the [blacklist](domain-language.md#blacklist) |
+| Each [advertisement](domain-language.md#advertisement) | only its [sender](domain-language.md#sender), subject, date and label, and whether it is [blacklisted](domain-language.md#blacklist) |
+| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, the rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default |
 | The [baseline](domain-language.md#baseline) | see [measuring before and after](mission.md#measuring-before-and-after) |
 
 ## Duplicates

@@ -51,10 +51,10 @@ The app gets there in four items, in this order:
 
 | Step | Item | What it does | State |
 |---|---|---|---|
-| 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a [local copy](domain-language.md#local-copy) of each [asset](domain-language.md#asset) on the [server](domain-language.md#server), makes everything searchable by its text, and groups [duplicates](domain-language.md#duplicate). | Planned, no code yet |
+| 1. Index | [FEATURE-001](../doing/BACKLOG.md) | Reads every [source](domain-language.md#source), keeps a [local copy](domain-language.md#local-copy) of each [asset](domain-language.md#asset) on the [server](domain-language.md#server), makes everything searchable by its text, groups [duplicates](domain-language.md#duplicate), and records which assets are [blacklisted](domain-language.md#blacklist). | Planned, no code yet |
 | 2. Organize | [FEATURE-003](../doing/BACKLOG.md) | A frontend where every [asset](domain-language.md#asset) is arranged in a [taxonomy](domain-language.md#taxonomy) the [user](domain-language.md#user) shapes and carries [tags](domain-language.md#tag) that find it outside the taxonomy, plus a search over all content. | To be planned |
 | 3. Clean copy | [FEATURE-004](../backlog/BACKLOG.md) | Writes the organized content to one place the [user](domain-language.md#user) chooses, and keeps it current. | Parked until the frontend is accepted |
-| 4. Clean up | [FEATURE-002](../backlog/BACKLOG.md) | Removes what is unnecessary from the [sources](domain-language.md#source), only with the [user](domain-language.md#user)'s go and only when verified copies exist. | Parked until the clean copy exists |
+| 4. Clean up | [FEATURE-002](../backlog/BACKLOG.md) | Moves what could be deleted from the [sources](domain-language.md#source) to the [quarantine](domain-language.md#quarantine). There the [user](domain-language.md#user) restores an [asset](domain-language.md#asset) or deletes it permanently, and what stays for 30 days is deleted. An asset worth keeping is removed from a source only when verified copies exist. | Parked until the clean copy exists |
 
 The rest of the concept documents describe step 1, the index. It has four
 goals:
@@ -83,9 +83,9 @@ measured: the [user](domain-language.md#user)'s own. The app measures it before 
 
 - **Before.** The first full [run](domain-language.md#run) of each [source](domain-language.md#source) records how many [assets](domain-language.md#asset) and how
   many [bytes](domain-language.md#bytes) that source holds. Once [duplicates](domain-language.md#duplicate) are grouped, it records what
-  share of them are duplicates. For [e-mail](domain-language.md#e-mail) it also records how many messages
-  come from [senders](domain-language.md#sender) that end up on the
-  [blacklist](domain-language.md#blacklist). These figures are kept unchanged
+  share of them are duplicates. It also records how many assets are
+  [blacklisted](domain-language.md#blacklist),
+  [advertisements](domain-language.md#advertisement) included. These figures are kept unchanged
   afterwards. They are the [baseline](domain-language.md#baseline).
 - **After.** The same figures, read again once the user has organized and
   cleaned up. This belongs to the later steps, not to the index.
@@ -102,7 +102,9 @@ Which figures exactly is still open:
 `#what-the-app-is-not`
 
 - **Not a one-off tidy-up.** New content goes through the same path every time.
-- **Not something that deletes by itself.** See
+- **Not something that deletes behind the [user](domain-language.md#user)'s
+  back.** Whatever could be deleted waits 30 days in the
+  [quarantine](domain-language.md#quarantine), where he can restore it. See
   [nothing is deleted without a go](principles.md#nothing-deleted-without-a-go).
 - **Not a cloud service.** It is self-hosted and nothing leaves the user's
   network. See

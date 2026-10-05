@@ -11,48 +11,23 @@ here.
 
 ## E-mail
 
-Background: [senders decide](sources.md#senders-decide).
+Background:
+[each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
 
-### Question: whitelist and official senders
+### Question: e-mail indexed fully
 
-`#question-whitelist-and-official-senders`
+`#question-e-mail-indexed-fully`
 
-**Question.** Is the [whitelist](domain-language.md#whitelist) the same list as
-the earlier list of
-[official senders](domain-language.md#official-sender-and-keyword), whose
-[message bodies](domain-language.md#message-body) are indexed, or a second list
-beside it?
+**Question.** Is every [e-mail](domain-language.md#e-mail) that is neither
+[advertisement](domain-language.md#advertisement) nor
+[spam](domain-language.md#spam) indexed fully, as an
+[asset](domain-language.md#asset): its
+[message body](domain-language.md#message-body) and its
+[attachments](domain-language.md#attachment)? The documents already work with
+this rule, and with spam recorded the same way as an advertisement.
 
-**Recommendation.** One list. A whitelisted [sender](domain-language.md#sender)'s
-[attachments](domain-language.md#attachment) and message body are both indexed.
-[Keywords](domain-language.md#official-sender-and-keyword) then no longer decide
-anything; a keyword that is found becomes one more hint when sorting senders.
-
-### Question: unknown senders
-
-`#question-unknown-senders`
-
-**Question.** What happens to an [e-mail](domain-language.md#e-mail) from a
-[sender](domain-language.md#sender) on neither list?
-
-**Recommendation.** Nothing from that sender is indexed yet. The
-[run](domain-language.md#run) summary lists the new senders, each with a count
-and the [provider](domain-language.md#provider)'s hints as a suggested sorting,
-and the [user](domain-language.md#user) puts each on one list. The first e-mail
-run therefore starts with sorting senders, before anything is indexed. A sender
-put on the [whitelist](domain-language.md#whitelist) has its earlier e-mails
-indexed by the next run.
-
-### Question: blacklisted after indexing
-
-`#question-blacklisted-after-indexing`
-
-**Question.** A [sender](domain-language.md#sender) is put on the
-[blacklist](domain-language.md#blacklist) after some of its
-[e-mails](domain-language.md#e-mail) were indexed. What happens to those?
-
-**Recommendation.** Nothing new is indexed. What is already indexed stays until
-the [user](domain-language.md#user) says otherwise.
+**Recommendation.** Yes. No list of [senders](domain-language.md#sender) and no
+list of words then decides what is indexed.
 
 ### Question: attachment id
 
@@ -67,6 +42,50 @@ between calls. And no id is defined for a
 **Recommendation.** Verify it when [e-mail](domain-language.md#e-mail) is built.
 If it is unstable, use the message's id plus the attachment's part number. For a
 body: the message's id plus "body".
+
+## Kept and trash
+
+Background:
+[whitelisted, blacklisted or neither](how-it-works.md#whitelisted-blacklisted-or-neither).
+
+### Question: where the quarantine is
+
+`#question-where-the-quarantine-is`
+
+**Question.** Where is the [quarantine](domain-language.md#quarantine): a place
+the app keeps, or one the [provider](domain-language.md#provider) already has?
+
+**Recommendation.** Each provider's own trash. It already lets the
+[user](domain-language.md#user) restore an item and deletes it by itself after
+a period; the app then only shows what is in the quarantine. To verify per
+provider before relying on it: that the period is 30 days.
+
+### Question: whitelisted by default
+
+`#question-whitelisted-by-default`
+
+**Question.** Which rules make an [asset](domain-language.md#asset)
+[whitelisted](domain-language.md#whitelist) by default, and who keeps them?
+
+**Recommendation.** Rules the [user](domain-language.md#user) keeps: by
+[sender](domain-language.md#sender), when the sender is a
+[person](domain-language.md#person) on the user's list, and by
+[source](domain-language.md#source), for example the photo library of his
+phone.
+
+### Question: whitelisted asset in the quarantine
+
+`#question-whitelisted-asset-in-the-quarantine`
+
+**Question.** Can a [whitelisted](domain-language.md#whitelist)
+[asset](domain-language.md#asset) still reach the
+[quarantine](domain-language.md#quarantine), for example as the
+[non-keeper](domain-language.md#non-keeper) of a
+[duplicate group](domain-language.md#duplicate-group)?
+
+**Recommendation.** Yes. A [duplicate](domain-language.md#duplicate) is trash
+even when the [keeper](domain-language.md#keeper) is whitelisted. Whitelisting
+protects what the asset is, not every copy of it.
 
 ## Duplicates
 
@@ -341,9 +360,10 @@ Background: [measuring before and after](mission.md#measuring-before-and-after).
 **Recommendation.** Per [source](domain-language.md#source):
 [assets](domain-language.md#asset), [bytes](domain-language.md#bytes),
 [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate),
-[near](domain-language.md#near) duplicates, and for
-[e-mail](domain-language.md#e-mail) the blacklisted share. Overall: the number
-of sources an asset is found in.
+[near](domain-language.md#near) duplicates, and
+[blacklisted](domain-language.md#blacklist) assets,
+[advertisements](domain-language.md#advertisement) included. Overall: the
+number of sources an asset is found in.
 
 ## Order of work
 

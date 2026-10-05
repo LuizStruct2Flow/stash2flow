@@ -117,6 +117,7 @@ replay a captured answer:
 |---|---|
 | OCR | Captured [OCR text](domain-language.md#ocr-text) per fixture file, with where it came from: engine, version, date, and the [sha256](domain-language.md#md5-and-sha256) of the input |
 | [Description](domain-language.md#description) | Captured outputs with where they came from; the domain checks the shape ([doc_type](domain-language.md#doc_type) in the vocabulary, one line) |
+| Classifying an [e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam) | Captured answers per fixture e-mail, with where they came from |
 | [Embeddings](domain-language.md#embedding) | Captured vectors for fixture files and fixture queries, photo and query text from the same model |
 | [Provider](domain-language.md#provider) APIs | Recorded responses with ids and names replaced |
 | `osxphotos` | Recorded output for a small made-up library |
@@ -132,7 +133,10 @@ look-alikes:
   names, invented [issuers](domain-language.md#issuer) and invalid ids, each
   also as an image-only PDF and as a JPG;
 - non-personal photos, with resized, recompressed and HEIC copies;
-- invented [senders](domain-language.md#sender).
+- invented [senders](domain-language.md#sender), with made-up
+  [e-mails](domain-language.md#e-mail): an invoice and an offer from the same
+  invented online shop, a personal e-mail, and
+  [spam](domain-language.md#spam).
 
 Real documents are used only on the [server](domain-language.md#server): for the
 benchmarks, of which only totals are committed, and for the founder's
@@ -170,9 +174,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - † means checked by tests only: the user cannot see it in the app.
 - *provisional* means the wording depends on an open question, linked next to
   it, and is fixed when that is ruled.
-- *new* means the title follows from the decision that the
-  [server](domain-language.md#server) keeps a
-  [local copy](domain-language.md#local-copy) and has not been reviewed yet.
+- *new* means the founder has not reviewed the title yet.
 
 **Search**
 
@@ -237,7 +239,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [8] The [duplicate report](domain-language.md#duplicate-report) shows thumbnails and paths side by side
 - [8] The [duplicate report](domain-language.md#duplicate-report) refuses a change without valid credentials
 - [8] [Assets](domain-language.md#asset) in a [shared account](domain-language.md#shared-account) are flagged as also belonging to someone else
-- [8] † Nothing is ever deleted or moved automatically
+- [8] † The index deletes nothing and moves nothing
 - [9] The same photo as JPG in OneDrive and HEIC in iCloud Photos lands in one [near](domain-language.md#near) group
 
 **Collectors**
@@ -249,21 +251,29 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 **E-mail**
 
-- [5] Nothing from a [sender](domain-language.md#sender) on the [blacklist](domain-language.md#blacklist) is indexed, [attachments](domain-language.md#attachment) included
-- [5] An [attachment](domain-language.md#attachment) from a [sender](domain-language.md#sender) on the [whitelist](domain-language.md#whitelist) is indexed as an [asset](domain-language.md#asset) and goes through the same [pipeline](domain-language.md#pipeline)
-- [5] A no-reply [sender](domain-language.md#sender) is not taken for [advertisement](domain-language.md#advertisement): an invoice from a whitelisted no-reply sender is indexed
+- [5] The [provider](domain-language.md#provider)'s labels decide first: an [e-mail](domain-language.md#e-mail) filed under promotions is an [advertisement](domain-language.md#advertisement) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) that carries an unsubscribe header is an [advertisement](domain-language.md#advertisement) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) the [provider](domain-language.md#provider) marked as spam is [spam](domain-language.md#spam) *(new)*
+- [5] A model classifies only an [e-mail](domain-language.md#e-mail) the [provider](domain-language.md#provider)'s labels leave unclear *(new)*
+- [5] An [advertisement](domain-language.md#advertisement) is recorded with its [sender](domain-language.md#sender), subject, date and label only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description), no other [pipeline](domain-language.md#pipeline) step *(new)*
+- [5] An [advertisement](domain-language.md#advertisement) that arrived less than one week ago is neither [whitelisted](domain-language.md#whitelist) nor [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] An [advertisement](domain-language.md#advertisement) that arrived more than one week ago is [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] [Spam](domain-language.md#spam) is [blacklisted](domain-language.md#blacklist) and recorded the same way as an [advertisement](domain-language.md#advertisement) *(provisional: [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully))*
+- [5] An [e-mail](domain-language.md#e-mail) that is neither [advertisement](domain-language.md#advertisement) nor [spam](domain-language.md#spam) is indexed fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) *(provisional: same question)*
+- [5] An [attachment](domain-language.md#attachment) is indexed as an [asset](domain-language.md#asset) and goes through the same [pipeline](domain-language.md#pipeline)
+- [5] The same [sender](domain-language.md#sender) can send an invoice that is indexed fully and an offer that is an [advertisement](domain-language.md#advertisement) *(new)*
+- [5] A no-reply [sender](domain-language.md#sender) is not taken for [advertisement](domain-language.md#advertisement): an invoice from a no-reply sender is indexed fully
 - [5] A picture inside an [e-mail](domain-language.md#e-mail)'s text, such as a logo, is not an [attachment](domain-language.md#attachment)
 - [5] An [attachment](domain-language.md#attachment)'s [asset_date](domain-language.md#asset_date) is the date received
 - [5] An [attachment](domain-language.md#attachment)'s [source_link](domain-language.md#source_link) opens its Gmail thread
-- [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) on the [whitelist](domain-language.md#whitelist) has its body indexed *(provisional: [open question: whitelist and official senders](open-questions.md#question-whitelist-and-official-senders))*
-- [5] Nothing from a [sender](domain-language.md#sender) on neither list is indexed *(provisional: [open question: unknown senders](open-questions.md#question-unknown-senders))*
-- [5] The [run](domain-language.md#run) summary lists the new [senders](domain-language.md#sender) with a count and the [provider](domain-language.md#provider)'s hints *(provisional: same question)*
-- [5] After the [user](domain-language.md#user) puts a [sender](domain-language.md#sender) on the [whitelist](domain-language.md#whitelist), the next [run](domain-language.md#run) indexes that sender's earlier [e-mails](domain-language.md#e-mail) too *(provisional: same question)*
-- [5] The first [e-mail](domain-language.md#e-mail) [run](domain-language.md#run) indexes nothing: it lists the [senders](domain-language.md#sender) for the [user](domain-language.md#user) to sort *(provisional: same question)*
+- [5] A personal [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) who is a [person](domain-language.md#person) on the [user](domain-language.md#user)'s list is [whitelisted](domain-language.md#whitelist) by default *(provisional: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default))*
+- [5] † A [blacklisted](domain-language.md#blacklist) [e-mail](domain-language.md#e-mail) stays in its mailbox: the index only records the verdict *(new)*
+- [5] The [run](domain-language.md#run) summary counts the [advertisements](domain-language.md#advertisement), the [spam](domain-language.md#spam) and the [blacklisted](domain-language.md#blacklist) [assets](domain-language.md#asset) *(new)*
 
 **Photos**
 
 - [9] Albums, [persons](domain-language.md#person), favorites and [place](domain-language.md#place) from iCloud Photos are kept
+- [9] A photo from the [user](domain-language.md#user)'s phone is [whitelisted](domain-language.md#whitelist) by default *(provisional: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default))*
 - [10] Photos are found by month
 - [10] Photos are found by what they show: "beach" finds a beach photo whose name says nothing
 
@@ -277,3 +287,23 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 No titles yet. They are written once the figures are ruled:
 [open question: baseline figures](open-questions.md#question-baseline-figures).
+
+## Clean-up scenario titles
+
+`#clean-up-scenario-titles`
+
+**These are not part of the index.** They belong to clean-up
+([FEATURE-002](../backlog/BACKLOG.md)), which is parked, so they carry no slice
+number and no slice of the index makes them green. They are kept here so the
+wording of the [quarantine](domain-language.md#quarantine) is reviewed with the
+rest.
+
+- A [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset) is moved to the [quarantine](domain-language.md#quarantine)
+- Moving an [asset](domain-language.md#asset) to the [quarantine](domain-language.md#quarantine) needs no go for each asset
+- The [user](domain-language.md#user) can look through the [quarantine](domain-language.md#quarantine)
+- The [user](domain-language.md#user) can restore an [asset](domain-language.md#asset) from the [quarantine](domain-language.md#quarantine)
+- The [user](domain-language.md#user) can delete an [asset](domain-language.md#asset) in the [quarantine](domain-language.md#quarantine) permanently
+- An [asset](domain-language.md#asset) that stayed in the [quarantine](domain-language.md#quarantine) for 30 days is deleted permanently
+- An [asset](domain-language.md#asset) restored from the [quarantine](domain-language.md#quarantine) is not deleted
+- An [asset](domain-language.md#asset) worth keeping is removed from a [source](domain-language.md#source) only when verified copies exist
+- A [non-keeper](domain-language.md#non-keeper) reaches the [quarantine](domain-language.md#quarantine) even when its [keeper](domain-language.md#keeper) is [whitelisted](domain-language.md#whitelist) *(provisional: [open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine))*
