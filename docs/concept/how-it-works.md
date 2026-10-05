@@ -30,7 +30,11 @@ When a [run](domain-language.md#run) finishes, a
 and errors. For a mailbox it also counts the
 [advertisements](domain-language.md#advertisement) and the
 [spam](domain-language.md#spam) it recorded, and the assets that are now
-[blacklisted](domain-language.md#blacklist). Through which channel it is sent is open:
+[blacklisted](domain-language.md#blacklist), and it says how many
+[senders](domain-language.md#sender) wait for the
+[user](domain-language.md#user)'s decision whether they are
+[trusted](domain-language.md#trusted). The run's summary in the app lists
+those senders. Through which channel the notification is sent is open:
 [open question: notification channel](open-questions.md#question-notification-channel).
 
 ## Starting a run
@@ -140,6 +144,15 @@ Every [asset](domain-language.md#asset), from every
 the asset, never on a [sender](domain-language.md#sender) or a source as a
 whole.
 
+The verdict is not the same as trust. Whether a
+[source](domain-language.md#source) or a [sender](domain-language.md#sender)
+is [trusted](domain-language.md#trusted) decides whether an
+[asset](domain-language.md#asset) is read; it gives no verdict. An asset from a
+trusted sender can be [whitelisted](domain-language.md#whitelist),
+[blacklisted](domain-language.md#blacklist) or neither, and an
+[e-mail](domain-language.md#e-mail) from a sender who is not trusted is not
+blacklisted for that reason.
+
 | Verdict | Meaning | How an [asset](domain-language.md#asset) gets it |
 |---|---|---|
 | [whitelisted](domain-language.md#whitelist) | kept | By default, from rules about where the asset came from. A personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from the [user](domain-language.md#user)'s phone. It is a default, not a guarantee. |
@@ -201,7 +214,42 @@ recorded, and it gets no [local copy](domain-language.md#local-copy), no
 The rules are in
 [each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
 
-Every other [asset](domain-language.md#asset) goes through the same
+Then its [sender](domain-language.md#sender) decides whether the
+[e-mail](domain-language.md#e-mail) is read. The rule is
+[who is trusted](sources.md#who-is-trusted).
+
+- **The [sender](domain-language.md#sender) is
+  [trusted](domain-language.md#trusted)**: the
+  [user](domain-language.md#user) has written to it himself, or has marked it
+  as trusted. The [e-mail](domain-language.md#e-mail)'s
+  [message body](domain-language.md#message-body) and its
+  [attachments](domain-language.md#attachment) go through the
+  [pipeline](domain-language.md#pipeline) below.
+- **The [user](domain-language.md#user) has never dealt with the
+  [sender](domain-language.md#sender)**: the
+  [e-mail](domain-language.md#e-mail) stops here. Its sender, subject, date and
+  [mail_label](domain-language.md#mail_label) are recorded, with no
+  [local copy](domain-language.md#local-copy) and no further step, and the
+  sender is listed for the user. He says once whether he trusts it.
+- **The [user](domain-language.md#user) said the
+  [sender](domain-language.md#sender) is not
+  [trusted](domain-language.md#trusted)**: the
+  [e-mail](domain-language.md#e-mail) is recorded the same way, and the sender
+  is not listed again.
+
+The first [run](domain-language.md#run) over a mailbox therefore starts with
+the [senders](domain-language.md#sender): the
+[user](domain-language.md#user) sees them, those he has written to already
+[trusted](domain-language.md#trusted), and decides the rest once per sender.
+While an [e-mail](domain-language.md#e-mail) is read nothing is loaded from the
+internet: no remote images and no following of links.
+
+An [asset](domain-language.md#asset) from the
+[user](domain-language.md#user)'s own drives and photo libraries comes from a
+[trusted](domain-language.md#trusted) [source](domain-language.md#source) and
+is read fully.
+
+Every [asset](domain-language.md#asset) that is read goes through the same
 [pipeline](domain-language.md#pipeline), in this order:
 
 1. **[Discovery](domain-language.md#discovery).**
@@ -263,6 +311,21 @@ Every other [asset](domain-language.md#asset) goes through the same
     [asset](domain-language.md#asset) is grouped with the assets that are the same.
     See [below](#duplicates).
 
+**Reading runs in isolation.** Every step that takes text, pictures or
+metadata out of an [asset](domain-language.md#asset)'s
+[bytes](domain-language.md#bytes) (the [phash](domain-language.md#phash), the
+metadata, the text) runs in a part of the app that has no network access and
+no access to the [providers](domain-language.md#provider)' access tokens or to
+the database. Nothing inside an asset is ever run: no macro, no script, no
+executable. This holds for every asset, also one from a
+[trusted](domain-language.md#trusted) [source](domain-language.md#source) or
+[sender](domain-language.md#sender):
+[the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
+Whether a file is refused for its size or its number of pages, and whether it
+is checked by an antivirus scan before it is read, is open:
+[open question: limits on size and pages](open-questions.md#question-limits-on-size-and-pages),
+[open question: antivirus scan](open-questions.md#question-antivirus-scan).
+
 **Videos** get their metadata and no OCR. They are not fetched: only their
 [provider hash](domain-language.md#provider-hash) is stored, so the same video
 at two different [providers](domain-language.md#provider) is not recognised as
@@ -308,7 +371,9 @@ when [assets](domain-language.md#asset) are already indexed. So:
 | Each [duplicate group](domain-language.md#duplicate-group) | [exact](domain-language.md#exact) or [near](domain-language.md#near), the [keeper](domain-language.md#keeper), [reviewed](domain-language.md#reviewed) or not |
 | Each [run](domain-language.md#run) | start, finish, counts of new, changed and [vanished](domain-language.md#vanished) [assets](domain-language.md#asset), errors |
 | Each [advertisement](domain-language.md#advertisement) and each [spam](domain-language.md#spam) e-mail | only its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label), and whether it is [blacklisted](domain-language.md#blacklist) |
-| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, the rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default |
+| Each [e-mail](domain-language.md#e-mail) whose [sender](domain-language.md#sender) is not [trusted](domain-language.md#trusted) | only its sender, subject, date and [mail_label](domain-language.md#mail_label) |
+| Each [sender](domain-language.md#sender) | whether the [user](domain-language.md#user) has written to it, and his decision whether it is [trusted](domain-language.md#trusted), if he has made one |
+| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted), the rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default |
 | The [baseline](domain-language.md#baseline) | see [measuring before and after](mission.md#measuring-before-and-after) |
 
 ## Duplicates

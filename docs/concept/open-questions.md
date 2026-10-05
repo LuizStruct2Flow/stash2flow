@@ -14,20 +14,35 @@ here.
 Background:
 [each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
 
-### Question: e-mail indexed fully
+### Question: e-mails recorded before their sender was trusted
 
-`#question-e-mail-indexed-fully`
+`#question-e-mails-recorded-before-their-sender-was-trusted`
 
-**Question.** Is every [e-mail](domain-language.md#e-mail) that is neither
-[advertisement](domain-language.md#advertisement) nor
-[spam](domain-language.md#spam) indexed fully, as an
-[asset](domain-language.md#asset): its
-[message body](domain-language.md#message-body) and its
-[attachments](domain-language.md#attachment)? The documents already work with
-this rule.
+**Question.** Of an [e-mail](domain-language.md#e-mail) from a
+[sender](domain-language.md#sender) the [user](domain-language.md#user) has
+never dealt with, only four things are recorded. When he then says the sender
+is [trusted](domain-language.md#trusted), are the e-mails already recorded
+read, and when?
 
-**Recommendation.** Yes. No list of [senders](domain-language.md#sender) and no
-list of words then decides what is indexed.
+**Recommendation.** Yes, at the next [run](domain-language.md#run) of that
+mailbox, without the [user](domain-language.md#user) asking again. His decision
+is what they waited for.
+
+### Question: spam from a sender the user has not decided on
+
+`#question-spam-from-a-sender-the-user-has-not-decided-on`
+
+**Question.** [Spam](domain-language.md#spam) that came through mostly comes
+from a [sender](domain-language.md#sender) the
+[user](domain-language.md#user) has never dealt with, and such an
+[e-mail](domain-language.md#e-mail) is not read. What is a model asked about
+it?
+
+**Recommendation.** Nothing. A model is asked only about an
+[e-mail](domain-language.md#e-mail) that was read. An e-mail from a
+[sender](domain-language.md#sender) the [user](domain-language.md#user) has not
+decided on waits for his decision on the sender, and gets no verdict until
+then.
 
 ### Question: attachment id
 
@@ -50,12 +65,92 @@ body: the message's id plus "body".
 **Question.** An [e-mail](domain-language.md#e-mail) has an attached PDF and
 its [mail_label](domain-language.md#mail_label) says promotions or spam. It is
 never [blacklisted](domain-language.md#blacklist) by its mail_label alone. Is
-it indexed fully, and which verdict does it get?
+it indexed fully, and which verdict does it get? Indexing it fully means
+reading an e-mail that
+[who is trusted](sources.md#who-is-trusted) says is not read.
 
-**Recommendation.** It is treated like any other
-[e-mail](domain-language.md#e-mail): indexed fully, with a
+**Recommendation.** When its [sender](domain-language.md#sender) is
+[trusted](domain-language.md#trusted), it is treated like any other
+[e-mail](domain-language.md#e-mail) from that sender: indexed fully, with a
 [local copy](domain-language.md#local-copy), and with no verdict until
-something else decides.
+something else decides. Otherwise only its sender, subject, date and
+[mail_label](domain-language.md#mail_label) are recorded, and it gets no
+verdict.
+
+## Reading and trust
+
+Background:
+[the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
+
+### Question: office documents
+
+`#question-office-documents`
+
+**Question.** Word-processor and spreadsheet files are not among the
+[file types](sources.md#file-types) today, so the app would not know what is
+inside them. Are they read?
+
+**Recommendation.** Yes, their text is read. Their macros are never run, and
+taking the text out does not need them.
+
+### Question: archives
+
+`#question-archives`
+
+**Question.** An archive, such as a zip file, holds other files. Does the app
+open it and read what is inside?
+
+**Recommendation.** Not at first. An archive is recorded by its name, size and
+hash, and listed so the [user](domain-language.md#user) sees what is not
+covered.
+
+### Question: programs and unknown file types
+
+`#question-programs-and-unknown-file-types`
+
+**Question.** What does the app do with a program, or with a file whose type it
+does not know?
+
+**Recommendation.** It records the name, size and hash only. It never reads
+such a file.
+
+### Question: limits on size and pages
+
+`#question-limits-on-size-and-pages`
+
+**Question.** A file can be built to exhaust the
+[server](domain-language.md#server), for example with an enormous size or
+number of pages. Does the app refuse a file beyond a limit?
+
+**Recommendation.** Yes, with limits on size and on the number of pages that
+the [user](domain-language.md#user) can set.
+
+### Question: antivirus scan
+
+`#question-antivirus-scan`
+
+**Question.** Is an [asset](domain-language.md#asset) checked by an antivirus
+scan before it is read? A flagged asset would be
+[blacklisted](domain-language.md#blacklist) by a rule, and would carry a
+visible warning wherever the [user](domain-language.md#user) can open or
+download it.
+
+**Recommendation.** Yes, as a second line behind trust and isolation, since
+what such a scan detects is modest.
+
+### Question: how reading is isolated
+
+`#question-how-reading-is-isolated`
+
+**Question.** The part of the app that takes text and pictures out of an
+[asset](domain-language.md#asset) may reach neither the network, nor the
+[providers](domain-language.md#provider)' access tokens, nor the database. With
+what is that made, on the [server](domain-language.md#server) and on a Mac?
+
+**Recommendation.** Choose it in slice 1, together with the reading libraries,
+and prove it there with a test in which the reading part tries to reach the
+network and fails. No real [asset](domain-language.md#asset) is read before
+that test is green.
 
 ## Kept and trash
 

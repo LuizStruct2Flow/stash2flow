@@ -139,7 +139,13 @@ look-alikes:
   e-mail with an attached PDF whose
   [mail_label](domain-language.md#mail_label) says promotions, a personal
   e-mail, [spam](domain-language.md#spam) whose mail_label says spam, and spam
-  that no mail_label marks.
+  that no mail_label marks;
+- among those invented [senders](domain-language.md#sender): one the
+  [user](domain-language.md#user) has written to, one he marked as
+  [trusted](domain-language.md#trusted), one he said no to and one he has
+  never dealt with;
+- a made-up [e-mail](domain-language.md#e-mail) whose text points at a remote
+  image and a link, and a made-up PDF that carries a script, both harmless.
 
 Real documents are used only on the [server](domain-language.md#server): for the
 benchmarks, of which only totals are committed, and for the founder's
@@ -256,7 +262,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 - [5] An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says promotions is an [advertisement](domain-language.md#advertisement) *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) that carries an unsubscribe header and whose [mail_label](domain-language.md#mail_label) does not say promotions is not an [advertisement](domain-language.md#advertisement) *(new)*
-- [5] An invoice that carries an unsubscribe header is indexed fully *(new)*
+- [5] An invoice that carries an unsubscribe header, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is indexed fully *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF is not [blacklisted](domain-language.md#blacklist) by its [mail_label](domain-language.md#mail_label) alone *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] A model is asked only about an [e-mail](domain-language.md#e-mail) that no [mail_label](domain-language.md#mail_label) marks *(new)*
@@ -265,16 +271,35 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] [Spam](domain-language.md#spam) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) that arrived less than one week ago is neither [whitelisted](domain-language.md#whitelist) nor [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) that arrived more than one week ago is [blacklisted](domain-language.md#blacklist) *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) that is neither [advertisement](domain-language.md#advertisement) nor [spam](domain-language.md#spam) is indexed fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) *(provisional: [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully))*
-- [5] An [attachment](domain-language.md#attachment) is indexed as an [asset](domain-language.md#asset) and goes through the same [pipeline](domain-language.md#pipeline)
-- [5] The same [sender](domain-language.md#sender) can send an invoice that is indexed fully and an offer that is an [advertisement](domain-language.md#advertisement) *(new)*
-- [5] A no-reply [sender](domain-language.md#sender) is not taken for [advertisement](domain-language.md#advertisement): an invoice from a no-reply sender is indexed fully
+- [5] An [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) that is neither [advertisement](domain-language.md#advertisement) nor [spam](domain-language.md#spam) is indexed fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) *(new)*
+- [5] An [attachment](domain-language.md#attachment) of an [e-mail](domain-language.md#e-mail) that is indexed fully is indexed as an [asset](domain-language.md#asset) and goes through the same [pipeline](domain-language.md#pipeline) *(new)*
+- [5] The same [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) can send an invoice that is indexed fully and an offer that is an [advertisement](domain-language.md#advertisement) *(new)*
+- [5] A no-reply [sender](domain-language.md#sender) is not taken for [advertisement](domain-language.md#advertisement): an invoice from a [trusted](domain-language.md#trusted) no-reply sender is indexed fully *(new)*
 - [5] A picture inside an [e-mail](domain-language.md#e-mail)'s text, such as a logo, is not an [attachment](domain-language.md#attachment)
 - [5] An [attachment](domain-language.md#attachment)'s [asset_date](domain-language.md#asset_date) is the date received
 - [5] An [attachment](domain-language.md#attachment)'s [source_link](domain-language.md#source_link) opens its Gmail thread
 - [5] A personal [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) who is a [person](domain-language.md#person) on the [user](domain-language.md#user)'s list is [whitelisted](domain-language.md#whitelist) by default *(provisional: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default))*
 - [5] † A [blacklisted](domain-language.md#blacklist) [e-mail](domain-language.md#e-mail) stays in its mailbox: the index only records the verdict *(new)*
 - [5] The [run](domain-language.md#run) summary counts the [advertisements](domain-language.md#advertisement), the [spam](domain-language.md#spam) and the [blacklisted](domain-language.md#blacklist) [assets](domain-language.md#asset) *(new)*
+
+**Trust and isolation**
+
+- [2] An [asset](domain-language.md#asset) from the [user](domain-language.md#user)'s own drives is read fully *(new)*
+- [2] † A script inside a PDF is never run *(new)*
+- [2] † A macro in an office document is never run *(new; provisional: [open question: office documents](open-questions.md#question-office-documents))*
+- [2] † The part of the app that reads an [asset](domain-language.md#asset) cannot reach the network *(new)*
+- [2] † The part of the app that reads an [asset](domain-language.md#asset) cannot reach the [providers](domain-language.md#provider)' access tokens or the database *(new)*
+- [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) has written to is [trusted](domain-language.md#trusted) *(new)*
+- [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) marked as [trusted](domain-language.md#trusted) is trusted *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) has never dealt with is not read: only its sender, subject, date and [mail_label](domain-language.md#mail_label) are recorded *(new)*
+- [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) has never dealt with is listed for him *(new)*
+- [5] The first [run](domain-language.md#run) over a mailbox starts by showing the [user](domain-language.md#user) his [senders](domain-language.md#sender), those he has written to already [trusted](domain-language.md#trusted) *(new)*
+- [5] The [user](domain-language.md#user) decides once per [sender](domain-language.md#sender), not per [e-mail](domain-language.md#e-mail), and the sender is not listed again *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) said is not [trusted](domain-language.md#trusted) is not read *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) whose [mail_label](domain-language.md#mail_label) says promotions is still an [advertisement](domain-language.md#advertisement) and is not read *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) who is not [trusted](domain-language.md#trusted) is not [blacklisted](domain-language.md#blacklist) for that reason *(new)*
+- [5] † Reading an [e-mail](domain-language.md#e-mail) loads nothing from the internet: no remote image and no link *(new)*
+- [5] The [run](domain-language.md#run) summary lists the [senders](domain-language.md#sender) that wait for the [user](domain-language.md#user)'s decision *(new)*
 
 **Photos**
 

@@ -69,6 +69,7 @@ The choices that are the [user](domain-language.md#user)'s:
 |---|---|
 | The [order of sources](domain-language.md#order-of-sources) | Uses it to suggest a [keeper](domain-language.md#keeper) in each [duplicate group](domain-language.md#duplicate-group). |
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
+| Which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) | Trusts a sender the [user](domain-language.md#user) has written to himself. Lists every sender he has never dealt with; he says once per sender whether he trusts it. Until then the app does not read that sender's [e-mails](domain-language.md#e-mail). |
 | Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies rules from where the asset came from. Who keeps the rules is open: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default). |
 | What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as an [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) by a rule. After 30 days it deletes what the [user](domain-language.md#user) left there. An asset blacklisted because a model judged it is only listed for him as something a model thinks is trash, and is moved there when he confirms it. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
@@ -154,7 +155,7 @@ What a model never does:
   [advertisement](domain-language.md#advertisement) and
   [spam](domain-language.md#spam) by the
   [mail_label](domain-language.md#mail_label), the advertisement's week of
-  validity, the
+  validity, who is [trusted](domain-language.md#trusted), the
   rules that make an asset [whitelisted](domain-language.md#whitelist) by
   default, the 30 days of the quarantine, when a
   [run](domain-language.md#run) starts, and the
@@ -162,6 +163,51 @@ What a model never does:
 - **Its output is checked by code.** A doc_type outside the vocabulary, a
   description longer than one line, a person who is not on the user's list or a
   date that is not printed in the text is refused.
+
+This is also what limits text inside an [asset](domain-language.md#asset) that
+tries to instruct a model. The model decides no action and its output is
+checked by code, so at worst the asset gets a wrong
+[description](domain-language.md#description).
+
+## The app reads what it trusts, in isolation, and runs nothing
+
+`#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing`
+
+Reading an [asset](domain-language.md#asset) means taking its text and pictures
+out, so the app knows what is inside. Running it means letting code inside it
+execute. The app does the first and never the second.
+
+- **It runs nothing.** No macro, no script and no executable inside an
+  [asset](domain-language.md#asset) is ever executed.
+- **It reads what it trusts.** An [asset](domain-language.md#asset) is read
+  when where it comes from is [trusted](domain-language.md#trusted): the
+  [user](domain-language.md#user)'s own drives and photo libraries, and an
+  [e-mail](domain-language.md#e-mail) from a
+  [sender](domain-language.md#sender) he has written to himself or has marked
+  as trusted. Of any other e-mail the app records the sender, subject, date and
+  [mail_label](domain-language.md#mail_label) only. Who is trusted is a rule in
+  code, never a model's guess: [who is trusted](sources.md#who-is-trusted).
+- **It reads in isolation.** The part of the app that takes text and pictures
+  out of an [asset](domain-language.md#asset) has no network access and no
+  access to the [providers](domain-language.md#provider)' access tokens or to
+  the database. A deliberately crafted file that breaks the reading library
+  reaches nothing. See
+  [reading in isolation](architecture.md#reading-in-isolation).
+- **While reading an [e-mail](domain-language.md#e-mail) it loads nothing from
+  the internet**: no remote images and no following of links. Only the text and
+  the [attachments](domain-language.md#attachment).
+
+Isolation stays although trust already decides what is read. Trust is about
+where an [asset](domain-language.md#asset) comes from, not about its
+[bytes](domain-language.md#bytes): a [trusted](domain-language.md#trusted)
+[sender](domain-language.md#sender) can be compromised, and the
+[user](domain-language.md#user)'s own drives hold files that once came from
+places that are not trusted.
+
+Trusted is not a verdict. Whether an [asset](domain-language.md#asset) is
+[whitelisted](domain-language.md#whitelist) or
+[blacklisted](domain-language.md#blacklist) is decided about the asset itself,
+after it was read or recorded.
 
 ## A local copy of every asset
 
@@ -178,6 +224,12 @@ The [server](domain-language.md#server) keeps a
 [server](domain-language.md#server) keeps only their
 [sender](domain-language.md#sender), subject, date and
 [mail_label](domain-language.md#mail_label).
+
+An [e-mail](domain-language.md#e-mail) whose
+[sender](domain-language.md#sender) is not
+[trusted](domain-language.md#trusted) is not indexed fully, so it has no
+[local copy](domain-language.md#local-copy) either: the
+[server](domain-language.md#server) keeps the same four things of it.
 
 The reason is where the [user](domain-language.md#user) wants to end up: once
 everything is organized, he cleans his cloud drives and keeps one clean copy. A
@@ -258,7 +310,8 @@ The copyright line of the licence file is still open:
 `#nothing-about-one-installation`
 
 [Sources](domain-language.md#source), [accounts](domain-language.md#account),
-[persons](domain-language.md#person), [senders](domain-language.md#sender),
+[persons](domain-language.md#person), [senders](domain-language.md#sender) and
+which of them are [trusted](domain-language.md#trusted),
 the rules that make an [asset](domain-language.md#asset)
 [whitelisted](domain-language.md#whitelist) by default, model names and the model server's address are configuration or data.
 They live outside the repository. None of them is written into the code.

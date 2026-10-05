@@ -35,8 +35,9 @@ deliberately not used.
 `#user`
 
 The person who runs the app and makes its choices: the [order of sources](#order-of-sources), the
-[keeper](#keeper), the rules that make an [asset](#asset) [whitelisted](#whitelist) by default, what is
-restored from the [quarantine](#quarantine), starting a [run](#run).
+[keeper](#keeper), which [senders](#sender) are [trusted](#trusted), the rules that make an
+[asset](#asset) [whitelisted](#whitelist) by default, what is restored from the
+[quarantine](#quarantine), starting a [run](#run).
 
 ### Server
 
@@ -111,6 +112,22 @@ can open has that Mac as its reader.
 
 The [user](#user)'s ranking of his [sources](#source). In a [duplicate group](#duplicate-group), the highest-ranked
 source gives the [keeper](#keeper). What is ranked is a source, not a [location](#location).
+
+### Trusted
+
+`#trusted`
+
+Said of where an [asset](#asset) comes from: a [source](#source) or a
+[sender](#sender). The app reads an asset, which means taking its text and
+pictures out, only when where it comes from is trusted. The [user](#user)'s own
+drives and photo libraries are trusted. A sender is trusted when the user has
+written to it himself, or has marked it as trusted. Who is trusted is a rule in
+code, never a model's guess.
+
+Trusted is not a verdict. It is about where an asset comes from;
+[whitelisted](#whitelist) and [blacklisted](#blacklist) are verdicts on the
+asset itself. Example: an online shop is a trusted sender, its invoice is kept
+and its offer becomes trash.
 
 ### Provider
 
@@ -187,7 +204,8 @@ What an [asset](#asset) consists of. The word is always bytes, never "content".
 
 The copy of an [asset](#asset)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
 in the [stash](#stash). An [advertisement](#advertisement) and [spam](#spam)
-have none.
+have none, and neither has an [e-mail](#e-mail) whose [sender](#sender) is not
+[trusted](#trusted).
 
 ### Stash
 
@@ -245,6 +263,11 @@ a guarantee: rules give it from where the asset came from. Example: a personal
 [e-mail](#e-mail) from a family member is usually whitelisted, and so is a
 photo from the user's phone.
 
+Whitelisted is not the same as [trusted](#trusted). Trusted is said of a
+[source](#source) or a [sender](#sender) and decides whether an
+[asset](#asset) is read. Whitelisted is said of one asset and says it is kept.
+An asset from a trusted sender can be whitelisted, blacklisted or neither.
+
 ### Blacklist
 
 `#blacklist`
@@ -266,6 +289,10 @@ An asset is blacklisted in one of two ways:
 
 An [e-mail](#e-mail) with an attached PDF is never blacklisted by its
 [mail_label](#mail_label) alone.
+
+A [sender](#sender) that is not [trusted](#trusted) does not make an
+[asset](#asset) blacklisted. Its [e-mail](#e-mail) is not read, and that is
+all.
 
 ### Quarantine
 
@@ -299,9 +326,14 @@ One message in a mailbox.
 
 `#sender`
 
-Who an [e-mail](#e-mail) comes from. A sender is on neither side: the same
-online shop sends an invoice the [user](#user) keeps and an offer he does not.
-Each e-mail is judged by what it is.
+Who an [e-mail](#e-mail) comes from. A sender is [trusted](#trusted) or not,
+and that decides whether its e-mails are read. A sender the [user](#user) has
+written to himself is trusted. A sender he has never dealt with is listed for
+him; he says once whether he trusts it, and after that the app knows.
+
+A sender is never [whitelisted](#whitelist) or [blacklisted](#blacklist): the
+same online shop sends an invoice the [user](#user) keeps and an offer he does
+not. Each e-mail is judged by what it is.
 
 ### mail_label
 
@@ -342,16 +374,17 @@ subject, date and mail_label, with no [local copy](#local-copy) and no
 
 `#attachment`
 
-A PDF or an image attached to an [e-mail](#e-mail). It is indexed as an [asset](#asset). A picture
-inside the e-mail's text, such as a logo, is not an attachment.
+A PDF or an image attached to an [e-mail](#e-mail). It is indexed as an
+[asset](#asset) when the e-mail's [sender](#sender) is [trusted](#trusted). A
+picture inside the e-mail's text, such as a logo, is not an attachment.
 
 ### Message body
 
 `#message-body`
 
-The text of an [e-mail](#e-mail). It is indexed for every e-mail that is
-neither [advertisement](#advertisement) nor [spam](#spam):
-[open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully).
+The text of an [e-mail](#e-mail). It is indexed when the e-mail's
+[sender](#sender) is [trusted](#trusted) and the e-mail is neither
+[advertisement](#advertisement) nor [spam](#spam).
 
 ## Runs
 
@@ -414,7 +447,9 @@ the user had before organizing and cleaning up, including how many
 `#pipeline`
 
 The steps an [asset](#asset) goes through. An [advertisement](#advertisement)
-or [spam](#spam) is recorded and goes through none of the later steps.
+or [spam](#spam) is recorded and goes through none of the later steps, and
+neither does an [e-mail](#e-mail) whose [sender](#sender) is not
+[trusted](#trusted).
 
 ### Completed steps
 
@@ -628,7 +663,9 @@ whose text holds those words.
 | owner, for the machine that reads a [source](#source) | [reader](#reader) | "Owner" reads as a person. The machine is the reader. |
 | type | [kind](#kind), [doc_type](#doc_type), [ext](#ext) | "Type" meant three things. |
 | deleted, for an [asset](#asset) that is gone from its [source](#source) | [vanished](#vanished) | The index never deletes. Only what is in the [quarantine](#quarantine) is deleted. |
-| a whitelisted or blacklisted [sender](#sender) | a [whitelisted](#whitelist) or [blacklisted](#blacklist) [asset](#asset) | The verdict is on the asset. The same sender sends what is kept and what is trash. || backend, or the machine's model name | [server](#server) | One word for the machine. |
+| a whitelisted or blacklisted [sender](#sender) | a [whitelisted](#whitelist) or [blacklisted](#blacklist) [asset](#asset) | The verdict is on the asset. The same sender sends what is kept and what is trash. |
+| a trusted [asset](#asset) | an [asset](#asset) from a [trusted](#trusted) [source](#source) or [sender](#sender) | Trusted is about where an asset comes from, not about the asset. |
+| backend, or the machine's model name | [server](#server) | One word for the machine. |
 | label, for what the [provider](#provider) says about an [e-mail](#e-mail) | [mail_label](#mail_label) | "Label" is loose. An unsubscribe header is not a mail_label. |
 | content | [bytes](#bytes) | One word. |
 | dup, dups | [duplicate](#duplicate) | `dups` is only a command's name. |
