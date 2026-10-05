@@ -117,6 +117,14 @@ The app indexes PDF, JPG, PNG, HEIC, TIFF and GIF
 [assets](domain-language.md#asset). Videos (MOV, MP4) get
 their metadata and hashes and no OCR.
 
+What the app does with other files is open: office documents
+([open question: office documents](open-questions.md#question-office-documents)),
+archives ([open question: archives](open-questions.md#question-archives)),
+and programs and unknown file types
+([open question: programs and unknown file types](open-questions.md#question-programs-and-unknown-file-types)).
+Whatever is ruled, nothing inside a file is ever run:
+[the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
+
 ## Reading changes
 
 `#reading-changes`
@@ -150,12 +158,18 @@ exist only as [e-mail](domain-language.md#e-mail)
   tell whether it is an [advertisement](domain-language.md#advertisement) or
   [spam](domain-language.md#spam). None is skipped unseen.
 - An [e-mail](domain-language.md#e-mail) that is neither is indexed fully, as
-  an [asset](domain-language.md#asset): its
+  an [asset](domain-language.md#asset), when its
+  [sender](domain-language.md#sender) is
+  [trusted](domain-language.md#trusted): its
   [message body](domain-language.md#message-body) and its
-  [attachments](domain-language.md#attachment). This rule still waits for
-  confirmation:
-  [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully).
-- An [attachment](domain-language.md#attachment) (a PDF or an image) is
+  [attachments](domain-language.md#attachment). The rule is
+  [who is trusted](#who-is-trusted).
+- Of an [e-mail](domain-language.md#e-mail) whose
+  [sender](domain-language.md#sender) is not
+  [trusted](domain-language.md#trusted), only the sender, subject, date and
+  [mail_label](domain-language.md#mail_label) are recorded.
+- An [attachment](domain-language.md#attachment) (a PDF or an image) of an
+  [e-mail](domain-language.md#e-mail) that is indexed fully is
   indexed as an [asset](domain-language.md#asset) and goes through the same
   [pipeline](domain-language.md#pipeline) as any other asset,
   including grouping with [duplicates](domain-language.md#duplicate) from all
@@ -172,6 +186,60 @@ exist only as [e-mail](domain-language.md#e-mail)
 How an [attachment](domain-language.md#attachment)'s id is formed is open:
 [open question: attachment id](open-questions.md#question-attachment-id).
 
+## Who is trusted
+
+`#who-is-trusted`
+
+The app reads an [asset](domain-language.md#asset) when it trusts where the
+asset comes from. Who is [trusted](domain-language.md#trusted) is a rule in
+code, never a model's guess. The rows are applied from the top; the
+[mail_label](domain-language.md#mail_label) is looked at before the
+[sender](domain-language.md#sender).
+
+| Where the [asset](domain-language.md#asset) comes from | [Trusted](domain-language.md#trusted)? | What the app does |
+|---|---|---|
+| The [user](domain-language.md#user)'s own drives and photo libraries | yes | reads the [asset](domain-language.md#asset) fully |
+| An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam or promotions | no | records its [sender](domain-language.md#sender), subject, date and mail_label only |
+| An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) has written to himself | yes | reads the text and the [attachments](domain-language.md#attachment) |
+| An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) marked as [trusted](domain-language.md#trusted) | yes | the same |
+| An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) has never dealt with | not yet | records the same four things and lists the sender for the user; he says once whether he trusts it, and after that the app knows |
+
+- **The first [run](domain-language.md#run) over a mailbox starts by showing
+  the [user](domain-language.md#user) his
+  [senders](domain-language.md#sender).** Those he has written to are already
+  [trusted](domain-language.md#trusted). He decides the rest: once per sender,
+  not per [e-mail](domain-language.md#e-mail).
+- **A later [run](domain-language.md#run) lists only the new
+  [senders](domain-language.md#sender)**: those the
+  [user](domain-language.md#user) has never dealt with and has not decided on.
+- **A [sender](domain-language.md#sender) the
+  [user](domain-language.md#user) said no to stays not
+  [trusted](domain-language.md#trusted).** Its
+  [e-mails](domain-language.md#e-mail) keep being recorded with the four
+  things, and the sender is not listed again.
+- **While reading an [e-mail](domain-language.md#e-mail) the app loads nothing
+  from the internet**: no remote images and no following of links. Only the
+  text and the [attachments](domain-language.md#attachment).
+- **[Trusted](domain-language.md#trusted) is not a verdict.** It is about
+  where an [asset](domain-language.md#asset) comes from and decides whether it
+  is read. [Whitelisted](domain-language.md#whitelist) and
+  [blacklisted](domain-language.md#blacklist) are verdicts on the asset itself:
+  an online shop can be a trusted [sender](domain-language.md#sender) while its
+  invoice is kept and its offer becomes trash.
+- **Reading happens in isolation, whoever the
+  [sender](domain-language.md#sender) is**: a
+  [trusted](domain-language.md#trusted) sender can be compromised. See
+  [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
+
+Two points are open: what happens to the
+[e-mails](domain-language.md#e-mail) already recorded once the
+[user](domain-language.md#user) trusts their
+[sender](domain-language.md#sender)
+([open question: e-mails recorded before their sender was trusted](open-questions.md#question-e-mails-recorded-before-their-sender-was-trusted)),
+and how [spam](domain-language.md#spam) is found among e-mails that are not
+read
+([open question: spam from a sender the user has not decided on](open-questions.md#question-spam-from-a-sender-the-user-has-not-decided-on)).
+
 ## Each e-mail is judged by what it is
 
 `#each-e-mail-is-judged-by-what-it-is`
@@ -179,13 +247,17 @@ How an [attachment](domain-language.md#attachment)'s id is formed is open:
 An [e-mail](domain-language.md#e-mail) is judged by what it is, not by its
 [sender](domain-language.md#sender). The same online shop sends an invoice the
 [user](domain-language.md#user) keeps and an offer he does not, so a sender is
-on neither side.
+never [whitelisted](domain-language.md#whitelist) or
+[blacklisted](domain-language.md#blacklist). Whether the sender is
+[trusted](domain-language.md#trusted) decides only whether the e-mail is read:
+[who is trusted](#who-is-trusted).
 
 | The [e-mail](domain-language.md#e-mail) is | How it is told | What the index does |
 |---|---|---|
 | an [advertisement](domain-language.md#advertisement) | its [mail_label](domain-language.md#mail_label) says promotions | records its [sender](domain-language.md#sender), subject, date and mail_label, and nothing else |
 | [spam](domain-language.md#spam) | its [mail_label](domain-language.md#mail_label) says spam; a model is asked only about an e-mail that no mail_label marks, to find spam that came through | records it the same way as an [advertisement](domain-language.md#advertisement) |
-| neither | | indexes it fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) |
+| neither, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) | | indexes it fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) |
+| neither, from a [sender](domain-language.md#sender) who is not [trusted](domain-language.md#trusted) | | records its sender, subject, date and [mail_label](domain-language.md#mail_label), and nothing else |
 
 Rules:
 
@@ -213,7 +285,9 @@ Rules:
   [e-mail](domain-language.md#e-mail) whose
   [mail_label](domain-language.md#mail_label) says spam.** It is
   [blacklisted](domain-language.md#blacklist). Spam that came through is spam
-  that no mail_label marks; a model judges it.
+  that no mail_label marks; a model judges it. What a model is asked when the
+  e-mail is not read is open:
+  [open question: spam from a sender the user has not decided on](open-questions.md#question-spam-from-a-sender-the-user-has-not-decided-on).
 - **Of an [advertisement](domain-language.md#advertisement) and of
   [spam](domain-language.md#spam) the [server](domain-language.md#server)
   keeps only** the [sender](domain-language.md#sender), subject, date and

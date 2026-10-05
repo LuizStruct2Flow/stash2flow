@@ -60,7 +60,9 @@ The database holds things a [run](domain-language.md#run) cannot rebuild: the
 [keepers](domain-language.md#keeper), the
 [order of sources](domain-language.md#order-of-sources), the rules that make
 an [asset](domain-language.md#asset)
-[whitelisted](domain-language.md#whitelist) by default) and the
+[whitelisted](domain-language.md#whitelist) by default, which
+[senders](domain-language.md#sender) are
+[trusted](domain-language.md#trusted)) and the
 [baseline](domain-language.md#baseline). That is why it is backed up.
 
 ## Model server
@@ -134,6 +136,40 @@ from the [user](domain-language.md#user) and therefore cannot be open.
 Who else must authenticate, and how, is open:
 [open question: authentication](open-questions.md#question-authentication).
 
+## Isolation of reading
+
+`#isolation-of-reading`
+
+The part of the app that takes text and pictures out of an
+[asset](domain-language.md#asset) runs on the
+[server](domain-language.md#server) so that a deliberately crafted file that
+breaks the reading library reaches nothing. It is a requirement on the
+installation, whatever it is made with:
+
+| The reading part | |
+|---|---|
+| gets | the [bytes](domain-language.md#bytes) of the [asset](domain-language.md#asset) it reads |
+| gives back | text, pictures and metadata |
+| cannot reach | the network: not the internet, not the local network, not the [model server](#model-server) |
+| cannot reach | the [token store](#token-store), which holds the [providers](domain-language.md#provider)' access tokens |
+| cannot reach | the [database](#database) or its credentials |
+| never does | run a macro, a script or an executable found inside an [asset](domain-language.md#asset) |
+
+- It holds for every [asset](domain-language.md#asset), also one from a
+  [trusted](domain-language.md#trusted) [source](domain-language.md#source) or
+  [sender](domain-language.md#sender).
+- The setup that enforces it lives in `infra/` as code, like the rest of the
+  [server](domain-language.md#server) setup, and a test proves that the reading
+  part cannot reach the network.
+- Where a Mac [collector](domain-language.md#collector) opens an
+  [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes), the
+  same holds on the Mac.
+
+With what it is made is open:
+[open question: how reading is isolated](open-questions.md#question-how-reading-is-isolated).
+The code's side of it is
+[reading in isolation](architecture.md#reading-in-isolation).
+
 ## Sensitive data
 
 `#sensitive-data`
@@ -150,4 +186,6 @@ What the [server](domain-language.md#server) holds and must protect:
 - the encrypted backups.
 
 Who it is protected against: another device on the local network, a stolen
-[server](domain-language.md#server) disk or backup, and a leaked token.
+[server](domain-language.md#server) disk or backup, a leaked token, and a
+deliberately crafted file among the [assets](domain-language.md#asset)
+([isolation of reading](#isolation-of-reading)).
