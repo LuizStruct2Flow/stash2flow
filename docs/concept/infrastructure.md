@@ -58,9 +58,9 @@ The database holds things a [run](domain-language.md#run) cannot rebuild: the
 [user](domain-language.md#user)'s choices
 ([reviewed](domain-language.md#reviewed) groups,
 [keepers](domain-language.md#keeper), the
-[order of sources](domain-language.md#order-of-sources), the
-[whitelist](domain-language.md#whitelist) and the
-[blacklist](domain-language.md#blacklist)) and the
+[order of sources](domain-language.md#order-of-sources), the rules that make
+an [asset](domain-language.md#asset)
+[whitelisted](domain-language.md#whitelist) by default) and the
 [baseline](domain-language.md#baseline). That is why it is backed up.
 
 ## Model server
@@ -69,8 +69,9 @@ The database holds things a [run](domain-language.md#run) cannot rebuild: the
 
 A program on the [user](domain-language.md#user)'s network that serves a local
 language model, such as Ollama or the llama.cpp server. The app calls it for
-[descriptions](domain-language.md#description), and for OCR only if the
-benchmark picks a vision model. The other models run inside the app's own
+[descriptions](domain-language.md#description), for classifying an
+[e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam), and
+for OCR only if the benchmark picks a vision model. The other models run inside the app's own
 process.
 
 Its address is configuration and must be a local one. Details are in

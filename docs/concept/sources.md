@@ -146,14 +146,20 @@ exist only as [e-mail](domain-language.md#e-mail)
 [attachments](domain-language.md#attachment). That is why a mailbox is a
 [source](domain-language.md#source).
 
+- Every [e-mail](domain-language.md#e-mail) is looked at, at least enough to
+  tell whether it is an [advertisement](domain-language.md#advertisement) or
+  [spam](domain-language.md#spam). None is skipped unseen.
+- An [e-mail](domain-language.md#e-mail) that is neither is indexed fully, as
+  an [asset](domain-language.md#asset): its
+  [message body](domain-language.md#message-body) and its
+  [attachments](domain-language.md#attachment). This rule still waits for
+  confirmation:
+  [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully).
 - An [attachment](domain-language.md#attachment) (a PDF or an image) is
   indexed as an [asset](domain-language.md#asset) and goes through the same
   [pipeline](domain-language.md#pipeline) as any other asset,
   including grouping with [duplicates](domain-language.md#duplicate) from all
   other [sources](domain-language.md#source).
-- Not every [message body](domain-language.md#message-body) is indexed. That
-  would be too much volume and noise, and the mailbox's own search already
-  covers it.
 - An [attachment](domain-language.md#attachment)'s
   [asset_date](domain-language.md#asset_date) is the date the
   [e-mail](domain-language.md#e-mail) was received.
@@ -166,43 +172,60 @@ exist only as [e-mail](domain-language.md#e-mail)
 How an [attachment](domain-language.md#attachment)'s id is formed is open:
 [open question: attachment id](open-questions.md#question-attachment-id).
 
-## Senders decide
+## Each e-mail is judged by what it is
 
-`#senders-decide`
+`#each-e-mail-is-judged-by-what-it-is`
 
-[Senders](domain-language.md#sender) decide which
-[e-mails](domain-language.md#e-mail) are indexed. The
-[user](domain-language.md#user) keeps two lists of senders:
+An [e-mail](domain-language.md#e-mail) is judged by what it is, not by its
+[sender](domain-language.md#sender). The same online shop sends an invoice the
+[user](domain-language.md#user) keeps and an offer he does not, so a sender is
+on neither side.
 
-| List | Effect |
-|---|---|
-| [whitelist](domain-language.md#whitelist) | [E-mails](domain-language.md#e-mail) from these [senders](domain-language.md#sender) are indexed. |
-| [blacklist](domain-language.md#blacklist) | Nothing from these [senders](domain-language.md#sender) is indexed, [attachments](domain-language.md#attachment) included. |
+| The [e-mail](domain-language.md#e-mail) is | How it is told | What the index does |
+|---|---|---|
+| an [advertisement](domain-language.md#advertisement) | the [provider](domain-language.md#provider) filed it under promotions, or it carries an unsubscribe header | records its [sender](domain-language.md#sender), subject, date and label, and nothing else |
+| [spam](domain-language.md#spam) | the [provider](domain-language.md#provider) marked it as spam; a model classifies what the labels leave unclear, such as spam that came through | records it the same way as an [advertisement](domain-language.md#advertisement) |
+| neither | | indexes it fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) |
 
 Rules:
 
+- **The [provider](domain-language.md#provider)'s own labels come first.** They
+  are deterministic. A model classifies only an
+  [e-mail](domain-language.md#e-mail) the labels leave unclear:
+  [deterministic code first](principles.md#deterministic-code-first).
+- **An [advertisement](domain-language.md#advertisement) is valid for one week
+  after it arrived**, whether or not the [user](domain-language.md#user) was
+  interested. After that it is [blacklisted](domain-language.md#blacklist).
+  The week is a rule in code. No model reads a date from the offer.
+- **Of an [advertisement](domain-language.md#advertisement) the
+  [server](domain-language.md#server) keeps only** its
+  [sender](domain-language.md#sender), subject, date and label. It gets no
+  [local copy](domain-language.md#local-copy), no
+  [description](domain-language.md#description) and no other
+  [pipeline](domain-language.md#pipeline) step. It is on its way out.
+- **[Spam](domain-language.md#spam) is [blacklisted](domain-language.md#blacklist).**
+  That it is recorded the same way as an
+  [advertisement](domain-language.md#advertisement) is part of the rule that
+  still waits for confirmation:
+  [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully).
+- **[Whitelisted](domain-language.md#whitelist) is a default, not a
+  guarantee.** A personal [e-mail](domain-language.md#e-mail) from a family
+  member is usually whitelisted. Which rules give the default is open:
+  [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default).
 - A no-reply address is **not** a sign of
   [advertisement](domain-language.md#advertisement). Invoices and receipts come
   from such [senders](domain-language.md#sender).
 - A picture inside an [e-mail](domain-language.md#e-mail)'s text, such as a
   logo, is never an [attachment](domain-language.md#attachment).
-- The [provider](domain-language.md#provider)'s hints about an
-  [e-mail](domain-language.md#e-mail) (for example "filed under promotions" or
-  "has an unsubscribe header") are only reported. The decision is made by the
-  app's own rule from the two lists.
-- Both lists are stored in the database and kept through the command line.
 
-Three points are open:
-
-- whether the [whitelist](domain-language.md#whitelist) is also the list that
-  decides which [message bodies](domain-language.md#message-body) are indexed:
-  [open question: whitelist and official senders](open-questions.md#question-whitelist-and-official-senders);
-- what happens to a [sender](domain-language.md#sender) on neither list:
-  [open question: unknown senders](open-questions.md#question-unknown-senders);
-- what happens when a sender is put on the
-  [blacklist](domain-language.md#blacklist) after its
-  [e-mails](domain-language.md#e-mail) were indexed:
-  [open question: blacklisted after indexing](open-questions.md#question-blacklisted-after-indexing).
+The index only records whether an [asset](domain-language.md#asset) is
+[whitelisted](domain-language.md#whitelist),
+[blacklisted](domain-language.md#blacklist) or neither. It never writes to the
+mailbox. Moving a blacklisted [e-mail](domain-language.md#e-mail) to the
+[quarantine](domain-language.md#quarantine) belongs to clean-up
+([FEATURE-002](../backlog/BACKLOG.md)), which is parked. The same verdicts
+apply to every asset, not only to e-mail:
+[whitelisted, blacklisted or neither](how-it-works.md#whitelisted-blacklisted-or-neither).
 
 ## Adding a source
 
