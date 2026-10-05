@@ -20,13 +20,25 @@ withholds it.
   [asset](domain-language.md#asset) or delete it permanently. Restoring is his
   no. Deleting it, or leaving it there, is his go: what stays in the quarantine
   for 30 days is deleted permanently.
+- **A model's verdict never ends in deletion by itself.** An
+  [asset](domain-language.md#asset)
+  [blacklisted](domain-language.md#blacklist) by a rule (an
+  [advertisement](domain-language.md#advertisement) past its week, an
+  [e-mail](domain-language.md#e-mail) whose
+  [mail_label](domain-language.md#mail_label) says spam) leaves the
+  [quarantine](domain-language.md#quarantine) by itself after 30 days. An asset
+  blacklisted because a model judged it
+  ([spam](domain-language.md#spam) that came through, which no mail_label
+  marks) stays in the quarantine until the
+  [user](domain-language.md#user) confirms it.
 - **An [asset](domain-language.md#asset) worth keeping is removed from a
   [source](domain-language.md#source) only when verified copies exist**: its
   [bytes](domain-language.md#bytes) are verified, by hash, both on the
   [server](domain-language.md#server) and in the clean copy. An
-  [advertisement](domain-language.md#advertisement) has no
-  [local copy](domain-language.md#local-copy), and that is intended: it is on
-  its way out.
+  [advertisement](domain-language.md#advertisement) and
+  [spam](domain-language.md#spam) have no
+  [local copy](domain-language.md#local-copy), and that is intended: they are
+  on their way out.
 - **The index deletes nothing and moves nothing.** It records whether an
   [asset](domain-language.md#asset) is
   [whitelisted](domain-language.md#whitelist),
@@ -51,7 +63,7 @@ The choices that are the [user](domain-language.md#user)'s:
 | The [order of sources](domain-language.md#order-of-sources) | Uses it to suggest a [keeper](domain-language.md#keeper) in each [duplicate group](domain-language.md#duplicate-group). |
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
 | Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies rules from where the asset came from. Who keeps the rules is open: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default). |
-| What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as a [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset). After 30 days it deletes what the [user](domain-language.md#user) left there. |
+| What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as a [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset). After 30 days it deletes what the [user](domain-language.md#user) left there, except an asset blacklisted because a model judged it: that one waits until he confirms it. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
 | Running a new [pipeline](domain-language.md#pipeline) step over [assets](domain-language.md#asset) already indexed | Does it only when asked. |
 
@@ -110,7 +122,7 @@ Where a model is used, and why code cannot do it:
 | Writing the [description](domain-language.md#description) and finding the [doc_type](domain-language.md#doc_type), the [issuer](domain-language.md#issuer) and the [persons](domain-language.md#person) | It means understanding free text in several languages. Rules would need a pattern for every issuer and every layout. |
 | Choosing the [doc_date](domain-language.md#doc_date) | Code can find every date printed on a page. Which one is the document's own date needs understanding. |
 | [Embeddings](domain-language.md#embedding), for search by meaning and by what a photo shows | Similarity of meaning cannot be written as rules. |
-| Classifying an [e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam) when the [provider](domain-language.md#provider)'s labels leave it unclear | The provider's labels come first and are deterministic. Spam that came through carries no label, and telling it from a wanted e-mail means understanding its text. |
+| Classifying an [e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam) when no [mail_label](domain-language.md#mail_label) marks it | The mail_label comes first and is deterministic. Spam that came through carries no mail_label, and telling it from a wanted e-mail means understanding its text. |
 | Proposing a [context](domain-language.md#context) for an asset that no rule covers | Rules from the [source](domain-language.md#source), the folder and the [sender](domain-language.md#sender) come first. A model proposes only for what is left. |
 | Helping develop the taxonomy | It is a judgement about one person's life. |
 
@@ -123,13 +135,19 @@ What a model never does:
   [user](domain-language.md#user)'s decisions, carried out by code. An
   [e-mail](domain-language.md#e-mail) a model classified as
   [spam](domain-language.md#spam) only reaches the
-  [quarantine](domain-language.md#quarantine), where the user can restore it.
+  [quarantine](domain-language.md#quarantine), and it stays there until the
+  user confirms it: a model's verdict never ends in deletion by itself. Only an
+  [asset](domain-language.md#asset)
+  [blacklisted](domain-language.md#blacklist) by a rule leaves the quarantine
+  by itself after 30 days.
 - **It never does what a rule can do.** [Fetching](domain-language.md#fetching),
   the hashes, [exact](domain-language.md#exact) and
   [near](domain-language.md#near) duplicates, [kind](domain-language.md#kind),
   the [asset_date](domain-language.md#asset_date), telling an
-  [advertisement](domain-language.md#advertisement) by the
-  [provider](domain-language.md#provider)'s labels, its week of validity, the
+  [advertisement](domain-language.md#advertisement) and
+  [spam](domain-language.md#spam) by the
+  [mail_label](domain-language.md#mail_label), the advertisement's week of
+  validity, the
   rules that make an asset [whitelisted](domain-language.md#whitelist) by
   default, the 30 days of the quarantine, when a
   [run](domain-language.md#run) starts, and the
@@ -144,10 +162,15 @@ What a model never does:
 
 The [server](domain-language.md#server) keeps a
 [local copy](domain-language.md#local-copy) of every
-[asset](domain-language.md#asset) it indexes fully. The one exception is an
-[advertisement](domain-language.md#advertisement): it is on its way out, so
-the server keeps only its [sender](domain-language.md#sender), subject, date
-and label.
+[asset](domain-language.md#asset) it indexes fully.
+
+"Every" has one exception, and it is deliberate: an
+[advertisement](domain-language.md#advertisement) and
+[spam](domain-language.md#spam) have no
+[local copy](domain-language.md#local-copy). They are on their way out, so the
+[server](domain-language.md#server) keeps only their
+[sender](domain-language.md#sender), subject, date and
+[mail_label](domain-language.md#mail_label).
 
 The reason is where the [user](domain-language.md#user) wants to end up: once
 everything is organized, he cleans his cloud drives and keeps one clean copy. A

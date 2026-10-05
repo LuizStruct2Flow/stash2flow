@@ -135,8 +135,11 @@ look-alikes:
 - non-personal photos, with resized, recompressed and HEIC copies;
 - invented [senders](domain-language.md#sender), with made-up
   [e-mails](domain-language.md#e-mail): an invoice and an offer from the same
-  invented online shop, a personal e-mail, and
-  [spam](domain-language.md#spam).
+  invented online shop, an invoice that carries an unsubscribe header, an
+  e-mail with an attached PDF whose
+  [mail_label](domain-language.md#mail_label) says promotions, a personal
+  e-mail, [spam](domain-language.md#spam) whose mail_label says spam, and spam
+  that no mail_label marks.
 
 Real documents are used only on the [server](domain-language.md#server): for the
 benchmarks, of which only totals are committed, and for the founder's
@@ -192,7 +195,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 - [2] The [user](domain-language.md#user) can start a [run](domain-language.md#run) at any time
 - [2] † A run never writes to a [source](domain-language.md#source)
-- [2] † The [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of every [asset](domain-language.md#asset) it indexes *(new)*
+- [2] † The [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of every [asset](domain-language.md#asset) it indexes fully *(new)*
 - [2] † The same [bytes](domain-language.md#bytes) arriving from two [sources](domain-language.md#source) are kept once in the [stash](domain-language.md#stash) *(new)*
 - [2] † File names are stored in NFC
 - [3] An interrupted [run](domain-language.md#run) resumes where it stopped
@@ -251,15 +254,18 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 **E-mail**
 
-- [5] The [provider](domain-language.md#provider)'s labels decide first: an [e-mail](domain-language.md#e-mail) filed under promotions is an [advertisement](domain-language.md#advertisement) *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) that carries an unsubscribe header is an [advertisement](domain-language.md#advertisement) *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) the [provider](domain-language.md#provider) marked as spam is [spam](domain-language.md#spam) *(new)*
-- [5] A model classifies only an [e-mail](domain-language.md#e-mail) the [provider](domain-language.md#provider)'s labels leave unclear *(new)*
-- [5] An [advertisement](domain-language.md#advertisement) is recorded with its [sender](domain-language.md#sender), subject, date and label only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description), no other [pipeline](domain-language.md#pipeline) step *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says promotions is an [advertisement](domain-language.md#advertisement) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) that carries an unsubscribe header and whose [mail_label](domain-language.md#mail_label) does not say promotions is not an [advertisement](domain-language.md#advertisement) *(new)*
+- [5] An invoice that carries an unsubscribe header is indexed fully *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF is not [blacklisted](domain-language.md#blacklist) by its [mail_label](domain-language.md#mail_label) alone *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] A model is asked only about an [e-mail](domain-language.md#e-mail) that no [mail_label](domain-language.md#mail_label) marks *(new)*
+- [5] [Spam](domain-language.md#spam) that came through, which no [mail_label](domain-language.md#mail_label) marks, is [blacklisted](domain-language.md#blacklist) because a model judged it *(new)*
+- [5] An [advertisement](domain-language.md#advertisement) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description), no other [pipeline](domain-language.md#pipeline) step *(new)*
+- [5] [Spam](domain-language.md#spam) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) that arrived less than one week ago is neither [whitelisted](domain-language.md#whitelist) nor [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) that arrived more than one week ago is [blacklisted](domain-language.md#blacklist) *(new)*
-- [5] [Spam](domain-language.md#spam) is [blacklisted](domain-language.md#blacklist) and recorded the same way as an [advertisement](domain-language.md#advertisement) *(provisional: [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully))*
-- [5] An [e-mail](domain-language.md#e-mail) that is neither [advertisement](domain-language.md#advertisement) nor [spam](domain-language.md#spam) is indexed fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) *(provisional: same question)*
+- [5] An [e-mail](domain-language.md#e-mail) that is neither [advertisement](domain-language.md#advertisement) nor [spam](domain-language.md#spam) is indexed fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) *(provisional: [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully))*
 - [5] An [attachment](domain-language.md#attachment) is indexed as an [asset](domain-language.md#asset) and goes through the same [pipeline](domain-language.md#pipeline)
 - [5] The same [sender](domain-language.md#sender) can send an invoice that is indexed fully and an offer that is an [advertisement](domain-language.md#advertisement) *(new)*
 - [5] A no-reply [sender](domain-language.md#sender) is not taken for [advertisement](domain-language.md#advertisement): an invoice from a no-reply sender is indexed fully
@@ -303,7 +309,9 @@ rest.
 - The [user](domain-language.md#user) can look through the [quarantine](domain-language.md#quarantine)
 - The [user](domain-language.md#user) can restore an [asset](domain-language.md#asset) from the [quarantine](domain-language.md#quarantine)
 - The [user](domain-language.md#user) can delete an [asset](domain-language.md#asset) in the [quarantine](domain-language.md#quarantine) permanently
-- An [asset](domain-language.md#asset) that stayed in the [quarantine](domain-language.md#quarantine) for 30 days is deleted permanently
+- An [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) by a rule that stayed in the [quarantine](domain-language.md#quarantine) for 30 days is deleted permanently
+- An [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) because a model judged it stays in the [quarantine](domain-language.md#quarantine) after 30 days, until the [user](domain-language.md#user) confirms it *(new)*
+- [Spam](domain-language.md#spam) a model judged is deleted permanently only after the [user](domain-language.md#user) confirms it in the [quarantine](domain-language.md#quarantine) *(new)*
 - An [asset](domain-language.md#asset) restored from the [quarantine](domain-language.md#quarantine) is not deleted
 - An [asset](domain-language.md#asset) worth keeping is removed from a [source](domain-language.md#source) only when verified copies exist
 - A [non-keeper](domain-language.md#non-keeper) reaches the [quarantine](domain-language.md#quarantine) even when its [keeper](domain-language.md#keeper) is [whitelisted](domain-language.md#whitelist) *(provisional: [open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine))*

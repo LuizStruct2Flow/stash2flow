@@ -186,7 +186,8 @@ What an [asset](#asset) consists of. The word is always bytes, never "content".
 `#local-copy`
 
 The copy of an [asset](#asset)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
-in the [stash](#stash). An [advertisement](#advertisement) has none.
+in the [stash](#stash). An [advertisement](#advertisement) and [spam](#spam)
+have none.
 
 ### Stash
 
@@ -251,8 +252,18 @@ photo from the user's phone.
 The [assets](#asset) that are trash. An asset on it is **blacklisted**.
 Blacklisted is a verdict on one asset, and it is clear-cut: an
 [advertisement](#advertisement) whose week of validity has passed, and
-[spam](#spam) that came through. A blacklisted asset could be deleted, so it is
+[spam](#spam). A blacklisted asset could be deleted, so it is
 moved to the [quarantine](#quarantine).
+
+An asset is blacklisted in one of two ways:
+
+- **By a rule**: an [advertisement](#advertisement) whose week of validity has
+  passed, and an [e-mail](#e-mail) whose [mail_label](#mail_label) says spam.
+- **Because a model judged it**: [spam](#spam) that came through, which no
+  [mail_label](#mail_label) marks.
+
+An [e-mail](#e-mail) with an attached PDF is never blacklisted by its
+[mail_label](#mail_label) alone.
 
 ### Quarantine
 
@@ -260,7 +271,9 @@ moved to the [quarantine](#quarantine).
 
 Where everything that could be deleted is moved. The [user](#user) can look
 through it, restore an [asset](#asset) or delete it permanently. What stays in
-the quarantine for 30 days is deleted permanently. Moving an asset there writes
+the quarantine for 30 days is deleted permanently, with one exception: an asset
+[blacklisted](#blacklist) because a model judged it stays in the quarantine
+until the user confirms it. Moving an asset there writes
 to its [source](#source), so the quarantine belongs to clean-up
 ([FEATURE-002](../backlog/BACKLOG.md)), not to the index.
 
@@ -280,15 +293,26 @@ Who an [e-mail](#e-mail) comes from. A sender is on neither side: the same
 online shop sends an invoice the [user](#user) keeps and an offer he does not.
 Each e-mail is judged by what it is.
 
+### mail_label
+
+`#mail_label`
+
+What the [provider](#provider) of a mailbox says about an [e-mail](#e-mail):
+that it is filed under promotions, or that it is spam. An unsubscribe header is
+not a mail_label: it is a header of the e-mail, and it decides nothing by
+itself.
+
 ### Advertisement
 
 `#advertisement`
 
 An [e-mail](#e-mail) that advertises something, such as an offer from an online
-shop. It is told by the [provider](#provider)'s own labels, never by a no-reply
-address. It is valid for one week after it arrived, whether or not the
-[user](#user) was interested; after that it is [blacklisted](#blacklist). The
-[server](#server) keeps only its [sender](#sender), subject, date and label: no
+shop. An e-mail is an advertisement only when its [mail_label](#mail_label)
+says promotions; an unsubscribe header or a no-reply address never makes it
+one, so an invoice is not taken for an advertisement. It is valid for one week
+after it arrived, whether or not the [user](#user) was interested; after that
+it is [blacklisted](#blacklist). The [server](#server) keeps only its
+[sender](#sender), subject, date and mail_label: no
 [local copy](#local-copy), no [description](#description), no other
 [pipeline](#pipeline) step.
 
@@ -296,10 +320,13 @@ address. It is valid for one week after it arrived, whether or not the
 
 `#spam`
 
-An unsolicited [e-mail](#e-mail) the [user](#user) does not want. The
-[provider](#provider) marks most of it as spam. Spam that came through is spam
-the provider did not mark; a model classifies it. Spam is
-[blacklisted](#blacklist).
+An unsolicited [e-mail](#e-mail) the [user](#user) does not want. It is, first
+of all, an e-mail whose [mail_label](#mail_label) says spam. Spam that came
+through is spam that no mail_label marks; a model is asked only about such an
+e-mail. Spam is [blacklisted](#blacklist). The [server](#server) keeps of it
+what it keeps of an [advertisement](#advertisement): its [sender](#sender),
+subject, date and mail_label, with no [local copy](#local-copy) and no
+[description](#description).
 
 ### Attachment
 
@@ -376,8 +403,8 @@ the user had before organizing and cleaning up, including how many
 
 `#pipeline`
 
-The steps an [asset](#asset) goes through. An [advertisement](#advertisement) is
-recorded and goes through none of the later steps.
+The steps an [asset](#asset) goes through. An [advertisement](#advertisement)
+or [spam](#spam) is recorded and goes through none of the later steps.
 
 ### Completed steps
 
@@ -592,6 +619,7 @@ whose text holds those words.
 | type | [kind](#kind), [doc_type](#doc_type), [ext](#ext) | "Type" meant three things. |
 | deleted, for an [asset](#asset) that is gone from its [source](#source) | [vanished](#vanished) | The index never deletes. Only what is in the [quarantine](#quarantine) is deleted. |
 | a whitelisted or blacklisted [sender](#sender) | a [whitelisted](#whitelist) or [blacklisted](#blacklist) [asset](#asset) | The verdict is on the asset. The same sender sends what is kept and what is trash. || backend, or the machine's model name | [server](#server) | One word for the machine. |
+| label, for what the [provider](#provider) says about an [e-mail](#e-mail) | [mail_label](#mail_label) | "Label" is loose. An unsubscribe header is not a mail_label. |
 | content | [bytes](#bytes) | One word. |
 | dup, dups | [duplicate](#duplicate) | `dups` is only a command's name. |
 | near, for geography | [place](#place) | Near is for [duplicates](#duplicate). Searching photos near a place is not part of the index item. |
