@@ -117,7 +117,6 @@ replay a captured answer:
 |---|---|
 | OCR | Captured [OCR text](domain-language.md#ocr-text) per fixture file, with where it came from: engine, version, date, and the [sha256](domain-language.md#md5-and-sha256) of the input |
 | [Description](domain-language.md#description) | Captured outputs with where they came from; the domain checks the shape ([doc_type](domain-language.md#doc_type) in the vocabulary, one line) |
-| Classifying an [e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam) | Captured answers per fixture e-mail, with where they came from |
 | [Embeddings](domain-language.md#embedding) | Captured vectors for fixture files and fixture queries, photo and query text from the same model |
 | [Provider](domain-language.md#provider) APIs | Recorded responses with ids and names replaced |
 | `osxphotos` | Recorded output for a small made-up library |
@@ -138,12 +137,12 @@ look-alikes:
   invented online shop, an invoice that carries an unsubscribe header, an
   e-mail with an attached PDF whose
   [mail_label](domain-language.md#mail_label) says promotions, a personal
-  e-mail, [spam](domain-language.md#spam) whose mail_label says spam, and spam
-  that no mail_label marks;
+  e-mail, and [spam](domain-language.md#spam) whose mail_label says spam;
 - among those invented [senders](domain-language.md#sender): one the
   [user](domain-language.md#user) has written to, one he marked as
-  [trusted](domain-language.md#trusted), one he said no to and one he has
-  never dealt with;
+  [trusted](domain-language.md#trusted), a
+  [rejected sender](domain-language.md#rejected-sender) and an
+  [undecided sender](domain-language.md#undecided-sender);
 - a made-up [e-mail](domain-language.md#e-mail) whose text points at a remote
   image and a link, and a made-up PDF that carries a script, both harmless.
 
@@ -265,8 +264,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] An invoice that carries an unsubscribe header, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is indexed fully *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF is not [blacklisted](domain-language.md#blacklist) by its [mail_label](domain-language.md#mail_label) alone *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
-- [5] A model is asked only about an [e-mail](domain-language.md#e-mail) that no [mail_label](domain-language.md#mail_label) marks *(new)*
-- [5] [Spam](domain-language.md#spam) that came through, which no [mail_label](domain-language.md#mail_label) marks, is [blacklisted](domain-language.md#blacklist) because a model judged it *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from a [rejected sender](domain-language.md#rejected-sender) is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description), no other [pipeline](domain-language.md#pipeline) step *(new)*
 - [5] [Spam](domain-language.md#spam) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) that arrived less than one week ago is neither [whitelisted](domain-language.md#whitelist) nor [blacklisted](domain-language.md#blacklist) *(new)*
@@ -287,19 +285,23 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] An [asset](domain-language.md#asset) from the [user](domain-language.md#user)'s own drives is read fully *(new)*
 - [2] † A script inside a PDF is never run *(new)*
 - [2] † A macro in an office document is never run *(new; provisional: [open question: office documents](open-questions.md#question-office-documents))*
-- [2] † The part of the app that reads an [asset](domain-language.md#asset) cannot reach the network *(new)*
-- [2] † The part of the app that reads an [asset](domain-language.md#asset) cannot reach the [providers](domain-language.md#provider)' access tokens or the database *(new)*
+- [2] † The [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
+- [2] † The [guardian](domain-language.md#guardian) cannot reach the [providers](domain-language.md#provider)' access tokens or the database while it reads an [asset](domain-language.md#asset) *(new)*
+- [9] † On a Mac the [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
 - [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) has written to is [trusted](domain-language.md#trusted) *(new)*
 - [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) marked as [trusted](domain-language.md#trusted) is trusted *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) has never dealt with is not read: only its sender, subject, date and [mail_label](domain-language.md#mail_label) are recorded *(new)*
-- [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) has never dealt with is listed for him *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) is not read: its sender, subject, date and [mail_label](domain-language.md#mail_label) are recorded, and the sender is listed for the [user](domain-language.md#user) *(new)*
 - [5] The first [run](domain-language.md#run) over a mailbox starts by showing the [user](domain-language.md#user) his [senders](domain-language.md#sender), those he has written to already [trusted](domain-language.md#trusted) *(new)*
 - [5] The [user](domain-language.md#user) decides once per [sender](domain-language.md#sender), not per [e-mail](domain-language.md#e-mail), and the sender is not listed again *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) said is not [trusted](domain-language.md#trusted) is not read *(new)*
+- [5] Once an [undecided sender](domain-language.md#undecided-sender) is [trusted](domain-language.md#trusted), the next [run](domain-language.md#run) reads its recorded [e-mails](domain-language.md#e-mail) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from a [rejected sender](domain-language.md#rejected-sender) is not read *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) whose [mail_label](domain-language.md#mail_label) says promotions is still an [advertisement](domain-language.md#advertisement) and is not read *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) who is not [trusted](domain-language.md#trusted) is not [blacklisted](domain-language.md#blacklist) for that reason *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) whose [mail_label](domain-language.md#mail_label) says spam is still [spam](domain-language.md#spam) and is not read *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is read like any other e-mail from that sender *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions, from an [undecided sender](domain-language.md#undecided-sender), is only recorded *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) is not [blacklisted](domain-language.md#blacklist) for that reason *(new)*
 - [5] † Reading an [e-mail](domain-language.md#e-mail) loads nothing from the internet: no remote image and no link *(new)*
-- [5] The [run](domain-language.md#run) summary lists the [senders](domain-language.md#sender) that wait for the [user](domain-language.md#user)'s decision *(new)*
+- [5] The [run](domain-language.md#run) summary lists the [undecided senders](domain-language.md#undecided-sender) that wait for the [user](domain-language.md#user)'s decision *(new)*
 
 **Photos**
 
@@ -312,7 +314,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 - [2] Processing an [asset](domain-language.md#asset) uses local models only
 - [2] † OAuth tokens are stored encrypted and every scope is read-only
-- [9] † iCloud Photos is read only through osxphotos
+- [9] † iCloud Photos is [fetched](domain-language.md#fetching) only through osxphotos
 
 **Baseline**
 
@@ -336,10 +338,6 @@ rest.
 - The [user](domain-language.md#user) can restore an [asset](domain-language.md#asset) from the [quarantine](domain-language.md#quarantine)
 - The [user](domain-language.md#user) can delete an [asset](domain-language.md#asset) in the [quarantine](domain-language.md#quarantine) permanently
 - An [asset](domain-language.md#asset) that stayed in the [quarantine](domain-language.md#quarantine) for 30 days is deleted permanently
-- An [asset](domain-language.md#asset) a model judged to be trash is not moved to the [quarantine](domain-language.md#quarantine) before the [user](domain-language.md#user) confirms it *(new)*
-- An [asset](domain-language.md#asset) a model judged to be trash is listed for the [user](domain-language.md#user) in the same place as the [quarantine](domain-language.md#quarantine) *(new)*
-- An [asset](domain-language.md#asset) a model judged to be trash is moved to the [quarantine](domain-language.md#quarantine) once the [user](domain-language.md#user) confirms it, and is deleted after 30 days like any other *(new)*
-- An [asset](domain-language.md#asset) a model judged to be trash that the [user](domain-language.md#user) never confirms is never deleted *(new)*
 - An [asset](domain-language.md#asset) restored from the [quarantine](domain-language.md#quarantine) is not deleted
 - An [asset](domain-language.md#asset) worth keeping is removed from a [source](domain-language.md#source) only when verified copies exist
 - A [non-keeper](domain-language.md#non-keeper) reaches the [quarantine](domain-language.md#quarantine) even when its [keeper](domain-language.md#keeper) is [whitelisted](domain-language.md#whitelist) *(provisional: [open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine))*

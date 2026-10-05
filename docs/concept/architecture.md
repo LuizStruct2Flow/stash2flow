@@ -33,8 +33,8 @@ This is the layering the project's
 
 | Layer | Contents |
 |---|---|
-| Domain | The [asset](domain-language.md#asset) and its identity; the [source](domain-language.md#source); the [run](domain-language.md#run); the [duplicate group](domain-language.md#duplicate-group). The rules: what counts as unchanged, [exact](domain-language.md#exact) and [near](domain-language.md#near) matching, the [keeper](domain-language.md#keeper) suggestion, [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text), the choice of [asset_date](domain-language.md#asset_date), the normal form of names, the [doc_type](domain-language.md#doc_type) vocabulary, whether an asset is [whitelisted](domain-language.md#whitelist), [blacklisted](domain-language.md#blacklist) or neither, which [e-mail](domain-language.md#e-mail) is an [advertisement](domain-language.md#advertisement) or [spam](domain-language.md#spam) by its [mail_label](domain-language.md#mail_label), when an advertisement's week of validity has passed, whether a source or a [sender](domain-language.md#sender) is [trusted](domain-language.md#trusted), and which [pipeline](domain-language.md#pipeline) steps an asset still needs, from its [completed steps](domain-language.md#completed-steps). |
-| Application | Run a [source](domain-language.md#source) (full, incremental, resumable; marks [vanished](domain-language.md#vanished) assets) · accept [asset records](domain-language.md#asset-record) · process an [asset](domain-language.md#asset) through the [pipeline](domain-language.md#pipeline) · process existing assets for a step on request · group [duplicates](domain-language.md#duplicate) and suggest [keepers](domain-language.md#keeper) · change a keeper, mark a group [reviewed](domain-language.md#reviewed) · tell an [advertisement](domain-language.md#advertisement) and [spam](domain-language.md#spam) from the other [e-mails](domain-language.md#e-mail) · list the [senders](domain-language.md#sender) the [user](domain-language.md#user) has not decided on, and take his decision whether one is [trusted](domain-language.md#trusted) · search · find photos · build the [duplicate report](domain-language.md#duplicate-report) · summarise a [run](domain-language.md#run). |
+| Domain | The [asset](domain-language.md#asset) and its identity; the [source](domain-language.md#source); the [run](domain-language.md#run); the [duplicate group](domain-language.md#duplicate-group). The rules: what counts as unchanged, [exact](domain-language.md#exact) and [near](domain-language.md#near) matching, the [keeper](domain-language.md#keeper) suggestion, [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text), the choice of [asset_date](domain-language.md#asset_date), the normal form of names, the [doc_type](domain-language.md#doc_type) vocabulary, whether an asset is [whitelisted](domain-language.md#whitelist), [blacklisted](domain-language.md#blacklist) or neither, which [e-mail](domain-language.md#e-mail) is an [advertisement](domain-language.md#advertisement) by its [mail_label](domain-language.md#mail_label) and which is [spam](domain-language.md#spam) by its mail_label or its [rejected sender](domain-language.md#rejected-sender), when an advertisement's week of validity has passed, whether a source or a [sender](domain-language.md#sender) is [trusted](domain-language.md#trusted), that the mail_label is applied before trust, and which [pipeline](domain-language.md#pipeline) steps an asset still needs, from its [completed steps](domain-language.md#completed-steps). |
+| Application | Run a [source](domain-language.md#source) (full, incremental, resumable; marks [vanished](domain-language.md#vanished) assets) · accept [asset records](domain-language.md#asset-record) · process an [asset](domain-language.md#asset) through the [pipeline](domain-language.md#pipeline) · process existing assets for a step on request · group [duplicates](domain-language.md#duplicate) and suggest [keepers](domain-language.md#keeper) · change a keeper, mark a group [reviewed](domain-language.md#reviewed) · tell an [advertisement](domain-language.md#advertisement) and [spam](domain-language.md#spam) from the other [e-mails](domain-language.md#e-mail) · list the [undecided senders](domain-language.md#undecided-sender), and take the [user](domain-language.md#user)'s decision whether one is [trusted](domain-language.md#trusted) or [rejected](domain-language.md#rejected-sender) · read the [e-mails](domain-language.md#e-mail) recorded while their [sender](domain-language.md#sender) was undecided, once it is trusted · search · find photos · build the [duplicate report](domain-language.md#duplicate-report) · summarise a [run](domain-language.md#run). |
 | Ports | See [ports and adapters](#ports-and-adapters). |
 | Adapters | See [ports and adapters](#ports-and-adapters). |
 
@@ -51,11 +51,10 @@ No port is added before a slice of the
 | [Ledger](domain-language.md#ledger) | narrow: all that a [run](domain-language.md#run) needs, see [one use-case, two programs](#one-use-case-two-programs) | onto the index ([server](domain-language.md#server)); an [API](domain-language.md#api) client ([collector](domain-language.md#collector)); a fake | 2; [cursor](domain-language.md#cursor) and [checkpoint](domain-language.md#checkpoint) in 3 |
 | Index | wide, [server](domain-language.md#server) only: [assets](domain-language.md#asset), [OCR text](domain-language.md#ocr-text), [embeddings](domain-language.md#embedding), [duplicate groups](domain-language.md#duplicate-group), [runs](domain-language.md#run), [completed steps](domain-language.md#completed-steps), whether an asset is [whitelisted](domain-language.md#whitelist) or [blacklisted](domain-language.md#blacklist) | PostgreSQL; an in-memory fake | 2 |
 | OCR | page image to text | the engine chosen in slice 1; a fake that replays fixtures | 2 |
-| File reading | metadata, [phash](domain-language.md#phash), PDF [text layer](domain-language.md#text-layer) and page rendering, thumbnail; for an [e-mail](domain-language.md#e-mail), its text and its [attachments](domain-language.md#attachment). Its adapters run in isolation: [reading in isolation](#reading-in-isolation) | image and PDF libraries; an e-mail parsing library in slice 5 | 2 |
+| File reading | metadata, [phash](domain-language.md#phash), PDF [text layer](domain-language.md#text-layer) and page rendering, thumbnail; for an [e-mail](domain-language.md#e-mail), its text and its [attachments](domain-language.md#attachment). Its adapters are the [guardian](domain-language.md#guardian)'s and run in isolation: [reading in isolation](#reading-in-isolation) | image and PDF libraries; an e-mail parsing library in slice 5 | 2 |
 | [Stash](domain-language.md#stash) | keeps each [asset](domain-language.md#asset)'s [local copy](domain-language.md#local-copy), addressed by [sha256](domain-language.md#md5-and-sha256) | a directory on the [server](domain-language.md#server) | 2 |
 | Token store | keeps the [providers](domain-language.md#provider)' access tokens | an encrypted file on the [server](domain-language.md#server) | 2 |
 | Clock | the time | the system | 2 |
-| Classifying an [e-mail](domain-language.md#e-mail) | says whether an e-mail that no [mail_label](domain-language.md#mail_label) marks is [spam](domain-language.md#spam) | the local model server; a fake that replays fixtures | 5 |
 | Description | [OCR text](domain-language.md#ocr-text) to [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [persons](domain-language.md#person), [issuer](domain-language.md#issuer) | the local model server; a fake | 6 |
 | Text embedding | [OCR text](domain-language.md#ocr-text) and query text to a vector | a model inside the app's process; a fake | 7 |
 | Image embedding | a photo to a vector, **and query text to a vector in the same model**; the text-embedding port is no substitute | a model inside the app's process; a fake | 10 |
@@ -81,6 +80,7 @@ with different adapters:
 |---|---|---|
 | [Sources](domain-language.md#source) [fetched](domain-language.md#fetching) | OneDrive, Google Drive, Gmail | iCloud Photos, iCloud Drive |
 | [Ledger](domain-language.md#ledger) | straight onto the index | an [API](domain-language.md#api) client, to the [server](domain-language.md#server)'s API |
+| [Guardian](domain-language.md#guardian) | yes | yes, in the same isolation: [reading in isolation](#reading-in-isolation) |
 | OCR, [embeddings](domain-language.md#embedding), [description](domain-language.md#description) | yes | no |
 
 The [ledger](domain-language.md#ledger) has five operations and nothing else:
@@ -104,7 +104,7 @@ The [ledger](domain-language.md#ledger) has five operations and nothing else:
 | How do a [collector](domain-language.md#collector)'s [bytes](domain-language.md#bytes) reach the [server](domain-language.md#server)? | The collector uploads them to the [API](domain-language.md#api) for every new or changed [asset](domain-language.md#asset). The server never calls a Mac. |
 
 The [phash](domain-language.md#phash) is computed by one implementation on both
-sides. That is what lets the same photo, read on a Mac and read on the
+sides. That is what lets the same photo, hashed on a Mac and hashed on the
 [server](domain-language.md#server), land in one [near](domain-language.md#near)
 group.
 
@@ -113,10 +113,13 @@ group.
 `#reading-in-isolation`
 
 Taking text and pictures out of an [asset](domain-language.md#asset) is done
-in one part of the app, kept apart from everything else. A deliberately crafted
-file that breaks a reading library then reaches nothing.
+in one part of the app, the [guardian](domain-language.md#guardian), kept apart
+from everything else. It decides whether an asset may be read, by whether its
+[source](domain-language.md#source) or [sender](domain-language.md#sender) is
+[trusted](domain-language.md#trusted), and reads it in isolation. A
+deliberately crafted file that breaks a reading library then reaches nothing.
 
-| | |
+| The [guardian](domain-language.md#guardian)'s reading | |
 |---|---|
 | What runs there | every adapter that opens an [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes) with a library: the file-reading adapters (images, PDFs, [e-mails](domain-language.md#e-mail)) and an OCR engine that runs inside the app's process |
 | What goes in | the [bytes](domain-language.md#bytes) of one [asset](domain-language.md#asset) |
@@ -128,23 +131,27 @@ file that breaks a reading library then reaches nothing.
   [trusted](domain-language.md#trusted) [source](domain-language.md#source) or
   [sender](domain-language.md#sender). Trust decides what is read; isolation
   limits what a broken reading can do.
-- **Nothing outside it opens an [asset](domain-language.md#asset)'s
-  [bytes](domain-language.md#bytes) with a library.** Hashing the bytes and
+- **Nothing outside the [guardian](domain-language.md#guardian) touches the
+  inside of an [asset](domain-language.md#asset)**: nothing else opens its
+  [bytes](domain-language.md#bytes) with a library. Hashing the bytes and
   keeping them in the [stash](domain-language.md#stash) do not open them, so
   they stay outside.
 - **A model at the model server gets only what came out**: text, or a picture
   of a page. It never gets the [asset](domain-language.md#asset)'s
   [bytes](domain-language.md#bytes).
 - **No remote image and no link of an [e-mail](domain-language.md#e-mail) is
-  loaded.** The reading part has no network to load it with.
-- **On a Mac too.** Where a [collector](domain-language.md#collector) opens an
-  [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes), for
-  the [phash](domain-language.md#phash), it does so in the same part, under the
-  same rule.
+  loaded.** The [guardian](domain-language.md#guardian) has no network to load
+  it with.
+- **On a Mac too.** A [collector](domain-language.md#collector) works with
+  files there. Where it needs the inside of an
+  [asset](domain-language.md#asset), for the
+  [phash](domain-language.md#phash), the
+  [guardian](domain-language.md#guardian) reads it, in the same isolation.
 
-With what the isolation is made is open:
+With what the isolation is made, on the [server](domain-language.md#server)
+and on a Mac, is open:
 [open question: how reading is isolated](open-questions.md#question-how-reading-is-isolated).
-What it requires of the [server](domain-language.md#server) is in
+What it requires of the installation is in
 [isolation of reading](infrastructure.md#isolation-of-reading). The rule it
 serves is
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
@@ -182,7 +189,6 @@ check.
 | Text embedding | Inside the app's process (`@huggingface/transformers`) | model name |
 | Image embedding, for photos and query text | Inside the app's process (`@huggingface/transformers`) | model name |
 | Description | At a local model server, over the OpenAI-compatible chat-completions HTTP API, which Ollama and the llama.cpp server speak. It needs text in and text out, and image in only if OCR goes this way. | address and model name |
-| Classifying an [e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam) | At the local model server, the same way as the description. | address and model name |
 
 The model server's address must be loopback or in a private range, including
 the range VPNs use. Any other address is refused at start. There is no key and

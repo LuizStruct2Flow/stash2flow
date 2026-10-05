@@ -11,6 +11,7 @@ judge whether a change is safe for the data it holds.
 One local machine, the [server](domain-language.md#server), runs everything
 except the Mac [collector](domain-language.md#collector): the database, the
 [API](domain-language.md#api), the [pullers](domain-language.md#puller), the
+[guardian](domain-language.md#guardian), the
 [workers](domain-language.md#worker) and the
 [scheduler](domain-language.md#scheduler). There are no cloud accounts and no
 cloud resources.
@@ -62,7 +63,8 @@ The database holds things a [run](domain-language.md#run) cannot rebuild: the
 an [asset](domain-language.md#asset)
 [whitelisted](domain-language.md#whitelist) by default, which
 [senders](domain-language.md#sender) are
-[trusted](domain-language.md#trusted)) and the
+[trusted](domain-language.md#trusted) and which are
+[rejected](domain-language.md#rejected-sender)) and the
 [baseline](domain-language.md#baseline). That is why it is backed up.
 
 ## Model server
@@ -71,9 +73,8 @@ an [asset](domain-language.md#asset)
 
 A program on the [user](domain-language.md#user)'s network that serves a local
 language model, such as Ollama or the llama.cpp server. The app calls it for
-[descriptions](domain-language.md#description), for classifying an
-[e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam), and
-for OCR only if the benchmark picks a vision model. The other models run inside the app's own
+[descriptions](domain-language.md#description), and for OCR only if the
+benchmark picks a vision model. The other models run inside the app's own
 process.
 
 Its address is configuration and must be a local one. Details are in
@@ -140,13 +141,13 @@ Who else must authenticate, and how, is open:
 
 `#isolation-of-reading`
 
-The part of the app that takes text and pictures out of an
-[asset](domain-language.md#asset) runs on the
-[server](domain-language.md#server) so that a deliberately crafted file that
-breaks the reading library reaches nothing. It is a requirement on the
-installation, whatever it is made with:
+The [guardian](domain-language.md#guardian) is the part of the app that takes
+text and pictures out of an [asset](domain-language.md#asset). It runs so that
+a deliberately crafted file that breaks the reading library reaches nothing.
+That is a requirement on the installation, on the
+[server](domain-language.md#server) and on a Mac, whatever it is made with:
 
-| The reading part | |
+| The [guardian](domain-language.md#guardian), while it reads | |
 |---|---|
 | gets | the [bytes](domain-language.md#bytes) of the [asset](domain-language.md#asset) it reads |
 | gives back | text, pictures and metadata |
@@ -159,13 +160,15 @@ installation, whatever it is made with:
   [trusted](domain-language.md#trusted) [source](domain-language.md#source) or
   [sender](domain-language.md#sender).
 - The setup that enforces it lives in `infra/` as code, like the rest of the
-  [server](domain-language.md#server) setup, and a test proves that the reading
-  part cannot reach the network.
-- Where a Mac [collector](domain-language.md#collector) opens an
-  [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes), the
-  same holds on the Mac.
+  [server](domain-language.md#server) setup, and a test proves that the
+  [guardian](domain-language.md#guardian) cannot reach the network.
+- The same holds on a Mac, because a
+  [collector](domain-language.md#collector) works with files there: where the
+  inside of an [asset](domain-language.md#asset) is needed, the
+  [guardian](domain-language.md#guardian) reads it in the same isolation.
 
-With what it is made is open:
+With what it is made, on the [server](domain-language.md#server) and on a Mac,
+is open:
 [open question: how reading is isolated](open-questions.md#question-how-reading-is-isolated).
 The code's side of it is
 [reading in isolation](architecture.md#reading-in-isolation).

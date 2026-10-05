@@ -14,8 +14,7 @@ withholds it.
 
 - **Whatever could be deleted is moved to the
   [quarantine](domain-language.md#quarantine) first.** Moving an
-  [asset](domain-language.md#asset) there does not need a go for each asset,
-  unless a model judged it.
+  [asset](domain-language.md#asset) there does not need a go for each asset.
 - **There is one [quarantine](domain-language.md#quarantine) for all
   [sources](domain-language.md#source).** The
   [user](domain-language.md#user) looks through it in the app, in one place. He
@@ -26,18 +25,15 @@ withholds it.
   no. Deleting it, or leaving it there, is his go: everything in the quarantine
   is deleted permanently after 30 days unless it is restored, with no
   exception.
-- **A model's verdict never moves an [asset](domain-language.md#asset) to the
-  [quarantine](domain-language.md#quarantine) by itself.** An asset
-  [blacklisted](domain-language.md#blacklist) by a rule (an
+- **Only a rule moves an [asset](domain-language.md#asset) to the
+  [quarantine](domain-language.md#quarantine).** An asset is
+  [blacklisted](domain-language.md#blacklist) by a rule: an
   [advertisement](domain-language.md#advertisement) past its week, an
   [e-mail](domain-language.md#e-mail) whose
-  [mail_label](domain-language.md#mail_label) says spam) is moved there. An
-  asset blacklisted because a model judged it
-  ([spam](domain-language.md#spam) that came through, which no mail_label
-  marks) is listed for the [user](domain-language.md#user), in the same one
-  place, as something a model thinks is trash. When he confirms it, it is moved
-  to the quarantine and follows the 30 days like everything else. So nothing a
-  model judged is on a clock before the user confirmed it.
+  [mail_label](domain-language.md#mail_label) says spam, an e-mail from a
+  [rejected sender](domain-language.md#rejected-sender). No model blacklists
+  an asset, so everything in the quarantine was put there by a rule and follows
+  the 30 days.
 - **An [asset](domain-language.md#asset) worth keeping is removed from a
   [source](domain-language.md#source) only when verified copies exist**: its
   [bytes](domain-language.md#bytes) are verified, by hash, both on the
@@ -69,9 +65,9 @@ The choices that are the [user](domain-language.md#user)'s:
 |---|---|
 | The [order of sources](domain-language.md#order-of-sources) | Uses it to suggest a [keeper](domain-language.md#keeper) in each [duplicate group](domain-language.md#duplicate-group). |
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
-| Which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) | Trusts a sender the [user](domain-language.md#user) has written to himself. Lists every sender he has never dealt with; he says once per sender whether he trusts it. Until then the app does not read that sender's [e-mails](domain-language.md#e-mail). |
+| Which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) | Trusts a sender the [user](domain-language.md#user) has written to himself. Lists every [undecided sender](domain-language.md#undecided-sender); he says once per sender whether he trusts it. Until then the app only records that sender's [e-mails](domain-language.md#e-mail). A sender he says no to is a [rejected sender](domain-language.md#rejected-sender), and its e-mails are [blacklisted](domain-language.md#blacklist) by a rule. |
 | Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies rules from where the asset came from. Who keeps the rules is open: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default). |
-| What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as an [asset](domain-language.md#asset) [blacklisted](domain-language.md#blacklist) by a rule. After 30 days it deletes what the [user](domain-language.md#user) left there. An asset blacklisted because a model judged it is only listed for him as something a model thinks is trash, and is moved there when he confirms it. |
+| What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as a [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset). After 30 days it deletes what the [user](domain-language.md#user) left there. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
 | Running a new [pipeline](domain-language.md#pipeline) step over [assets](domain-language.md#asset) already indexed | Does it only when asked. |
 
@@ -130,7 +126,6 @@ Where a model is used, and why code cannot do it:
 | Writing the [description](domain-language.md#description) and finding the [doc_type](domain-language.md#doc_type), the [issuer](domain-language.md#issuer) and the [persons](domain-language.md#person) | It means understanding free text in several languages. Rules would need a pattern for every issuer and every layout. |
 | Choosing the [doc_date](domain-language.md#doc_date) | Code can find every date printed on a page. Which one is the document's own date needs understanding. |
 | [Embeddings](domain-language.md#embedding), for search by meaning and by what a photo shows | Similarity of meaning cannot be written as rules. |
-| Classifying an [e-mail](domain-language.md#e-mail) as [spam](domain-language.md#spam) when no [mail_label](domain-language.md#mail_label) marks it | The mail_label comes first and is deterministic. Spam that came through carries no mail_label, and telling it from a wanted e-mail means understanding its text. |
 | Proposing a [context](domain-language.md#context) for an asset that no rule covers | Rules from the [source](domain-language.md#source), the folder and the [sender](domain-language.md#sender) come first. A model proposes only for what is left. |
 | Helping develop the taxonomy | It is a judgement about one person's life. |
 
@@ -140,20 +135,18 @@ What a model never does:
   [keeper](domain-language.md#keeper) wins and whether a
   [duplicate group](domain-language.md#duplicate-group) is
   [reviewed](domain-language.md#reviewed) are the
-  [user](domain-language.md#user)'s decisions, carried out by code. An
-  [e-mail](domain-language.md#e-mail) a model classified as
-  [spam](domain-language.md#spam) is only listed for the user as something a
-  model thinks is trash. It is moved to the
-  [quarantine](domain-language.md#quarantine) when he confirms it, and from
-  then on it follows the 30 days like every other
-  [asset](domain-language.md#asset) there: a model's verdict never moves an
-  asset to the quarantine by itself.
+  [user](domain-language.md#user)'s decisions, carried out by code.
+- **It never [blacklists](domain-language.md#blacklist) an
+  [asset](domain-language.md#asset), and it is not used for
+  [spam](domain-language.md#spam).** Spam is an
+  [e-mail](domain-language.md#e-mail) whose
+  [mail_label](domain-language.md#mail_label) says spam, or an e-mail from a
+  [rejected sender](domain-language.md#rejected-sender). Both are rules.
 - **It never does what a rule can do.** [Fetching](domain-language.md#fetching),
   the hashes, [exact](domain-language.md#exact) and
   [near](domain-language.md#near) duplicates, [kind](domain-language.md#kind),
   the [asset_date](domain-language.md#asset_date), telling an
-  [advertisement](domain-language.md#advertisement) and
-  [spam](domain-language.md#spam) by the
+  [advertisement](domain-language.md#advertisement) by the
   [mail_label](domain-language.md#mail_label), the advertisement's week of
   validity, who is [trusted](domain-language.md#trusted), the
   rules that make an asset [whitelisted](domain-language.md#whitelist) by
@@ -179,20 +172,35 @@ execute. The app does the first and never the second.
 
 - **It runs nothing.** No macro, no script and no executable inside an
   [asset](domain-language.md#asset) is ever executed.
-- **It reads what it trusts.** An [asset](domain-language.md#asset) is read
-  when where it comes from is [trusted](domain-language.md#trusted): the
+- **It reads what it trusts.** The [guardian](domain-language.md#guardian)
+  decides whether an [asset](domain-language.md#asset) may be read, by whether
+  where it comes from is [trusted](domain-language.md#trusted): the
   [user](domain-language.md#user)'s own drives and photo libraries, and an
   [e-mail](domain-language.md#e-mail) from a
   [sender](domain-language.md#sender) he has written to himself or has marked
   as trusted. Of any other e-mail the app records the sender, subject, date and
   [mail_label](domain-language.md#mail_label) only. Who is trusted is a rule in
   code, never a model's guess: [who is trusted](sources.md#who-is-trusted).
-- **It reads in isolation.** The part of the app that takes text and pictures
-  out of an [asset](domain-language.md#asset) has no network access and no
-  access to the [providers](domain-language.md#provider)' access tokens or to
-  the database. A deliberately crafted file that breaks the reading library
+- **The [mail_label](domain-language.md#mail_label) is applied before trust.**
+  An [e-mail](domain-language.md#e-mail) whose mail_label says promotions or
+  spam is not read, even from a [trusted](domain-language.md#trusted)
+  [sender](domain-language.md#sender). The one exception is an e-mail with an
+  attached PDF whose mail_label says promotions: from a trusted sender it is
+  read like any other e-mail from that sender, and from an
+  [undecided sender](domain-language.md#undecided-sender) it is only recorded.
+- **It reads in isolation.** The [guardian](domain-language.md#guardian) reads
+  an [asset](domain-language.md#asset) with no network access and no access to
+  the [providers](domain-language.md#provider)' access tokens or to the
+  database. A deliberately crafted file that breaks the reading library
   reaches nothing. See
   [reading in isolation](architecture.md#reading-in-isolation).
+- **Nothing else touches the inside of an
+  [asset](domain-language.md#asset).** Only the
+  [guardian](domain-language.md#guardian) takes text and pictures out of one.
+- **The isolation applies on a Mac too.** A
+  [collector](domain-language.md#collector) works with files there, and where
+  the inside of an [asset](domain-language.md#asset) is needed on the Mac, the
+  [guardian](domain-language.md#guardian) reads it in the same isolation.
 - **While reading an [e-mail](domain-language.md#e-mail) it loads nothing from
   the internet**: no remote images and no following of links. Only the text and
   the [attachments](domain-language.md#attachment).
@@ -225,9 +233,9 @@ The [server](domain-language.md#server) keeps a
 [sender](domain-language.md#sender), subject, date and
 [mail_label](domain-language.md#mail_label).
 
-An [e-mail](domain-language.md#e-mail) whose
-[sender](domain-language.md#sender) is not
-[trusted](domain-language.md#trusted) is not indexed fully, so it has no
+An [e-mail](domain-language.md#e-mail) from an
+[undecided sender](domain-language.md#undecided-sender) is not indexed fully,
+so it has no
 [local copy](domain-language.md#local-copy) either: the
 [server](domain-language.md#server) keeps the same four things of it.
 
@@ -263,7 +271,8 @@ Whether videos are copied too is open, because they may be large:
 
 The index never writes to a [source](domain-language.md#source). Every
 permission it asks a [provider](domain-language.md#provider) for is read-only,
-and a [run](domain-language.md#run) only reads.
+and a [run](domain-language.md#run) only
+[fetches](domain-language.md#fetching).
 
 The first thing that will ever write to a [source](domain-language.md#source) is
 the clean-up step ([FEATURE-002](../backlog/BACKLOG.md)), under the rule
@@ -274,8 +283,9 @@ does it: it only records whether an asset is
 [whitelisted](domain-language.md#whitelist) or
 [blacklisted](domain-language.md#blacklist).
 
-The photo library on a Mac is never read directly. It is read only through the
-command-line program `osxphotos`.
+The photo library on a Mac is never opened directly. It is
+[fetched](domain-language.md#fetching) only through the command-line program
+`osxphotos`.
 
 ## Open source
 
@@ -311,7 +321,8 @@ The copyright line of the licence file is still open:
 
 [Sources](domain-language.md#source), [accounts](domain-language.md#account),
 [persons](domain-language.md#person), [senders](domain-language.md#sender) and
-which of them are [trusted](domain-language.md#trusted),
+which of them are [trusted](domain-language.md#trusted) or
+[rejected](domain-language.md#rejected-sender),
 the rules that make an [asset](domain-language.md#asset)
 [whitelisted](domain-language.md#whitelist) by default, model names and the model server's address are configuration or data.
 They live outside the repository. None of them is written into the code.

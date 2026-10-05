@@ -14,36 +14,6 @@ here.
 Background:
 [each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
 
-### Question: e-mails recorded before their sender was trusted
-
-`#question-e-mails-recorded-before-their-sender-was-trusted`
-
-**Question.** Of an [e-mail](domain-language.md#e-mail) from a
-[sender](domain-language.md#sender) the [user](domain-language.md#user) has
-never dealt with, only four things are recorded. When he then says the sender
-is [trusted](domain-language.md#trusted), are the e-mails already recorded
-read, and when?
-
-**Recommendation.** Yes, at the next [run](domain-language.md#run) of that
-mailbox, without the [user](domain-language.md#user) asking again. His decision
-is what they waited for.
-
-### Question: spam from a sender the user has not decided on
-
-`#question-spam-from-a-sender-the-user-has-not-decided-on`
-
-**Question.** [Spam](domain-language.md#spam) that came through mostly comes
-from a [sender](domain-language.md#sender) the
-[user](domain-language.md#user) has never dealt with, and such an
-[e-mail](domain-language.md#e-mail) is not read. What is a model asked about
-it?
-
-**Recommendation.** Nothing. A model is asked only about an
-[e-mail](domain-language.md#e-mail) that was read. An e-mail from a
-[sender](domain-language.md#sender) the [user](domain-language.md#user) has not
-decided on waits for his decision on the sender, and gets no verdict until
-then.
-
 ### Question: attachment id
 
 `#question-attachment-id`
@@ -57,25 +27,6 @@ between calls. And no id is defined for a
 **Recommendation.** Verify it when [e-mail](domain-language.md#e-mail) is built.
 If it is unstable, use the message's id plus the attachment's part number. For a
 body: the message's id plus "body".
-
-### Question: e-mail with an attached PDF
-
-`#question-e-mail-with-an-attached-pdf`
-
-**Question.** An [e-mail](domain-language.md#e-mail) has an attached PDF and
-its [mail_label](domain-language.md#mail_label) says promotions or spam. It is
-never [blacklisted](domain-language.md#blacklist) by its mail_label alone. Is
-it indexed fully, and which verdict does it get? Indexing it fully means
-reading an e-mail that
-[who is trusted](sources.md#who-is-trusted) says is not read.
-
-**Recommendation.** When its [sender](domain-language.md#sender) is
-[trusted](domain-language.md#trusted), it is treated like any other
-[e-mail](domain-language.md#e-mail) from that sender: indexed fully, with a
-[local copy](domain-language.md#local-copy), and with no verdict until
-something else decides. Otherwise only its sender, subject, date and
-[mail_label](domain-language.md#mail_label) are recorded, and it gets no
-verdict.
 
 ## Reading and trust
 
@@ -142,13 +93,15 @@ what such a scan detects is modest.
 
 `#question-how-reading-is-isolated`
 
-**Question.** The part of the app that takes text and pictures out of an
-[asset](domain-language.md#asset) may reach neither the network, nor the
-[providers](domain-language.md#provider)' access tokens, nor the database. With
-what is that made, on the [server](domain-language.md#server) and on a Mac?
+**Question.** The [guardian](domain-language.md#guardian) reads an
+[asset](domain-language.md#asset) in isolation: it may reach neither the
+network, nor the [providers](domain-language.md#provider)' access tokens, nor
+the database. With what is that made, on the
+[server](domain-language.md#server) and on a Mac, where a
+[collector](domain-language.md#collector) works with files?
 
 **Recommendation.** Choose it in slice 1, together with the reading libraries,
-and prove it there with a test in which the reading part tries to reach the
+and prove it there with a test in which the guardian tries to reach the
 network and fails. No real [asset](domain-language.md#asset) is read before
 that test is green.
 
@@ -362,7 +315,8 @@ Background: [the Mac collector](sources.md#mac-collector).
 `#question-two-collectors-one-source`
 
 **Question.** Two Macs can only see the same
-[asset](domain-language.md#asset) if both read the same
+[asset](domain-language.md#asset) if both
+[fetch](domain-language.md#fetching) the same
 [source](domain-language.md#source), but a source has one
 [reader](domain-language.md#reader). What happens when a second
 [collector](domain-language.md#collector) reports it?
@@ -370,7 +324,8 @@ Background: [the Mac collector](sources.md#mac-collector).
 **Recommendation.** A [source](domain-language.md#source) is unique by
 [location](domain-language.md#location) and
 [account](domain-language.md#account). The
-[reader](domain-language.md#reader) is the machine that normally reads it.
+[reader](domain-language.md#reader) is the machine that normally
+[fetches](domain-language.md#fetching) it.
 [Asset records](domain-language.md#asset-record) from another
 [collector](domain-language.md#collector) for the same source update the same
 row, and [collected_by](domain-language.md#collected_by) records who sent them.
