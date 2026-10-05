@@ -1,8 +1,8 @@
 # Sources
 
-Where [assets](domain-language.md#asset) come from: which places the app reads,
-which machine reads each, and how [e-mail](domain-language.md#e-mail) is
-handled. Read this to understand what the app can reach and how a new kind of
+Where [assets](domain-language.md#asset) come from: which places the app
+[fetches](domain-language.md#fetching), which machine fetches each, and how
+[e-mail](domain-language.md#e-mail) is handled. Read this to understand what the app can reach and how a new kind of
 [source](domain-language.md#source) would be added.
 
 ## What a source is
@@ -15,8 +15,8 @@ A [source](domain-language.md#source) is one configured place
 | Part | Meaning | Example |
 |---|---|---|
 | [location](domain-language.md#location) | which kind of place | `gdrive` |
-| [account](domain-language.md#account) | whose login it is read with | one Google account |
-| [reader](domain-language.md#reader) | which machine reads it | the [server](domain-language.md#server), or a Mac that runs a [collector](domain-language.md#collector) |
+| [account](domain-language.md#account) | whose login it is [fetched](domain-language.md#fetching) with | one Google account |
+| [reader](domain-language.md#reader) | which machine [fetches](domain-language.md#fetching) it | the [server](domain-language.md#server), or a Mac that runs a [collector](domain-language.md#collector) |
 
 [Sources](domain-language.md#source) are configured centrally on the
 [server](domain-language.md#server). A source is stored with its position in the
@@ -33,7 +33,7 @@ a [shared account](domain-language.md#shared-account). Its
 
 `#shipped-locations`
 
-| Location | Read through | Read by |
+| Location | Fetched through | Fetched by |
 |---|---|---|
 | `onedrive` | Microsoft Graph API, read-only | the [server](domain-language.md#server) |
 | `gdrive` | Google Drive API, read-only | the [server](domain-language.md#server) |
@@ -46,13 +46,21 @@ A [user](domain-language.md#user) can have several
 [location](domain-language.md#location); each is its own
 [source](domain-language.md#source).
 
-Other mailboxes, read over IMAP, are not part of the index item.
+Other mailboxes, fetched over IMAP, are not part of the index item.
 
-## Who reads a source
+## Who fetches a source
 
-`#who-reads-a-source`
+`#who-fetches-a-source`
 
-- **The [server](domain-language.md#server) reads cloud
+A [source](domain-language.md#source) is
+[fetched](domain-language.md#fetching); an [asset](domain-language.md#asset) is
+read. The machine that fetches a source is its
+[reader](domain-language.md#reader). Reading an asset, which means taking its
+text and pictures out, is done only by the
+[guardian](domain-language.md#guardian).
+
+- **The [server](domain-language.md#server)
+  [fetches](domain-language.md#fetching) cloud
   [sources](domain-language.md#source) directly**, through their
   [providers](domain-language.md#provider), with a
   [puller](domain-language.md#puller) per source. No Mac needs to be on for
@@ -86,7 +94,11 @@ the first does not, and enabling it is configuration only.
 - The [server](domain-language.md#server) never calls a Mac, because a Mac may
   be asleep. The [collector](domain-language.md#collector) always calls the
   server.
-- It reads the photo library only through `osxphotos`, never directly.
+- It [fetches](domain-language.md#fetching) the photo library only through
+  `osxphotos`, never directly.
+- Where the inside of an [asset](domain-language.md#asset) is needed on the
+  Mac, the [guardian](domain-language.md#guardian) reads it there, in the same
+  isolation as on the [server](domain-language.md#server).
 
 Two points are open: what happens when two
 [collectors](domain-language.md#collector) report the same
@@ -125,12 +137,13 @@ and programs and unknown file types
 Whatever is ruled, nothing inside a file is ever run:
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
 
-## Reading changes
+## Fetching changes
 
-`#reading-changes`
+`#fetching-changes`
 
 After the first full [run](domain-language.md#run), a
-[source](domain-language.md#source) is read incrementally through its
+[source](domain-language.md#source) is [fetched](domain-language.md#fetching)
+incrementally through its
 [provider](domain-language.md#provider)'s change feed. The stored position in
 that feed is the [cursor](domain-language.md#cursor).
 
@@ -164,10 +177,12 @@ exist only as [e-mail](domain-language.md#e-mail)
   [message body](domain-language.md#message-body) and its
   [attachments](domain-language.md#attachment). The rule is
   [who is trusted](#who-is-trusted).
-- Of an [e-mail](domain-language.md#e-mail) whose
-  [sender](domain-language.md#sender) is not
-  [trusted](domain-language.md#trusted), only the sender, subject, date and
-  [mail_label](domain-language.md#mail_label) are recorded.
+- Of an [e-mail](domain-language.md#e-mail) from an
+  [undecided sender](domain-language.md#undecided-sender), only the sender,
+  subject, date and [mail_label](domain-language.md#mail_label) are recorded.
+- An [e-mail](domain-language.md#e-mail) from a
+  [rejected sender](domain-language.md#rejected-sender) is
+  [spam](domain-language.md#spam).
 - An [attachment](domain-language.md#attachment) (a PDF or an image) of an
   [e-mail](domain-language.md#e-mail) that is indexed fully is
   indexed as an [asset](domain-language.md#asset) and goes through the same
@@ -190,19 +205,31 @@ How an [attachment](domain-language.md#attachment)'s id is formed is open:
 
 `#who-is-trusted`
 
-The app reads an [asset](domain-language.md#asset) when it trusts where the
-asset comes from. Who is [trusted](domain-language.md#trusted) is a rule in
-code, never a model's guess. The rows are applied from the top; the
-[mail_label](domain-language.md#mail_label) is looked at before the
-[sender](domain-language.md#sender).
+The [guardian](domain-language.md#guardian) decides whether an
+[asset](domain-language.md#asset) may be read, by whether its
+[source](domain-language.md#source) or [sender](domain-language.md#sender) is
+[trusted](domain-language.md#trusted). Who is trusted is a rule in code, never
+a model's guess.
 
-| Where the [asset](domain-language.md#asset) comes from | [Trusted](domain-language.md#trusted)? | What the app does |
+A [sender](domain-language.md#sender) is in one of three states:
+
+| Sender | Meaning | What the app does with its [e-mails](domain-language.md#e-mail) |
 |---|---|---|
-| The [user](domain-language.md#user)'s own drives and photo libraries | yes | reads the [asset](domain-language.md#asset) fully |
-| An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam or promotions | no | records its [sender](domain-language.md#sender), subject, date and mail_label only |
-| An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) has written to himself | yes | reads the text and the [attachments](domain-language.md#attachment) |
-| An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) marked as [trusted](domain-language.md#trusted) | yes | the same |
-| An [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) the [user](domain-language.md#user) has never dealt with | not yet | records the same four things and lists the sender for the user; he says once whether he trusts it, and after that the app knows |
+| [trusted](domain-language.md#trusted) | the [user](domain-language.md#user) has written to it, or he marked it | reads them |
+| [undecided](domain-language.md#undecided-sender) | the [user](domain-language.md#user) has never dealt with it | records sender, subject, date and [mail_label](domain-language.md#mail_label), and lists the sender for him |
+| [rejected](domain-language.md#rejected-sender) | the [user](domain-language.md#user) said no | [blacklists](domain-language.md#blacklist) them, by a rule |
+
+The [mail_label](domain-language.md#mail_label) is applied before trust:
+
+| Where the [asset](domain-language.md#asset) comes from | What the app does |
+|---|---|
+| The [user](domain-language.md#user)'s own drives and photo libraries, which are [trusted](domain-language.md#trusted) | reads the [asset](domain-language.md#asset) fully |
+| An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam | does not read it, even from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender); records its sender, subject, date and mail_label; it is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) by a rule |
+| An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says promotions, with no attached PDF | does not read it, even from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender); records the same four things; it is an [advertisement](domain-language.md#advertisement) |
+| An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions | from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), reads it like any other e-mail from that sender; from an [undecided sender](domain-language.md#undecided-sender), only records the same four things |
+| Any other [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) | reads the text and the [attachments](domain-language.md#attachment) |
+| Any other [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) | does not read it; records the same four things and lists the sender for the [user](domain-language.md#user) |
+| An [e-mail](domain-language.md#e-mail) from a [rejected sender](domain-language.md#rejected-sender) | does not read it; records the same four things; it is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) by a rule |
 
 - **The first [run](domain-language.md#run) over a mailbox starts by showing
   the [user](domain-language.md#user) his
@@ -210,13 +237,17 @@ code, never a model's guess. The rows are applied from the top; the
   [trusted](domain-language.md#trusted). He decides the rest: once per sender,
   not per [e-mail](domain-language.md#e-mail).
 - **A later [run](domain-language.md#run) lists only the new
-  [senders](domain-language.md#sender)**: those the
-  [user](domain-language.md#user) has never dealt with and has not decided on.
-- **A [sender](domain-language.md#sender) the
-  [user](domain-language.md#user) said no to stays not
-  [trusted](domain-language.md#trusted).** Its
-  [e-mails](domain-language.md#e-mail) keep being recorded with the four
-  things, and the sender is not listed again.
+  [undecided senders](domain-language.md#undecided-sender).**
+- **Once the [user](domain-language.md#user) says an
+  [undecided sender](domain-language.md#undecided-sender) is
+  [trusted](domain-language.md#trusted), the next
+  [run](domain-language.md#run) reads the
+  [e-mails](domain-language.md#e-mail) recorded while it was undecided.** He
+  does not have to ask again.
+- **A [rejected sender](domain-language.md#rejected-sender) is not listed
+  again.** Its [e-mails](domain-language.md#e-mail) are
+  [spam](domain-language.md#spam): recorded with the four things and
+  [blacklisted](domain-language.md#blacklist) by a rule.
 - **While reading an [e-mail](domain-language.md#e-mail) the app loads nothing
   from the internet**: no remote images and no following of links. Only the
   text and the [attachments](domain-language.md#attachment).
@@ -226,45 +257,46 @@ code, never a model's guess. The rows are applied from the top; the
   [blacklisted](domain-language.md#blacklist) are verdicts on the asset itself:
   an online shop can be a trusted [sender](domain-language.md#sender) while its
   invoice is kept and its offer becomes trash.
-- **Reading happens in isolation, whoever the
-  [sender](domain-language.md#sender) is**: a
+- **The [guardian](domain-language.md#guardian) reads in isolation, whoever
+  the [sender](domain-language.md#sender) is**: a
   [trusted](domain-language.md#trusted) sender can be compromised. See
   [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
-
-Two points are open: what happens to the
-[e-mails](domain-language.md#e-mail) already recorded once the
-[user](domain-language.md#user) trusts their
-[sender](domain-language.md#sender)
-([open question: e-mails recorded before their sender was trusted](open-questions.md#question-e-mails-recorded-before-their-sender-was-trusted)),
-and how [spam](domain-language.md#spam) is found among e-mails that are not
-read
-([open question: spam from a sender the user has not decided on](open-questions.md#question-spam-from-a-sender-the-user-has-not-decided-on)).
 
 ## Each e-mail is judged by what it is
 
 `#each-e-mail-is-judged-by-what-it-is`
 
-An [e-mail](domain-language.md#e-mail) is judged by what it is, not by its
-[sender](domain-language.md#sender). The same online shop sends an invoice the
-[user](domain-language.md#user) keeps and an offer he does not, so a sender is
-never [whitelisted](domain-language.md#whitelist) or
+An [e-mail](domain-language.md#e-mail) is judged by what it is. The same online
+shop sends an invoice the [user](domain-language.md#user) keeps and an offer he
+does not, so a [sender](domain-language.md#sender) is never
+[whitelisted](domain-language.md#whitelist) or
 [blacklisted](domain-language.md#blacklist). Whether the sender is
-[trusted](domain-language.md#trusted) decides only whether the e-mail is read:
-[who is trusted](#who-is-trusted).
+[trusted](domain-language.md#trusted) decides whether the e-mail is read:
+[who is trusted](#who-is-trusted). The sender decides the verdict in one case
+only: every e-mail from a
+[rejected sender](domain-language.md#rejected-sender) is
+[spam](domain-language.md#spam).
 
 | The [e-mail](domain-language.md#e-mail) is | How it is told | What the index does |
 |---|---|---|
 | an [advertisement](domain-language.md#advertisement) | its [mail_label](domain-language.md#mail_label) says promotions | records its [sender](domain-language.md#sender), subject, date and mail_label, and nothing else |
-| [spam](domain-language.md#spam) | its [mail_label](domain-language.md#mail_label) says spam; a model is asked only about an e-mail that no mail_label marks, to find spam that came through | records it the same way as an [advertisement](domain-language.md#advertisement) |
+| [spam](domain-language.md#spam) | its [mail_label](domain-language.md#mail_label) says spam, or it comes from a [rejected sender](domain-language.md#rejected-sender) | records it the same way as an [advertisement](domain-language.md#advertisement), and records that it is [blacklisted](domain-language.md#blacklist) |
 | neither, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) | | indexes it fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) |
-| neither, from a [sender](domain-language.md#sender) who is not [trusted](domain-language.md#trusted) | | records its sender, subject, date and [mail_label](domain-language.md#mail_label), and nothing else |
+| neither, from an [undecided sender](domain-language.md#undecided-sender) | | records its sender, subject, date and [mail_label](domain-language.md#mail_label), and nothing else |
 
 Rules:
 
-- **The [mail_label](domain-language.md#mail_label) comes first.** It is what
-  the [provider](domain-language.md#provider) says about an
-  [e-mail](domain-language.md#e-mail), and reading it is deterministic. A model
-  is asked only about an e-mail that no mail_label marks:
+- **The [mail_label](domain-language.md#mail_label) is applied before
+  trust.** It is what the [provider](domain-language.md#provider) says about
+  an [e-mail](domain-language.md#e-mail), and applying it is deterministic. An
+  e-mail whose mail_label says promotions or spam is not read, even from a
+  [trusted](domain-language.md#trusted) [sender](domain-language.md#sender),
+  with the one exception of the attached PDF below.
+- **No model is used for [spam](domain-language.md#spam).** Spam is an
+  [e-mail](domain-language.md#e-mail) whose
+  [mail_label](domain-language.md#mail_label) says spam, or an e-mail from a
+  [rejected sender](domain-language.md#rejected-sender). Both are
+  [blacklisted](domain-language.md#blacklist) by a rule:
   [deterministic code first](principles.md#deterministic-code-first).
 - **An invoice must not be taken for an
   [advertisement](domain-language.md#advertisement).** An
@@ -274,20 +306,16 @@ Rules:
   decides: invoices carry one too.
 - **An [e-mail](domain-language.md#e-mail) with an attached PDF is never
   [blacklisted](domain-language.md#blacklist) by its
-  [mail_label](domain-language.md#mail_label) alone.** Whether it is indexed
-  fully, and which verdict it gets, is open:
-  [open question: e-mail with an attached PDF](open-questions.md#question-e-mail-with-an-attached-pdf).
+  [mail_label](domain-language.md#mail_label) alone.**
+- **An [e-mail](domain-language.md#e-mail) with an attached PDF whose
+  [mail_label](domain-language.md#mail_label) says promotions** is read like
+  any other e-mail from that [sender](domain-language.md#sender) when the
+  sender is [trusted](domain-language.md#trusted). From an
+  [undecided sender](domain-language.md#undecided-sender) it is only recorded.
 - **An [advertisement](domain-language.md#advertisement) is valid for one week
   after it arrived**, whether or not the [user](domain-language.md#user) was
   interested. After that it is [blacklisted](domain-language.md#blacklist).
   The week is a rule in code. No model reads a date from the offer.
-- **[Spam](domain-language.md#spam) is, first of all, an
-  [e-mail](domain-language.md#e-mail) whose
-  [mail_label](domain-language.md#mail_label) says spam.** It is
-  [blacklisted](domain-language.md#blacklist). Spam that came through is spam
-  that no mail_label marks; a model judges it. What a model is asked when the
-  e-mail is not read is open:
-  [open question: spam from a sender the user has not decided on](open-questions.md#question-spam-from-a-sender-the-user-has-not-decided-on).
 - **Of an [advertisement](domain-language.md#advertisement) and of
   [spam](domain-language.md#spam) the [server](domain-language.md#server)
   keeps only** the [sender](domain-language.md#sender), subject, date and
@@ -295,14 +323,11 @@ Rules:
   [local copy](domain-language.md#local-copy), a
   [description](domain-language.md#description) or any other
   [pipeline](domain-language.md#pipeline) step. They are on their way out.
-- **A model's verdict never moves an [e-mail](domain-language.md#e-mail) to
-  the [quarantine](domain-language.md#quarantine) by itself.** An
-  [asset](domain-language.md#asset)
-  [blacklisted](domain-language.md#blacklist) by a rule is moved there.
-  [Spam](domain-language.md#spam) a model judged is listed for the
-  [user](domain-language.md#user) as something a model thinks is trash; when he
-  confirms it, it is moved to the quarantine and is deleted after 30 days like
-  everything else there.
+- **Only a rule moves an [e-mail](domain-language.md#e-mail) to the
+  [quarantine](domain-language.md#quarantine).** A
+  [blacklisted](domain-language.md#blacklist) e-mail is moved there and is
+  deleted after 30 days unless the [user](domain-language.md#user) restores
+  it.
 - **There is one [quarantine](domain-language.md#quarantine) for all
   [sources](domain-language.md#source).** The
   [user](domain-language.md#user) looks through it in the app, in one place,

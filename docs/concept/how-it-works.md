@@ -1,7 +1,7 @@
 # How it works
 
 What happens to an asset from the moment a [source](domain-language.md#source) is
-read until the [user](domain-language.md#user) finds it in a search or sees it
+[fetched](domain-language.md#fetching) until the [user](domain-language.md#user) finds it in a search or sees it
 in the [duplicate report](domain-language.md#duplicate-report). Read this to
 understand the app's behaviour; it describes the index, the first of the
 [four steps](mission.md#four-steps), and says where the frontend adds to it.
@@ -12,11 +12,11 @@ understand the app's behaviour; it describes the index, the first of the
 
 A [run](domain-language.md#run) is one pass over one
 [source](domain-language.md#source). The first run of a source is full. Every
-later run is incremental: it reads only what changed since the stored
-[cursor](domain-language.md#cursor).
+later run is incremental: it [fetches](domain-language.md#fetching) only what
+changed since the stored [cursor](domain-language.md#cursor).
 
-A [run](domain-language.md#run) only reads. It never writes to a
-[source](domain-language.md#source).
+A [run](domain-language.md#run) only [fetches](domain-language.md#fetching).
+It never writes to a [source](domain-language.md#source).
 
 For every [run](domain-language.md#run) the [server](domain-language.md#server)
 records when it started and finished, how many [assets](domain-language.md#asset)
@@ -31,9 +31,8 @@ and errors. For a mailbox it also counts the
 [advertisements](domain-language.md#advertisement) and the
 [spam](domain-language.md#spam) it recorded, and the assets that are now
 [blacklisted](domain-language.md#blacklist), and it says how many
-[senders](domain-language.md#sender) wait for the
-[user](domain-language.md#user)'s decision whether they are
-[trusted](domain-language.md#trusted). The run's summary in the app lists
+[undecided senders](domain-language.md#undecided-sender) wait for the
+[user](domain-language.md#user)'s decision. The run's summary in the app lists
 those senders. Through which channel the notification is sent is open:
 [open question: notification channel](open-questions.md#question-notification-channel).
 
@@ -74,8 +73,8 @@ since that [source](domain-language.md#source)'s last finished run.
 The first [run](domain-language.md#run) of a
 [source](domain-language.md#source) goes in batches and can be interrupted. It
 resumes where it stopped, from the
-[checkpoint](domain-language.md#checkpoint). Photos are read from the oldest to
-the newest.
+[checkpoint](domain-language.md#checkpoint). Photos are
+[fetched](domain-language.md#fetching) from the oldest to the newest.
 
 The rules that make this safe:
 
@@ -150,13 +149,16 @@ is [trusted](domain-language.md#trusted) decides whether an
 [asset](domain-language.md#asset) is read; it gives no verdict. An asset from a
 trusted sender can be [whitelisted](domain-language.md#whitelist),
 [blacklisted](domain-language.md#blacklist) or neither, and an
-[e-mail](domain-language.md#e-mail) from a sender who is not trusted is not
-blacklisted for that reason.
+[e-mail](domain-language.md#e-mail) from an
+[undecided sender](domain-language.md#undecided-sender) is not blacklisted for
+that reason. Only a
+[rejected sender](domain-language.md#rejected-sender) gives a verdict: its
+e-mails are [spam](domain-language.md#spam).
 
 | Verdict | Meaning | How an [asset](domain-language.md#asset) gets it |
 |---|---|---|
 | [whitelisted](domain-language.md#whitelist) | kept | By default, from rules about where the asset came from. A personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from the [user](domain-language.md#user)'s phone. It is a default, not a guarantee. |
-| [blacklisted](domain-language.md#blacklist) | trash | Clear-cut. By a rule: an [advertisement](domain-language.md#advertisement) that arrived more than one week ago, and an [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam. Because a model judged it: [spam](domain-language.md#spam) that came through, which no mail_label marks. |
+| [blacklisted](domain-language.md#blacklist) | trash | Clear-cut, and always by a rule, never by a model: an [advertisement](domain-language.md#advertisement) that arrived more than one week ago, and [spam](domain-language.md#spam), which is an [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam or an e-mail from a [rejected sender](domain-language.md#rejected-sender). |
 | neither | not judged yet | Everything else, for example an invoice from an online shop, or an advertisement in its week of validity. |
 
 - The week of validity of an
@@ -173,12 +175,10 @@ blacklisted for that reason.
   [user](domain-language.md#user) looks through in the app, in one place. There
   he restores an [asset](domain-language.md#asset) or deletes it permanently,
   and everything in it is deleted after 30 days unless it is restored.
-- An [asset](domain-language.md#asset)
-  [blacklisted](domain-language.md#blacklist) because a model judged it is not
-  moved to the [quarantine](domain-language.md#quarantine) by that verdict. The
-  same one place lists it for the [user](domain-language.md#user) as something
-  a model thinks is trash. When he confirms it, it is moved to the quarantine
-  and follows the 30 days like everything else.
+- No model [blacklists](domain-language.md#blacklist) an
+  [asset](domain-language.md#asset), so everything in the
+  [quarantine](domain-language.md#quarantine) was put there by a rule and
+  follows the 30 days.
 - Moving an [asset](domain-language.md#asset) to the
   [quarantine](domain-language.md#quarantine) writes to a
   [source](domain-language.md#source), so it belongs to clean-up
@@ -191,51 +191,58 @@ by default
 where an asset in the [quarantine](domain-language.md#quarantine) physically
 sits until it is deleted
 ([open question: where the quarantine is](open-questions.md#question-where-the-quarantine-is)),
-whether a whitelisted asset can still reach it
-([open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine)),
-and what happens to an [e-mail](domain-language.md#e-mail) with an attached PDF
-whose [mail_label](domain-language.md#mail_label) says promotions or spam
-([open question: e-mail with an attached PDF](open-questions.md#question-e-mail-with-an-attached-pdf)).
+and whether a whitelisted asset can still reach it
+([open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine)).
 
 ## Pipeline steps
 
 `#pipeline-steps`
 
-An [e-mail](domain-language.md#e-mail) is first told apart: is it an
-[advertisement](domain-language.md#advertisement),
-[spam](domain-language.md#spam) or neither? Its
-[mail_label](domain-language.md#mail_label) decides first: promotions makes it
-an advertisement, spam makes it spam. An unsubscribe header alone decides
-nothing. A model is asked only about an e-mail that no mail_label marks, to
-find spam that came through. An advertisement or spam stops there:
-its [sender](domain-language.md#sender), subject, date and mail_label are
-recorded, and it gets no [local copy](domain-language.md#local-copy), no
+An [e-mail](domain-language.md#e-mail) is first told apart by its
+[mail_label](domain-language.md#mail_label), which is applied before trust:
+promotions makes it an [advertisement](domain-language.md#advertisement), spam
+makes it [spam](domain-language.md#spam). An unsubscribe header alone decides
+nothing, and no model is asked. An advertisement or spam stops there, even
+from a [trusted](domain-language.md#trusted)
+[sender](domain-language.md#sender): its sender, subject, date and mail_label
+are recorded, and it gets no [local copy](domain-language.md#local-copy), no
 [description](domain-language.md#description) and no further step.
 The rules are in
 [each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
 
-Then its [sender](domain-language.md#sender) decides whether the
+One [e-mail](domain-language.md#e-mail) does not stop there: one with an
+attached PDF whose [mail_label](domain-language.md#mail_label) says
+promotions. It goes on to the next step like an e-mail that no mail_label
+marks, so from a [trusted](domain-language.md#trusted)
+[sender](domain-language.md#sender) it is read like any other e-mail from that
+sender, and from an [undecided sender](domain-language.md#undecided-sender) it
+is only recorded.
+
+Then the [guardian](domain-language.md#guardian) decides, by the
+[sender](domain-language.md#sender), whether the
 [e-mail](domain-language.md#e-mail) is read. The rule is
 [who is trusted](sources.md#who-is-trusted).
 
-- **The [sender](domain-language.md#sender) is
-  [trusted](domain-language.md#trusted)**: the
+- **A [trusted](domain-language.md#trusted)
+  [sender](domain-language.md#sender)**: the
   [user](domain-language.md#user) has written to it himself, or has marked it
   as trusted. The [e-mail](domain-language.md#e-mail)'s
   [message body](domain-language.md#message-body) and its
   [attachments](domain-language.md#attachment) go through the
   [pipeline](domain-language.md#pipeline) below.
-- **The [user](domain-language.md#user) has never dealt with the
-  [sender](domain-language.md#sender)**: the
+- **An [undecided sender](domain-language.md#undecided-sender)**: the
+  [user](domain-language.md#user) has never dealt with it. The
   [e-mail](domain-language.md#e-mail) stops here. Its sender, subject, date and
   [mail_label](domain-language.md#mail_label) are recorded, with no
   [local copy](domain-language.md#local-copy) and no further step, and the
-  sender is listed for the user. He says once whether he trusts it.
-- **The [user](domain-language.md#user) said the
-  [sender](domain-language.md#sender) is not
-  [trusted](domain-language.md#trusted)**: the
-  [e-mail](domain-language.md#e-mail) is recorded the same way, and the sender
-  is not listed again.
+  sender is listed for the user. He says once whether he trusts it. Once he
+  says it is [trusted](domain-language.md#trusted), the next
+  [run](domain-language.md#run) reads the e-mails recorded so far.
+- **A [rejected sender](domain-language.md#rejected-sender)**: the
+  [user](domain-language.md#user) said no. The
+  [e-mail](domain-language.md#e-mail) is [spam](domain-language.md#spam): it
+  is recorded the same way and [blacklisted](domain-language.md#blacklist) by
+  a rule, and the sender is not listed again.
 
 The first [run](domain-language.md#run) over a mailbox therefore starts with
 the [senders](domain-language.md#sender): the
@@ -311,15 +318,17 @@ Every [asset](domain-language.md#asset) that is read goes through the same
     [asset](domain-language.md#asset) is grouped with the assets that are the same.
     See [below](#duplicates).
 
-**Reading runs in isolation.** Every step that takes text, pictures or
-metadata out of an [asset](domain-language.md#asset)'s
-[bytes](domain-language.md#bytes) (the [phash](domain-language.md#phash), the
-metadata, the text) runs in a part of the app that has no network access and
-no access to the [providers](domain-language.md#provider)' access tokens or to
-the database. Nothing inside an asset is ever run: no macro, no script, no
-executable. This holds for every asset, also one from a
-[trusted](domain-language.md#trusted) [source](domain-language.md#source) or
-[sender](domain-language.md#sender):
+**The [guardian](domain-language.md#guardian) reads in isolation.** Every step
+that takes text, pictures or metadata out of an
+[asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes) (the
+[phash](domain-language.md#phash), the metadata, the text) is done by the
+guardian, with no network access and no access to the
+[providers](domain-language.md#provider)' access tokens or to the database.
+Nothing else in the app touches the inside of an asset. Nothing inside an asset
+is ever run: no macro, no script, no executable. This holds for every asset,
+also one from a [trusted](domain-language.md#trusted)
+[source](domain-language.md#source) or [sender](domain-language.md#sender), and
+on a Mac as on the [server](domain-language.md#server):
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
 Whether a file is refused for its size or its number of pages, and whether it
 is checked by an antivirus scan before it is read, is open:
@@ -371,9 +380,9 @@ when [assets](domain-language.md#asset) are already indexed. So:
 | Each [duplicate group](domain-language.md#duplicate-group) | [exact](domain-language.md#exact) or [near](domain-language.md#near), the [keeper](domain-language.md#keeper), [reviewed](domain-language.md#reviewed) or not |
 | Each [run](domain-language.md#run) | start, finish, counts of new, changed and [vanished](domain-language.md#vanished) [assets](domain-language.md#asset), errors |
 | Each [advertisement](domain-language.md#advertisement) and each [spam](domain-language.md#spam) e-mail | only its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label), and whether it is [blacklisted](domain-language.md#blacklist) |
-| Each [e-mail](domain-language.md#e-mail) whose [sender](domain-language.md#sender) is not [trusted](domain-language.md#trusted) | only its sender, subject, date and [mail_label](domain-language.md#mail_label) |
-| Each [sender](domain-language.md#sender) | whether the [user](domain-language.md#user) has written to it, and his decision whether it is [trusted](domain-language.md#trusted), if he has made one |
-| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted), the rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default |
+| Each [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) | only its sender, subject, date and [mail_label](domain-language.md#mail_label) |
+| Each [sender](domain-language.md#sender) | whether the [user](domain-language.md#user) has written to it, and whether it is [trusted](domain-language.md#trusted), [undecided](domain-language.md#undecided-sender) or [rejected](domain-language.md#rejected-sender) |
+| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) and which are [rejected](domain-language.md#rejected-sender), the rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default |
 | The [baseline](domain-language.md#baseline) | see [measuring before and after](mission.md#measuring-before-and-after) |
 
 ## Duplicates

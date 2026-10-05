@@ -17,8 +17,8 @@ is listed at the end of this page.
 |---|---|
 | [mission.md](mission.md) | What we want to achieve and why: the mission, digital trash, the four steps, measuring before and after, what the app is not. |
 | [domain-language.md](domain-language.md) | The agreed words, one by one. |
-| [principles.md](principles.md) | The rules that hold everywhere: nothing deleted without a go and the quarantine, the user decides, privacy, deterministic code first, reading what is trusted in isolation and running nothing, local copies, open source. |
-| [sources.md](sources.md) | Where files come from: sources, accounts, the Mac collector, who is trusted, and how each e-mail is judged by what it is. |
+| [principles.md](principles.md) | The rules that hold everywhere: nothing deleted without a go and the quarantine, the user decides, privacy, deterministic code first, the guardian reading what is trusted in isolation and running nothing, local copies, open source. |
+| [sources.md](sources.md) | Where files come from: sources, accounts, the Mac collector, who is trusted, the three states of a sender, and how each e-mail is judged by what it is. |
 | [how-it-works.md](how-it-works.md) | What happens to a file: runs, whitelisted and blacklisted assets, the pipeline steps, duplicates, how assets are organized and found, search, the duplicate report. |
 | [architecture.md](architecture.md) | How the code is organized: layers, ports and adapters, where models run, the language choice. |
 | [testing.md](testing.md) | Specifications first and why, the test layers, fixtures, the draft scenario titles of the index, and the scenario titles of clean-up. |
@@ -83,10 +83,12 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#expected-volume](infrastructure.md#expected-volume)
 - [#ext](domain-language.md#ext)
 - [#fetching](domain-language.md#fetching)
+- [#fetching-changes](sources.md#fetching-changes)
 - [#file-types](sources.md#file-types)
 - [#finding-photos](how-it-works.md#finding-photos)
 - [#fixtures](testing.md#fixtures)
 - [#four-steps](mission.md#four-steps)
+- [#guardian](domain-language.md#guardian)
 - [#has_text](domain-language.md#has_text)
 - [#hexagonal-layering](architecture.md#hexagonal-layering)
 - [#how-assets-are-organized-and-found](how-it-works.md#how-assets-are-organized-and-found)
@@ -147,8 +149,6 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-disk-encryption](open-questions.md#question-disk-encryption)
 - [#question-duplicate-report-and-frontend](open-questions.md#question-duplicate-report-and-frontend)
 - [#question-e-mail-slice-order](open-questions.md#question-e-mail-slice-order)
-- [#question-e-mail-with-an-attached-pdf](open-questions.md#question-e-mail-with-an-attached-pdf)
-- [#question-e-mails-recorded-before-their-sender-was-trusted](open-questions.md#question-e-mails-recorded-before-their-sender-was-trusted)
 - [#question-frontier-model-for-the-taxonomy](open-questions.md#question-frontier-model-for-the-taxonomy)
 - [#question-how-an-asset-gets-its-context](open-questions.md#question-how-an-asset-gets-its-context)
 - [#question-how-reading-is-isolated](open-questions.md#question-how-reading-is-isolated)
@@ -163,7 +163,6 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-programs-and-unknown-file-types](open-questions.md#question-programs-and-unknown-file-types)
 - [#question-public-repository-check](open-questions.md#question-public-repository-check)
 - [#question-server-setup](open-questions.md#question-server-setup)
-- [#question-spam-from-a-sender-the-user-has-not-decided-on](open-questions.md#question-spam-from-a-sender-the-user-has-not-decided-on)
 - [#question-two-collectors-one-source](open-questions.md#question-two-collectors-one-source)
 - [#question-vanished-in-search](open-questions.md#question-vanished-in-search)
 - [#question-videos](open-questions.md#question-videos)
@@ -176,8 +175,8 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-whitelisted-by-default](open-questions.md#question-whitelisted-by-default)
 - [#read-only-on-sources](principles.md#read-only-on-sources)
 - [#reader](domain-language.md#reader)
-- [#reading-changes](sources.md#reading-changes)
 - [#reading-in-isolation](architecture.md#reading-in-isolation)
+- [#rejected-sender](domain-language.md#rejected-sender)
 - [#resuming](how-it-works.md#resuming)
 - [#reviewed](domain-language.md#reviewed)
 - [#reviewing-duplicates](how-it-works.md#reviewing-duplicates)
@@ -213,6 +212,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#token-store](infrastructure.md#token-store)
 - [#trusted](domain-language.md#trusted)
 - [#unchanged-assets](how-it-works.md#unchanged-assets)
+- [#undecided-sender](domain-language.md#undecided-sender)
 - [#user](domain-language.md#user)
 - [#vanished](domain-language.md#vanished)
 - [#vanished-assets](how-it-works.md#vanished-assets)
@@ -224,7 +224,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#where-models-run](architecture.md#where-models-run)
 - [#whitelist](domain-language.md#whitelist)
 - [#whitelisted-blacklisted-or-neither](how-it-works.md#whitelisted-blacklisted-or-neither)
+- [#who-fetches-a-source](sources.md#who-fetches-a-source)
 - [#who-is-trusted](sources.md#who-is-trusted)
-- [#who-reads-a-source](sources.md#who-reads-a-source)
 - [#words-we-do-not-use](domain-language.md#words-we-do-not-use)
 - [#worker](domain-language.md#worker)
