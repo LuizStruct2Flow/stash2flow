@@ -143,18 +143,23 @@ whole.
 | Verdict | Meaning | How an [asset](domain-language.md#asset) gets it |
 |---|---|---|
 | [whitelisted](domain-language.md#whitelist) | kept | By default, from rules about where the asset came from. A personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from the [user](domain-language.md#user)'s phone. It is a default, not a guarantee. |
-| [blacklisted](domain-language.md#blacklist) | trash | Clear-cut: an [advertisement](domain-language.md#advertisement) that arrived more than one week ago, and [spam](domain-language.md#spam) that came through. |
+| [blacklisted](domain-language.md#blacklist) | trash | Clear-cut. By a rule: an [advertisement](domain-language.md#advertisement) that arrived more than one week ago, and an [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam. Because a model judged it: [spam](domain-language.md#spam) that came through, which no mail_label marks. |
 | neither | not judged yet | Everything else, for example an invoice from an online shop, or an advertisement in its week of validity. |
 
 - The week of validity of an
   [advertisement](domain-language.md#advertisement) is a rule in code: one week
   after it arrived, whether or not the [user](domain-language.md#user) was
   interested.
+- An [e-mail](domain-language.md#e-mail) with an attached PDF is never
+  [blacklisted](domain-language.md#blacklist) by its
+  [mail_label](domain-language.md#mail_label) alone.
 - The index only records the verdict. It deletes nothing and moves nothing.
 - Whatever could be deleted is moved to the
   [quarantine](domain-language.md#quarantine), where the
   [user](domain-language.md#user) restores it or deletes it permanently, and
-  where it is deleted after 30 days. That writes to a
+  where it is deleted after 30 days. An [asset](domain-language.md#asset)
+  [blacklisted](domain-language.md#blacklist) because a model judged it is the
+  exception: it stays there until the user confirms it. That writes to a
   [source](domain-language.md#source), so it belongs to clean-up
   ([FEATURE-002](../backlog/BACKLOG.md)), which is parked:
   [nothing deleted without a go](principles.md#nothing-deleted-without-a-go).
@@ -173,11 +178,14 @@ and whether a whitelisted asset can still reach it
 
 An [e-mail](domain-language.md#e-mail) is first told apart: is it an
 [advertisement](domain-language.md#advertisement),
-[spam](domain-language.md#spam) or neither? The
-[provider](domain-language.md#provider)'s labels decide first, and a model
-classifies only what they leave unclear. An advertisement or spam stops there:
-its [sender](domain-language.md#sender), subject, date and label are recorded,
-and it gets no [local copy](domain-language.md#local-copy) and no further step.
+[spam](domain-language.md#spam) or neither? Its
+[mail_label](domain-language.md#mail_label) decides first: promotions makes it
+an advertisement, spam makes it spam. An unsubscribe header alone decides
+nothing. A model is asked only about an e-mail that no mail_label marks, to
+find spam that came through. An advertisement or spam stops there:
+its [sender](domain-language.md#sender), subject, date and mail_label are
+recorded, and it gets no [local copy](domain-language.md#local-copy), no
+[description](domain-language.md#description) and no further step.
 The rules are in
 [each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
 
@@ -282,12 +290,12 @@ when [assets](domain-language.md#asset) are already indexed. So:
 | About | What is kept |
 |---|---|
 | Each [source](domain-language.md#source) | [location](domain-language.md#location), [account](domain-language.md#account), [reader](domain-language.md#reader), [cursor](domain-language.md#cursor), [checkpoint](domain-language.md#checkpoint), whether it is enabled, when its last [run](domain-language.md#run) finished, its rank in the [order of sources](domain-language.md#order-of-sources) |
-| Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [issuer](domain-language.md#issuer); its [persons](domain-language.md#person), which are [tags](domain-language.md#tag), so there can be several; coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [e-mail](domain-language.md#e-mail) and an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject, thread and the [provider](domain-language.md#provider)'s labels; whether it is [whitelisted](domain-language.md#whitelist), [blacklisted](domain-language.md#blacklist) or neither; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
+| Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [issuer](domain-language.md#issuer); its [persons](domain-language.md#person), which are [tags](domain-language.md#tag), so there can be several; coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [e-mail](domain-language.md#e-mail) and an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject, thread and [mail_label](domain-language.md#mail_label); whether it is [whitelisted](domain-language.md#whitelist), [blacklisted](domain-language.md#blacklist) or neither; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
 | Text | the [OCR text](domain-language.md#ocr-text) per page, searchable without accents and tolerant of misreadings |
 | [Embeddings](domain-language.md#embedding) | per [asset](domain-language.md#asset), with the name of the model that made them |
 | Each [duplicate group](domain-language.md#duplicate-group) | [exact](domain-language.md#exact) or [near](domain-language.md#near), the [keeper](domain-language.md#keeper), [reviewed](domain-language.md#reviewed) or not |
 | Each [run](domain-language.md#run) | start, finish, counts of new, changed and [vanished](domain-language.md#vanished) [assets](domain-language.md#asset), errors |
-| Each [advertisement](domain-language.md#advertisement) | only its [sender](domain-language.md#sender), subject, date and label, and whether it is [blacklisted](domain-language.md#blacklist) |
+| Each [advertisement](domain-language.md#advertisement) and each [spam](domain-language.md#spam) e-mail | only its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label), and whether it is [blacklisted](domain-language.md#blacklist) |
 | The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, the rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default |
 | The [baseline](domain-language.md#baseline) | see [measuring before and after](mission.md#measuring-before-and-after) |
 

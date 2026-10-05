@@ -24,7 +24,7 @@ Background:
 [asset](domain-language.md#asset): its
 [message body](domain-language.md#message-body) and its
 [attachments](domain-language.md#attachment)? The documents already work with
-this rule, and with spam recorded the same way as an advertisement.
+this rule.
 
 **Recommendation.** Yes. No list of [senders](domain-language.md#sender) and no
 list of words then decides what is indexed.
@@ -54,6 +54,10 @@ Background:
 
 **Question.** Where is the [quarantine](domain-language.md#quarantine): a place
 the app keeps, or one the [provider](domain-language.md#provider) already has?
+It must be able to hold an [asset](domain-language.md#asset)
+[blacklisted](domain-language.md#blacklist) because a model judged it until
+the [user](domain-language.md#user) confirms it, which a trash that empties by
+itself does not do.
 
 **Recommendation.** Each provider's own trash. It already lets the
 [user](domain-language.md#user) restore an item and deletes it by itself after

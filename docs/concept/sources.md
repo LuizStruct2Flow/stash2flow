@@ -183,31 +183,48 @@ on neither side.
 
 | The [e-mail](domain-language.md#e-mail) is | How it is told | What the index does |
 |---|---|---|
-| an [advertisement](domain-language.md#advertisement) | the [provider](domain-language.md#provider) filed it under promotions, or it carries an unsubscribe header | records its [sender](domain-language.md#sender), subject, date and label, and nothing else |
-| [spam](domain-language.md#spam) | the [provider](domain-language.md#provider) marked it as spam; a model classifies what the labels leave unclear, such as spam that came through | records it the same way as an [advertisement](domain-language.md#advertisement) |
+| an [advertisement](domain-language.md#advertisement) | its [mail_label](domain-language.md#mail_label) says promotions | records its [sender](domain-language.md#sender), subject, date and mail_label, and nothing else |
+| [spam](domain-language.md#spam) | its [mail_label](domain-language.md#mail_label) says spam; a model is asked only about an e-mail that no mail_label marks, to find spam that came through | records it the same way as an [advertisement](domain-language.md#advertisement) |
 | neither | | indexes it fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) |
 
 Rules:
 
-- **The [provider](domain-language.md#provider)'s own labels come first.** They
-  are deterministic. A model classifies only an
-  [e-mail](domain-language.md#e-mail) the labels leave unclear:
+- **The [mail_label](domain-language.md#mail_label) comes first.** It is what
+  the [provider](domain-language.md#provider) says about an
+  [e-mail](domain-language.md#e-mail), and reading it is deterministic. A model
+  is asked only about an e-mail that no mail_label marks:
   [deterministic code first](principles.md#deterministic-code-first).
+- **An invoice must not be taken for an
+  [advertisement](domain-language.md#advertisement).** An
+  [e-mail](domain-language.md#e-mail) is an advertisement only when its
+  [mail_label](domain-language.md#mail_label) says promotions. An unsubscribe
+  header is a header of the e-mail, not a mail_label, and alone it never
+  decides: invoices carry one too.
+- **An [e-mail](domain-language.md#e-mail) with an attached PDF is never
+  [blacklisted](domain-language.md#blacklist) by its
+  [mail_label](domain-language.md#mail_label) alone.**
 - **An [advertisement](domain-language.md#advertisement) is valid for one week
   after it arrived**, whether or not the [user](domain-language.md#user) was
   interested. After that it is [blacklisted](domain-language.md#blacklist).
   The week is a rule in code. No model reads a date from the offer.
-- **Of an [advertisement](domain-language.md#advertisement) the
-  [server](domain-language.md#server) keeps only** its
-  [sender](domain-language.md#sender), subject, date and label. It gets no
-  [local copy](domain-language.md#local-copy), no
-  [description](domain-language.md#description) and no other
-  [pipeline](domain-language.md#pipeline) step. It is on its way out.
-- **[Spam](domain-language.md#spam) is [blacklisted](domain-language.md#blacklist).**
-  That it is recorded the same way as an
-  [advertisement](domain-language.md#advertisement) is part of the rule that
-  still waits for confirmation:
-  [open question: e-mail indexed fully](open-questions.md#question-e-mail-indexed-fully).
+- **[Spam](domain-language.md#spam) is, first of all, an
+  [e-mail](domain-language.md#e-mail) whose
+  [mail_label](domain-language.md#mail_label) says spam.** It is
+  [blacklisted](domain-language.md#blacklist). Spam that came through is spam
+  that no mail_label marks; a model judges it.
+- **Of an [advertisement](domain-language.md#advertisement) and of
+  [spam](domain-language.md#spam) the [server](domain-language.md#server)
+  keeps only** the [sender](domain-language.md#sender), subject, date and
+  [mail_label](domain-language.md#mail_label). Neither gets a
+  [local copy](domain-language.md#local-copy), a
+  [description](domain-language.md#description) or any other
+  [pipeline](domain-language.md#pipeline) step. They are on their way out.
+- **A model's verdict never ends in deletion by itself.** An
+  [asset](domain-language.md#asset)
+  [blacklisted](domain-language.md#blacklist) by a rule leaves the
+  [quarantine](domain-language.md#quarantine) by itself after 30 days.
+  [Spam](domain-language.md#spam) a model judged stays there until the
+  [user](domain-language.md#user) confirms it.
 - **[Whitelisted](domain-language.md#whitelist) is a default, not a
   guarantee.** A personal [e-mail](domain-language.md#e-mail) from a family
   member is usually whitelisted. Which rules give the default is open:
