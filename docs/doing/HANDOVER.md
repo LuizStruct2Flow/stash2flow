@@ -43,10 +43,11 @@ Two things it does NOT do, so you do not go looking:
 
 ## 2. WIP — what is in flight right now
 
-**Nothing has been pushed.** Every commit on `main` is local. The remote is a
-public repository, so before the first push grep the tracked files for the
-founder's account data (names, addresses, folder and machine names) and confirm
-`docs/SPEC-*.md` is ignored.
+**The remote is a public repository.** Before every push, search the tracked
+files and the commit messages of the pushed range for the founder's account
+data (names, addresses, folder and machine names) and confirm `docs/SPEC-*.md`
+is ignored. A local branch named `backup-before-scrub` may exist: it holds
+history from before such data was removed and must never be pushed.
 
 **The concept is waiting on the founder, not on an agent.** It lives in
 `docs/concept/`, one document per concern, linked by hashtags; the plan
