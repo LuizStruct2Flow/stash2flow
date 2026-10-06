@@ -797,6 +797,44 @@ describe('A-07 — a2bp reverse-substitutes and refuses to launder project speci
     })
   })
 
+  it('BUG-155 a known dotdir inside a shell default `${VAR:-$HOME/.codex}` files, ~/.kimi-code files, a script\'s ~/.<placeholder> still blocks', async () => {
+    await scenario('a2bp-contam-bug155', async (s) => {
+      // THE REPRODUCER. The dot-dir pass extracted `[A-Za-z0-9_.{}-]*` after
+      // `/.`, so the closing brace of a shell default-value expansion became
+      // part of the name: `codex}` is not on the known list although `codex`
+      // is, and CI went red on a line that is not contamination (4a2b7e2).
+      // `~/.kimi-code` is the Kimi CLI's own home — the same class as `codex`
+      // and `gemini`, missing only because Kimi joined after the list was
+      // written. Braces stay meaningful as a WHOLE placeholder: #11's A-09
+      // shape must block exactly as before, which the third run pins.
+      const f = await fixture(s)
+      const rel = 'scripts/log-activity.sh'
+      const file = async (body: string): Promise<A2bpResult> => {
+        await f.writeBp(rel, 'SENTINEL\n')
+        await f.writeIn(f.proj, rel, `#!/bin/sh\n${body}\n`)
+        return f.a2bp(f.proj, [rel])
+      }
+
+      const codex = await file('CODEX_HOME_DIR="${CODEX_HOME:-$HOME/.codex}"')
+      expect(
+        codex.rc,
+        `BUG-155: a known dotdir inside \${VAR:-…} was BLOCKED — the brace was read as part of the name\n${codex.out}`,
+      ).toBe(0)
+
+      const kimi = await file('KIMI_BIN="$HOME/.kimi-code/bin/kimi"')
+      expect(kimi.rc, `BUG-155: the Kimi CLI's own home dir was BLOCKED as a per-project state dir\n${kimi.out}`).toBe(0)
+
+      // This suite SHIPS, so the CI push scan judges these two lines as added
+      // lines of a script file — exactly the shape they plant.
+      const placeholder = await file('state_dir="$HOME/.{{PROJECT_NAME}}"') // a2bp-allow: fixture plant, the A-09 shape this run pins
+      expect(
+        placeholder.rc,
+        'a SCRIPT hardcoding $HOME/.{{PROJECT_NAME}} was filed — the A-09 shape must still block (#11)', // a2bp-allow: names the fixture plant above
+      ).not.toBe(0)
+      expect(placeholder.out).toContain('literal per-project state dir')
+    })
+  })
+
   it('#12 one contaminated file refuses the WHOLE request; nothing is filed (F3)', async () => {
     await scenario('a2bp-contam-12', async (s) => {
       // THIS EXPECTATION IS INVERTED FROM WHAT IT USED TO BE, deliberately. While
@@ -1338,12 +1376,12 @@ describe('A-07 — a2bp reverse-substitutes and refuses to launder project speci
       // preconditions, not the CLI's behaviour.
       //
       // THE PATH MATTERS: `tests/*` is managed and NOT substituted, so with
-      // contamination.sh absent and the refusal downgraded, staging is a plain
-      // `cp`, `contamination_scan` is simply not a command, `findings` comes back
-      // empty — and the request is filed with the scan having never run. That is
-      // the door BUG-002 and A-09 came through, standing open. Any substitutable
-      // path would instead fail in `contamination_stage` and be rejected for a
-      // different reason, which is why this case does not use the carrier.
+      // contamination.mts absent and the refusal downgraded, staging is a plain
+      // `cp` and the scan is reached only through the lib's import — so the
+      // request would be filed with the scan having never run. That is the door
+      // BUG-002 and A-09 came through, standing open. Any substitutable path
+      // would instead fail in staging and be rejected for a different reason,
+      // which is why this case does not use the carrier.
       const f = await fixture(s)
       const contaminated = 'tests/fixture/test.sh'
       const hostPath = '/home/someone/dev/acme-flow/secret'
@@ -1382,7 +1420,7 @@ describe('A-07 — a2bp reverse-substitutes and refuses to launder project speci
       expect(control.out.toUpperCase(), 'the control run reported no finding').toContain('BLOCK')
 
       const r = await f.a2bp(f.proj, [contaminated], {
-        cli: await copyCli('cli-no-guard', 'contamination.sh'),
+        cli: await copyCli('cli-no-guard', 'contamination.mts'),
       })
 
       expect(
@@ -1393,7 +1431,7 @@ describe('A-07 — a2bp reverse-substitutes and refuses to launder project speci
       expect(
         r.out,
         'refused, but not by the required-libs guard — a downstream failure is not the same as a refusal (BUG-003)',
-      ).toContain('scripts/lib/contamination.sh is missing')
+      ).toContain('scripts/lib/contamination.mts is missing')
     })
   })
 })

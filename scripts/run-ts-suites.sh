@@ -342,6 +342,7 @@ sh_lint_stage(){
   fi
   pipe_stage "shellcheck · TASK-033" sh_lint "$_sl_root"
   ts_shell_inventory_stage "$_sl_root"
+  ts_contamination_stage "$_sl_root"
 }
 
 # --- TASK-067: the shell inventory gate --------------------------------------
@@ -404,30 +405,39 @@ ts_shell_inventory_stage(){
 # Prints the resolved ref on stdout; prints nothing and returns 1 if none of
 # the three resolves, which the caller must treat as FAIL CLOSED (refuse to
 # run the check at all, never fall back to judging the tree against itself).
+# LABEL (optional, default "shell-inventory") prefixes the diagnostic lines,
+# so the contamination stage (TASK-090, the second caller) reports in its own
+# name.
 ts_shell_inventory_base(){
   _sib_root="${1:-.}"
+  _sib_label="${2:-shell-inventory}"
   _sib_zero="0000000000000000000000000000000000000000"
   if [ -n "${BP_SHELL_INVENTORY_BASE:-}" ] && [ "$BP_SHELL_INVENTORY_BASE" != "$_sib_zero" ]; then
     if git -C "$_sib_root" rev-parse --verify --quiet "${BP_SHELL_INVENTORY_BASE}^{commit}" >/dev/null 2>&1; then
       printf '%s\n' "$BP_SHELL_INVENTORY_BASE"
       return 0
     fi
-    echo "shell-inventory: BP_SHELL_INVENTORY_BASE=$BP_SHELL_INVENTORY_BASE does not resolve to a commit here — falling back" >&2
+    echo "$_sib_label: BP_SHELL_INVENTORY_BASE=$BP_SHELL_INVENTORY_BASE does not resolve to a commit here — falling back" >&2
   elif [ -n "${BP_SHELL_INVENTORY_BASE:-}" ]; then
-    echo "shell-inventory: BP_SHELL_INVENTORY_BASE is the all-zero ref (a brand-new ref) — falling back" >&2
+    echo "$_sib_label: BP_SHELL_INVENTORY_BASE is the all-zero ref (a brand-new ref) — falling back" >&2
   fi
-  _sib_up="$(git -C "$_sib_root" rev-parse --verify --quiet '@{u}' 2>/dev/null)"
+  # Each lookup is `||`-guarded: under the hook's `set -e`, a lookup that finds
+  # nothing (no upstream is the COMMON case — fresh clone, local branch) would
+  # otherwise kill the shell at the assignment and take the whole gate down
+  # before the next source is ever tried — the silent-death shape of BUG-055.
+  # Found by TASK-090's fixture, whose repo has no upstream on purpose.
+  _sib_up="$(git -C "$_sib_root" rev-parse --verify --quiet '@{u}' 2>/dev/null)" || true
   if [ -n "$_sib_up" ]; then
     printf '%s\n' "$_sib_up"
     return 0
   fi
-  _sib_om="$(git -C "$_sib_root" rev-parse --verify --quiet origin/main 2>/dev/null)"
+  _sib_om="$(git -C "$_sib_root" rev-parse --verify --quiet origin/main 2>/dev/null)" || true
   if [ -n "$_sib_om" ]; then
-    echo "shell-inventory: no upstream and no explicit base — using origin/main" >&2
+    echo "$_sib_label: no upstream and no explicit base — using origin/main" >&2
     printf '%s\n' "$_sib_om"
     return 0
   fi
-  echo "shell-inventory: cannot resolve a base ref (no BP_SHELL_INVENTORY_BASE, no @{u}, no origin/main)" >&2
+  echo "$_sib_label: cannot resolve a base ref (no BP_SHELL_INVENTORY_BASE, no @{u}, no origin/main)" >&2
   return 1
 }
 
@@ -442,6 +452,74 @@ ts_shell_inventory(){
     return 1
   }
   sh_lint_files "$_sinv_root" | ts_scrubbed "$_sinv_node" "$_sinv_root/scripts/shell-inventory-check.mts" "$_sinv_root" "$_sinv_base"
+}
+
+# --- TASK-090: the contamination push scan in the gate -------------------------
+#
+# FOUNDER DECISION 2026-10-05 ("yes, do it"): the blueprint's own pre-push gate
+# runs the contamination push scan over the pushed range and blocks on a BLOCK
+# finding, exactly as CI's `contamination` job does. The CI-only gap turned
+# main red three times (4a2b7e2, 5966207, d334541) — each a line the gate
+# could have caught before the push. CI stays the backstop: it re-runs the
+# scan on the pushed revision, so a --no-verify bypass still cannot advance
+# `released`.
+#
+# WIRED IN HERE, for the same reason TASK-067's shell inventory is: the two
+# files that call gate stages (.githooks/pre-push, .githooks/pre-push-project)
+# are legacy shell, and editing either forces its whole-file port (AGENTS.md
+# §"Shell to TypeScript, organically"). This file is exempt and already reached
+# by every project's gate.
+#
+# TWO CALL SITES, one per gate profile, because the profiles reach different
+# bridge functions:
+#   - FULL push: sh_lint_stage's chain, beside ts_shell_inventory_stage.
+#   - TEXT-ONLY push: ts_docs_stage is the ONLY bridge function the text-only
+#     branch of .githooks/pre-push-project calls, and shipped markdown
+#     (AGENTS.md, docs/…) is exactly what the scan judges — so the scan rides
+#     at the top of ts_docs_stage. Without that, a text-only push would skip
+#     the scan entirely.
+#
+# BLUEPRINT-ONLY BY THE CHECK ITSELF, like the CI job it mirrors: a checkout
+# without .blueprint-root pipe_skips with the reason — a derived project
+# publishes nothing on its push (a2bp's own scan is its pre-publication stop).
+#
+# THE BASE is ts_shell_inventory_base's resolution (BP_SHELL_INVENTORY_BASE,
+# then @{u}, then origin/main), read BEFORE ts_scrubbed like the inventory
+# stage — the scrub would remove BP_SHELL_INVENTORY_BASE, CI's hook for
+# `github.event.before`. The scan runs --before <base> --after HEAD, the
+# push-event shape CI drives. NO BASE RESOLVES → the stage FAILS CLOSED: a
+# tree judged against itself would pass its own contaminated line (the
+# self-authorization shape the shell inventory stage refuses for the same
+# reason).
+ts_contamination_stage(){
+  _ct_root="${1:-$(pwd)}"
+  if [ ! -f "$_ct_root/.blueprint-root" ]; then
+    pipe_skip "contamination · TASK-090" "blueprint-only: no .blueprint-root here"
+    return 0
+  fi
+  if [ ! -f "$_ct_root/scripts/contamination-push-scan.mts" ]; then
+    pipe_skip "contamination · TASK-090" "scripts/contamination-push-scan.mts absent"
+    return 0
+  fi
+  if ! command -v node >/dev/null 2>&1; then
+    echo "❌ The contamination push scan needs node (>=22.18, native type stripping) on PATH."
+    pipe_stage "contamination · TASK-090" false
+    return 1
+  fi
+  pipe_stage "contamination · TASK-090" ts_contamination "$_ct_root" "$(command -v node)"
+}
+
+# ts_contamination ROOT NODE — the command itself, mirroring the way CI's job
+# drives the script (--before/--after push-event semantics). NODE is resolved
+# by the caller, before ts_scrubbed's environment scrub.
+ts_contamination(){
+  _ctn_root="${1:-.}"
+  _ctn_node="$2"
+  _ctn_base="$(ts_shell_inventory_base "$_ctn_root" contamination)" || {
+    echo "❌ contamination push scan: no base ref — refusing to judge HEAD against itself (resolution messages above)"
+    return 1
+  }
+  ts_scrubbed "$_ctn_node" "$_ctn_root/scripts/contamination-push-scan.mts" --before "$_ctn_base" --after HEAD --repo "$_ctn_root"
 }
 
 # ts_typecheck [ROOT] — TASK-031. `tsc --noEmit -p ROOT/tests` with the PINNED
@@ -556,6 +634,11 @@ ts_typecheck_stage(){
 # none of them present the stage skips with that reason.
 ts_docs_stage(){
   _td_root="${1:-$(pwd)}"
+  # TASK-090: a text-only push reaches ONLY this stage from the bridge, and
+  # shipped markdown (AGENTS.md, docs/…) is exactly what the contamination
+  # push scan judges — so the scan runs here, first, on a text-only push. On a
+  # full push it runs in sh_lint_stage's chain instead.
+  ts_contamination_stage "$_td_root"
   set --
   for _td_s in doc-links lifecycle-docs bug-numbers; do
     if [ -f "$_td_root/tests/$_td_s/$_td_s.spec.ts" ]; then

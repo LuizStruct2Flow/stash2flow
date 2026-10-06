@@ -8,7 +8,7 @@
 #
 #   scripts/blueprint.mts substitute_placeholders    sed -e "s/{{PROJECT_NAME}}/${name}/g"
 #   scripts/blueprint.mts substituted_blueprint_copy the same sed
-#   contamination.sh  _contamination_subst_file  bash ${line//token/$name}
+#   contamination.mts  _contamination_subst_file  bash ${line//token/$name}
 #
 # a2bp's round-trip check — the load-bearing safety property since R4 — used
 # the bash form to verify what the sed form would later produce. For a project
@@ -64,7 +64,7 @@ bp_placeholder_upper() {
 # `scripts/blueprint.mts` and `scripts/new-project.sh` were already excluded for
 # exactly this reason, and the list simply never grew when the logic moved into
 # libraries. The consequence was live: on a zero-second-old bootstrap `drift`
-# reported `scripts/lib/placeholders.sh` and `scripts/lib/contamination.sh` as
+# reported `scripts/lib/placeholders.sh` and `scripts/lib/contamination.mts` as
 # drifted and offered `blueprint pull` — which would have corrupted them.
 #
 # It lives HERE, beside the primitive, so bootstrap, pull, drift and a2bp share
@@ -87,7 +87,7 @@ bp_placeholder_upper() {
 bp_should_substitute() {
   case "$1" in
     *scripts/blueprint.mts|*scripts/new-project.sh) return 1 ;;
-    *scripts/lib/placeholders.sh|*scripts/lib/contamination.sh) return 1 ;;
+    *scripts/lib/placeholders.sh|*scripts/lib/contamination.mts) return 1 ;;
     tests/*) return 1 ;;
   esac
   return 0

@@ -363,7 +363,13 @@ code is the one whose clean review authorizes the push.
    # blind exactly when it believes it is covered. Resolving rather than
    # hardcoding means the recipe follows the baton if it ever moves again.
    . scripts/lib/state-dir.sh
-   SIG=$(agent_signal_file "$PWD")
+   # `agent_signal_file` takes no argument and refuses one, which left SIG empty
+   # and the loop polling nothing, silently (a2bp PR #86, stash2flow). The
+   # root-taking form is `agent_signal_file_for`; refuse to start blind, and say
+   # when the watch is armed.
+   SIG=$(agent_signal_file_for "$PWD")
+   [ -f "$SIG" ] || { echo "[signal-monitor] baton not found at '$SIG'"; exit 1; }
+   echo "[signal-monitor] armed on $SIG"
    last=$(mt "$SIG")
    while true; do
      sleep 2
@@ -498,7 +504,7 @@ headless Kimi CLI on each flip to `OVER_TO_KIMI`. Output lands in
 
 **What is Kimi-specific and worth knowing before you dispatch one:**
 
-- The binary is `kimi` (`KIMI_BIN` overrides) and its home is `~/.kimi-code/`. <!-- a2bp-allow: the Kimi CLI's own home, a tool dotdir like ~/.codex, not a project path; BUG-155 adds it to the known list -->
+- The binary is `kimi` (`KIMI_BIN` overrides) and its home is `~/.kimi-code/`.
 
   **`-p` / `--prompt` is the whole story, and it takes no autonomy flag.** The
   interactive `--auto` and `-y/--yolo` modes exist, but kimi 2.0.2 refuses to

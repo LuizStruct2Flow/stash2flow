@@ -188,9 +188,9 @@ Git does not record whether that hook ran, so neither CI nor repository history
 can detect a `--no-verify` bypass. The observable backstop in this repository is
 that CI re-runs the covered committed-content checks on the pushed revision, and
 `.github/workflows/security.yml` advances `released` only after `secret-scan`,
-`sast`, `sca`, `commit-subjects`, and `ts-tests` are green. A bypassed push can
-therefore land on `main`, but cannot fan out to derived projects, which pull
-`released`. Every local stage relied on by that backstop has a CI counterpart —
+`sast`, `sca`, `contamination`, `commit-subjects`, and `ts-tests` are green. A
+bypassed push can therefore land on `main`, but cannot fan out to derived
+projects, which pull `released`. Every local stage relied on by that backstop has a CI counterpart —
 enforced by: `tests/gate-ci-parity` "TASK-078: every local gate stage relied on
 as a CI backstop has a CI counterpart". The check is directional: CI may be
 stricter, and currently adds Semgrep's `p/javascript` and `p/typescript` packs

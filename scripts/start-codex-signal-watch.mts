@@ -186,7 +186,7 @@ if [ -n "$REQUESTED_MODEL" ]; then
 else
   printf "[roster] requested model=<codex default>\n" | tee -a "$RUN_LOG"
 fi
-CODEX_HOME_DIR="\${CODEX_HOME:-$HOME/.codex}"  # a2bp-allow: Codex CLI's own home dir default, not per-project state (BUG-155)
+CODEX_HOME_DIR="\${CODEX_HOME:-$HOME/.codex}"
 if [ -r "$ROOT/scripts/lib/codex-session.sh" ]; then
   . "$ROOT/scripts/lib/codex-session.sh"
 fi

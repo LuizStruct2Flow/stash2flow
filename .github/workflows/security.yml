@@ -251,15 +251,15 @@ jobs:
 
   contamination:
     # TASK-079 (TASK-062-16), audit row C168. NOTHING scanned a push for
-    # contamination before this job: contamination_scan (scripts/lib/
-    # contamination.sh) ran only on the a2bp path, and the audit's premise of a
+    # contamination before this job: the contamination scan (scripts/lib/
+    # contamination.mts) ran only on the a2bp path, and the audit's premise of a
     # pre-push call site to extend was measured to be wrong — the absence IS
     # the finding. Founder decision 2026-09-22 (PLAN-TASK-062 §"Founder
     # decisions" #3): the CI-only route, reusing the existing checker.
     #
-    # The script sources scripts/lib/contamination.sh and hands the push's
+    # The script imports scripts/lib/contamination.mts and hands the push's
     # ADDED lines, for the files that SHIP (export-ignore'd records are
-    # skipped and counted), to the real contamination_scan — no pattern is
+    # skipped and counted), to the real contaminationScan — no pattern is
     # duplicated here.
     #
     # BLUEPRINT-ONLY, AND SKIPPED — NOT GREEN — EVERYWHERE ELSE. Contamination

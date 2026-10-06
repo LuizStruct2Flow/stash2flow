@@ -18,8 +18,8 @@
 // Usage:
 //   node scripts/start-kimi-signal-watch.mts
 //
-// The Kimi CLI is `~/.kimi-code/bin/kimi` or whatever `KIMI_BIN` points at. (a2bp-allow: Kimi CLI's own install dir, not per-project state.)
-// Auth reuses ~/.kimi-code/ (device-code login). (a2bp-allow: same — Kimi's own auth dir, not per-project state.)
+// The Kimi CLI is `~/.kimi-code/bin/kimi` or whatever `KIMI_BIN` points at.
+// Auth reuses ~/.kimi-code/ (device-code login).
 //
 // NOTE: the shared poller (signal-watch.mts) executes the wake script via its
 // AGENT_WAKE_COMMAND env hook (TASK-063; renamed from codex-signal-watch.sh /
@@ -45,10 +45,6 @@ function fail(message: string): never {
 }
 
 // Discover the Kimi binary.
-// Kimi's own default install dir — not per-project state, so it is not
-// derived via scripts/lib/state-dir.sh (see the header comment above).
-const KIMI_HOME_DISPLAY = '~/.kimi-code' // a2bp-allow: Kimi CLI's own default install dir, not per-project state
-
 function findKimiBin(): string {
   const override = process.env.KIMI_BIN
   if (override) return override
@@ -66,7 +62,7 @@ if (!KIMI_BIN || !isExecutable(KIMI_BIN)) {
 Tried:
   1. $KIMI_BIN (${process.env.KIMI_BIN ?? ''})
   2. \`kimi\` on PATH
-  3. ${KIMI_HOME_DISPLAY}/bin/kimi
+  3. ~/.kimi-code/bin/kimi
 
 Install per https://moonshotai.github.io/kimi-code/ (then authenticate once
 with \`kimi login\`), or point KIMI_BIN at a kimi binary you trust, then
@@ -148,7 +144,7 @@ fi
 # run is the \`effort\` key of the \`[thinking]\` section in the kimi config.toml.
 # VERIFIED ON THE WIRE, not inferred: a dispatched session records
 # \`"thinkingEffort":"high"\` in its own
-# \`~/.kimi-code/sessions/<wd>/<session>/agents/main/wire.jsonl\` (a2bp-allow: Kimi's own session-log path, not per-project state), matching
+# \`~/.kimi-code/sessions/<wd>/<session>/agents/main/wire.jsonl\`, matching
 # \`[thinking] effort\` in that file. Do not add a \`default_effort\` fallback here:
 # that key exists, but it is a PER-MODEL key inside \`[models."<alias>"]\`, not a
 # \`[thinking]\` one, and whether it overrides \`[thinking]\` for a \`-p\` run has not
@@ -156,7 +152,7 @@ fi
 # block fixes, one level up. Read failure is likewise NOT papered over with the
 # roster requested effort (F-002: a value standing in for something it does not
 # imply) — the effort is left empty and the reason goes to the run log.
-KIMI_CFG="\${KIMI_CODE_HOME:-$HOME/.kimi-code}/config.toml"  # a2bp-allow: Kimi CLI's own config dir default, not per-project state
+KIMI_CFG="\${KIMI_CODE_HOME:-$HOME/.kimi-code}/config.toml"
 APPLIED_EFFORT=""
 APPLIED_EFFORT_REASON=""
 if [ -r "$KIMI_CFG" ]; then
