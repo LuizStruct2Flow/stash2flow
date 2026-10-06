@@ -18,6 +18,10 @@ changed since the stored [cursor](domain-language.md#cursor).
 A [run](domain-language.md#run) only [fetches](domain-language.md#fetching).
 It never writes to a [source](domain-language.md#source).
 
+The first [run](domain-language.md#run) of a
+[source](domain-language.md#source) reports the source's total size before it
+downloads anything.
+
 For every [run](domain-language.md#run) the [server](domain-language.md#server)
 records when it started and finished, how many [assets](domain-language.md#asset)
 were new, changed and [vanished](domain-language.md#vanished), and its errors.
@@ -129,8 +133,9 @@ An [asset](domain-language.md#asset) that is no longer in its
 [vanished](domain-language.md#vanished). Its row stays in the index and its
 `deleted_at` is set. Nothing is removed.
 
-Whether [vanished](domain-language.md#vanished) assets show up in search is open:
-[open question: vanished in search](open-questions.md#question-vanished-in-search).
+In search a [vanished](domain-language.md#vanished)
+[asset](domain-language.md#asset) is hidden by default and shown with a flag.
+The answer says how many were left out.
 
 ## Whitelisted, blacklisted or neither
 
@@ -157,7 +162,7 @@ e-mails are [spam](domain-language.md#spam).
 
 | Verdict | Meaning | How an [asset](domain-language.md#asset) gets it |
 |---|---|---|
-| [whitelisted](domain-language.md#whitelist) | kept | By default, from rules about where the asset came from. A personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from the [user](domain-language.md#user)'s phone. It is a default, not a guarantee. |
+| [whitelisted](domain-language.md#whitelist) | kept | By default, from rules the [user](domain-language.md#user) keeps about where the asset came from: by [sender](domain-language.md#sender), when the sender is a [person](domain-language.md#person) on his list, and by [source](domain-language.md#source), for example the photo library of his phone. So a personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from his phone. It is a default, not a guarantee. |
 | [blacklisted](domain-language.md#blacklist) | trash | Clear-cut, and always by a rule, never by a model: an [advertisement](domain-language.md#advertisement) that arrived more than one week ago, and [spam](domain-language.md#spam), which is an [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam or an e-mail from a [rejected sender](domain-language.md#rejected-sender). |
 | neither | not judged yet | Everything else, for example an invoice from an online shop, or an advertisement in its week of validity. |
 
@@ -185,13 +190,11 @@ e-mails are [spam](domain-language.md#spam).
   ([FEATURE-002](../backlog/BACKLOG.md)), which is parked:
   [nothing deleted without a go](principles.md#nothing-deleted-without-a-go).
 
-Open points: which rules make an [asset](domain-language.md#asset) whitelisted
-by default
-([open question: whitelisted by default](open-questions.md#question-whitelisted-by-default)),
-where an asset in the [quarantine](domain-language.md#quarantine) physically
-sits until it is deleted
+Open points: where an [asset](domain-language.md#asset) in the
+[quarantine](domain-language.md#quarantine) physically sits until it is deleted
 ([open question: where the quarantine is](open-questions.md#question-where-the-quarantine-is)),
-and whether a whitelisted asset can still reach it
+and whether a [whitelisted](domain-language.md#whitelist) asset can still reach
+it
 ([open question: whitelisted asset in the quarantine](open-questions.md#question-whitelisted-asset-in-the-quarantine)).
 
 ## Pipeline steps
@@ -276,7 +279,10 @@ Every [asset](domain-language.md#asset) that is read goes through the same
    [bytes](domain-language.md#bytes); the
    [provider hash](domain-language.md#provider-hash) is stored too.
    For an image, the [phash](domain-language.md#phash); for a PDF, the phash
-   of its rendered first page.
+   of its rendered first page. The sha256 decides which
+   [assets](domain-language.md#asset) are [exact](domain-language.md#exact)
+   [duplicates](domain-language.md#duplicate); the md5 is stored because it is
+   required.
 5. **Metadata.**
    - Images: the date taken, the coordinates, the camera, the dimensions.
    - PDFs: the creation date, the program that made it (which identifies a
@@ -289,15 +295,21 @@ Every [asset](domain-language.md#asset) that is read goes through the same
    - From these the [asset_date](domain-language.md#asset_date) is chosen: the
      best available date, with a note of where it came from.
 6. **Text.** A PDF with a [text layer](domain-language.md#text-layer) is not
-   sent to OCR. Otherwise the pages are rendered and read. The
+   sent to OCR. Every image and every PDF without a text layer gets OCR: its
+   pages are rendered and read. A video never gets OCR. The
    [OCR text](domain-language.md#ocr-text) is stored per page in its original
-   language. Exactly which [assets](domain-language.md#asset) are read is open:
-   [open question: which assets get OCR](open-questions.md#question-which-assets-get-ocr).
+   language. The text of an office document is taken out as it is, without
+   OCR, and its macros are never run. If the measured files per hour make the
+   first [run](domain-language.md#run) too slow, the
+   [user](domain-language.md#user) decides then whether photos from iCloud
+   Photos skip OCR.
 7. **[Kind](domain-language.md#kind).** [has_text](domain-language.md#has_text)
    is set from the amount of [OCR text](domain-language.md#ocr-text), and the
    kind of the [asset](domain-language.md#asset) is decided.
-   The exact rules are open:
-   [open question: kind rules](open-questions.md#question-kind-rules).
+   Three rules are defined by examples in the feature files, written before
+   any code and reviewed with them: how a screenshot is told from a photo, how
+   much text makes has_text true, and what complete photo metadata means when
+   the [keeper](domain-language.md#keeper) is [chosen](#choosing-the-keeper).
 8. **[Description](domain-language.md#description).** Only for an
    [asset](domain-language.md#asset) of [kind](domain-language.md#kind)
    `document`. A local model writes
@@ -330,18 +342,31 @@ also one from a [trusted](domain-language.md#trusted)
 [source](domain-language.md#source) or [sender](domain-language.md#sender), and
 on a Mac as on the [server](domain-language.md#server):
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
-Whether a file is refused for its size or its number of pages, and whether it
-is checked by an antivirus scan before it is read, is open:
-[open question: limits on size and pages](open-questions.md#question-limits-on-size-and-pages),
+
+**A file can be refused.** A file can be built to exhaust the
+[server](domain-language.md#server), for example with an enormous size or
+number of pages. The [guardian](domain-language.md#guardian) does not read a
+file beyond a limit on its size or on its number of pages, and the
+[user](domain-language.md#user) sets both limits. What the app does with each
+file type, such as an archive or a program, is in
+[file types](sources.md#file-types).
+
+The index runs no antivirus scan. Whether an
+[asset](domain-language.md#asset) is checked where the
+[user](domain-language.md#user) opens or downloads it is decided with the
+frontend:
 [open question: antivirus scan](open-questions.md#question-antivirus-scan).
 
-**Videos** get their metadata and no OCR. They are not fetched: only their
+**Videos** get their metadata and no OCR. The first
+[run](domain-language.md#run) of a [source](domain-language.md#source) reports
+the source's total size before it downloads anything, and with those numbers
+the [user](domain-language.md#user) decides whether the
+[server](domain-language.md#server) keeps a
+[local copy](domain-language.md#local-copy) of videos. Until he decides, a
+video is not fetched: only its
 [provider hash](domain-language.md#provider-hash) is stored, so the same video
 at two different [providers](domain-language.md#provider) is not recognised as
-an [exact](domain-language.md#exact) duplicate. Whether videos are copied to the
-[server](domain-language.md#server) after all, which would close that gap, is
-open:
-[open question: videos](open-questions.md#question-videos).
+an [exact](domain-language.md#exact) duplicate.
 
 Every step that uses a model uses a local one:
 [local models only](principles.md#local-models-only). Which models is open:
@@ -402,6 +427,14 @@ when [assets](domain-language.md#asset) are already indexed. So:
   [phash](domain-language.md#phash) values, against a threshold that is
   configurable.
 - Different photos are not grouped.
+- An [asset](domain-language.md#asset) is in one group only. Assets showing
+  the same image are one group; it is [exact](domain-language.md#exact) when
+  all [bytes](domain-language.md#bytes) match, otherwise
+  [near](domain-language.md#near).
+- The [sha256](domain-language.md#md5-and-sha256) decides that two
+  [assets](domain-language.md#asset) are [exact](domain-language.md#exact)
+  [duplicates](domain-language.md#duplicate). The md5 is stored because it is
+  required.
 - A group keeps its id when [assets](domain-language.md#asset) join it.
 - [Assets](domain-language.md#asset) in a
   [shared account](domain-language.md#shared-account) are flagged as also
@@ -411,12 +444,8 @@ when [assets](domain-language.md#asset) are already indexed. So:
   [sources](domain-language.md#source) are expected from the first day, for
   example when a cloud drive holds a partial copy of a photo library.
 
-Open points: which hash decides [exact](domain-language.md#exact)
-([open question: hash for exact](open-questions.md#question-which-hash-decides-exact)),
-whether an [asset](domain-language.md#asset) can be in two groups at once
-([open question: one group per asset](open-questions.md#question-one-group-per-asset)),
-and [near](domain-language.md#near) matching of PDFs
-([open question: near matching of PDFs](open-questions.md#question-near-matching-pdfs)).
+[Near](domain-language.md#near) matching of PDFs is open:
+[open question: near matching of PDFs](open-questions.md#question-near-matching-pdfs).
 
 ## Choosing the keeper
 
@@ -518,10 +547,8 @@ Who builds what:
   [tags](domain-language.md#tag) the [user](domain-language.md#user) makes, and
   browsing.
 
-This split still waits for a ruling:
-[open question: which step builds what](open-questions.md#question-which-step-builds-what).
 How an [asset](domain-language.md#asset) gets its
-[context](domain-language.md#context) is open too:
+[context](domain-language.md#context) is open:
 [open question: how an asset gets its context](open-questions.md#question-how-an-asset-gets-its-context).
 
 ## Search
@@ -553,10 +580,17 @@ How text search behaves:
 - Every [match](domain-language.md#match) carries a
   [source_link](domain-language.md#source_link).
 
-Open points: which date the date range filters on
-([open question: date filter](open-questions.md#question-date-filter)) and
-whether [vanished](domain-language.md#vanished) assets are shown
-([open question: vanished in search](open-questions.md#question-vanished-in-search)).
+How the date range filters:
+
+- For a document it uses the [doc_date](domain-language.md#doc_date), and the
+  [asset_date](domain-language.md#asset_date) when the document has no
+  doc_date.
+- Known limit: a wrongly read [doc_date](domain-language.md#doc_date) hides the
+  [asset](domain-language.md#asset) from a date filter.
+
+A [vanished](domain-language.md#vanished) [asset](domain-language.md#asset) is
+hidden by default and shown with a flag. The answer says how many were left
+out.
 
 ## Finding photos
 
@@ -566,6 +600,9 @@ whether [vanished](domain-language.md#vanished) assets are shown
 |---|---|
 | `stash photos --date 2024-07` | photos by month |
 | `stash photos --query "beach"` | photos by what they show, even when the name says nothing |
+
+The date filter for photos uses the
+[asset_date](domain-language.md#asset_date).
 
 Albums, [persons](domain-language.md#person), favorites and
 [place](domain-language.md#place) from iCloud Photos are kept with each

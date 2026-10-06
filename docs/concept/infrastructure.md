@@ -129,13 +129,13 @@ question for the founder is
 
 `#authentication`
 
-The [API](domain-language.md#api) refuses a call without valid credentials. That
-holds for the [collectors](domain-language.md#collector), and for the
-[duplicate report](domain-language.md#duplicate-report), which takes changes
-from the [user](domain-language.md#user) and therefore cannot be open.
+The [API](domain-language.md#api) refuses a call without valid credentials.
+Everything that calls it authenticates: the
+[collectors](domain-language.md#collector), the command line, and the browser
+that opens the [duplicate report](domain-language.md#duplicate-report).
 
-Who else must authenticate, and how, is open:
-[open question: authentication](open-questions.md#question-authentication).
+- Each client has its own token.
+- The [API](domain-language.md#api) is served over HTTPS on the local network.
 
 ## Isolation of reading
 
