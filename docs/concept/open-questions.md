@@ -308,6 +308,26 @@ that keeps [assets](domain-language.md#asset) on the server.
 
 ## Sources and collectors
 
+### Question: network storage as a source
+
+`#question-network-storage-as-a-source`
+
+**Question.** A network storage device holds [assets](domain-language.md#asset)
+too, and it may be switched off while a copy of it exists somewhere else. Is
+the device itself the [source](domain-language.md#source), or its copy? And
+which slice of the plan adds it?
+
+**Recommendation.** A new [location](domain-language.md#location) for a folder
+the [server](domain-language.md#server) can reach, fetched like any other
+source, with the server as its [reader](domain-language.md#reader). Index
+whichever of the two is reachable; if both are, the same
+[bytes](domain-language.md#bytes) form
+[exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate)
+and the [order of sources](domain-language.md#order-of-sources) decides the
+[keeper](domain-language.md#keeper). Add it in the slice that adds the
+remaining file sources, since reading a folder is the simplest kind of
+[fetching](domain-language.md#fetching).
+
 Background: [the Mac collector](sources.md#mac-collector).
 
 ### Question: two collectors, one source
