@@ -3,8 +3,8 @@
  * (TASK-062-16), audit row C168.
  *
  * THE FINDING. C168 was written as if `.githooks/pre-push` had a contamination
- * call site to extend. Measured, it has none: `contamination_scan`
- * (scripts/lib/contamination.sh) ran only from `scripts/blueprint.mts`'s a2bp
+ * call site to extend. Measured, it has none: the contamination scan
+ * (scripts/lib/contamination.mts) ran only from `scripts/blueprint.mts`'s a2bp
  * path, so nothing scanned a push for the BUG-002 / A-09 shapes — a host home
  * path, a foreign per-project state dir, an operator's specifics landing in a
  * managed file and publishing to every downstream project on the next
@@ -15,10 +15,10 @@
  * advancing `released`.
  *
  * THE PROPERTY THAT MATTERS MOST IS REUSE. The job's value is that it applies
- * contamination.sh's OWN checker to the pushed diff — not a forked copy of its
+ * contamination.mts's OWN checker to the pushed diff — not a forked copy of its
  * patterns, which would drift silently (the audit CSV's re-open condition).
- * Case #1 is a TEXT PROXY for that: it pins that the script names
- * contamination.sh and that three of the checker's regexes are absent from it.
+ * Case #1 is a TEXT PROXY for that: it pins that the script imports
+ * contamination.mts and that three of the checker's regexes are absent from it.
  * A re-spelled fork would pass it. The real coverage is the red/green case,
  * which drives the actual checker through the script and would go green on a
  * fork only if the fork reproduced the checker's verdicts.
@@ -54,10 +54,10 @@ async function workflow(): Promise<string> {
   return readFile(join(REPO_ROOT, '.github/workflows/security.yml'), 'utf8')
 }
 
-describe('TASK-079 — the pushed diff is scanned by contamination.sh’s own checker', () => {
-  it('#1 the script SOURCES contamination.sh and carries none of its patterns itself', async () => {
+describe('TASK-079 — the pushed diff is scanned by contamination.mts’s own checker', () => {
+  it('#1 the script IMPORTS contamination.mts and carries none of its patterns itself', async () => {
     const text = await readFile(SCRIPT, 'utf8')
-    expect(text).toContain('contamination.sh')
+    expect(text).toContain("from './lib/contamination.mts'")
     // The checker's regexes. If any of these appears in the script, the
     // patterns have been forked and will drift — the audit's re-open trigger.
     expect(text).not.toMatch(/\?\(Users\|home\)|\(Users\|home\)/)

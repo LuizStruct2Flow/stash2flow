@@ -198,7 +198,6 @@
       "Skill(update-config)",
       "Skill(update-config:*)",
       "Bash(bash -n scripts/agent-activity.sh)",
-      "Bash(bash -n scripts/lib/contamination.sh)",
       "Bash(bash tests/agent-activity-bound/test.sh)",
       "Bash(echo \"EXIT=$?\")",
       "Bash(python3 -)",

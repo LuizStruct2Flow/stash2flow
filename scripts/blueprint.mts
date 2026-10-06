@@ -2630,27 +2630,28 @@ export async function cmdPull(args: readonly string[]): Promise<number> {
 
 // --- SLICE 4: a2bp / prs (plan §3 P5) ---------------------------------------
 //
-// `a2bp` is orchestration over six shell libs (contamination.sh, request.sh,
+// `a2bp` is orchestration over six libs: five shell (request.sh,
 // request-build.sh, request-config.sh, request-inputs.sh, request-file.sh),
-// so it ports as straight-line TypeScript over bridge calls into the SAME
-// shell functions — the libs are not reimplemented, only called (plan §4).
+// which it reaches by bridge calls into the SAME shell functions — not
+// reimplemented, only called (plan §4) — and scripts/lib/contamination.mts
+// (BUG-155 port), which it imports once the required-libs check has passed.
 // `reqLib` recreates the real CLI's point-of-use placeholders.sh fallback
-// alongside the six: contamination_stage calls bp_substitute_stream
+// alongside the shell five: their functions call bp_substitute_stream
 // INTERNALLY, so a bridge that omitted it would fail differently. The five
 // git/gh wrappers are bridged too, keeping request-file.sh/request.sh as their
 // single implementation (review finding 4).
-const A2BP_LIB_NAMES: readonly string[] = [
-  'contamination.sh',
+const A2BP_SHELL_LIBS: readonly string[] = [
   'request.sh',
   'request-build.sh',
   'request-config.sh',
   'request-inputs.sh',
   'request-file.sh',
 ]
+const A2BP_LIB_NAMES: readonly string[] = ['contamination.mts', ...A2BP_SHELL_LIBS]
 
 function a2bpLibPaths(): string[] {
   const dir = libDir()
-  return A2BP_LIB_NAMES.map((n) => join(dir, n))
+  return A2BP_SHELL_LIBS.map((n) => join(dir, n))
 }
 
 // placeholders.sh is NOT one of the six `[ -r … ] || die` libs cmd_a2bp
@@ -2843,6 +2844,10 @@ async function cmdA2bp(args: readonly string[]): Promise<number> {
       return die(`scripts/lib/${lib} is missing — refusing to file a request without it`)
     }
   }
+  // Imported HERE, after the check above, for the same reason the shell
+  // sourced its libs after `[ -r … ] || die`: a missing guard is this refusal,
+  // never a module-resolution crash on every subcommand.
+  const { contaminationStage, contaminationScan } = await import('./lib/contamination.mts')
 
   let dryRun = false
   const files: string[] = []
@@ -2850,7 +2855,7 @@ async function cmdA2bp(args: readonly string[]): Promise<number> {
     if (arg === '--dry-run') dryRun = true
     else if (arg === '--force') {
       return die(
-        "--force is gone. a2bp files a request that a person reviews, so there is nothing to waive. Fix the finding, or mark the line with an inline 'a2bp-allow: <why it is safe>' comment. If the guard is wrong, that is a bug in scripts/lib/contamination.sh.",
+        "--force is gone. a2bp files a request that a person reviews, so there is nothing to waive. Fix the finding, or mark the line with an inline 'a2bp-allow: <why it is safe>' comment. If the guard is wrong, that is a bug in scripts/lib/contamination.mts.",
       )
     } else if (arg.startsWith('-')) {
       return die(`unknown option: ${arg} (usage: blueprint a2bp [--dry-run] FILE...)`)
@@ -2963,12 +2968,10 @@ async function cmdA2bp(args: readonly string[]): Promise<number> {
 
       const staged = join(scratch, `staged.${flatName}`)
       if (await bpShouldSubstitute(path)) {
-        const stageR = await unchecked(() =>
-          reqLib('contamination_stage "$1" "$2" "$3" "$4"', [join(root, path), basecopy, projName, staged]),
-        )
-        if (stageR.status !== 0) {
+        const stageStatus = contaminationStage(join(root, path), basecopy, projName, staged)
+        if (stageStatus !== 0) {
           process.stdout.write(`  ${C_RED}reject${C_RESET}  ${path}  (staging failed)\n`)
-          if (stageR.status === 3) {
+          if (stageStatus === 3) {
             process.stdout.write(
               `    ${C_DIM}Round-trip check failed: substituting the staged result does not${C_RESET}\n`,
             )
@@ -2994,16 +2997,12 @@ async function cmdA2bp(args: readonly string[]): Promise<number> {
         }
       }
 
-      const scanR = await unchecked(() => reqLib('contamination_scan "$1" "$2" "$3"', [staged, projName, path]))
-      const findings = scanR.stdout
-      const hasBlock = findings.includes('|BLOCK|')
-      if (findings) {
-        for (const line of nonEmptyLines(findings)) {
-          const { ln, kind, reason, text } = splitFindingLine(line)
-          const colour = kind === 'BLOCK' ? C_RED : C_YELLOW
-          process.stdout.write(`    ${colour}${kind}${C_RESET}  ${path}:${ln} — ${reason}\n`)
-          process.stdout.write(`      ${C_DIM}${text}${C_RESET}\n`)
-        }
+      const { findings, blocked: hasBlock } = contaminationScan(staged, projName, path)
+      for (const line of findings) {
+        const { ln, kind, reason, text } = splitFindingLine(line)
+        const colour = kind === 'BLOCK' ? C_RED : C_YELLOW
+        process.stdout.write(`    ${colour}${kind}${C_RESET}  ${path}:${ln} — ${reason}\n`)
+        process.stdout.write(`      ${C_DIM}${text}${C_RESET}\n`)
       }
       if (hasBlock) {
         process.stdout.write(`  ${C_RED}reject${C_RESET}  ${path}  (contamination)\n`)

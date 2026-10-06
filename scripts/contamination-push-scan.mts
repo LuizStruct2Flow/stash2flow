@@ -2,8 +2,8 @@
 //
 // THE FINDING THIS CLOSES. C168 was written as if `.githooks/pre-push` had a
 // contamination call site that needed extending. It has none: measured, there
-// is no push-time contamination scan at all — `contamination_scan`
-// (scripts/lib/contamination.sh) runs only from `scripts/blueprint.mts`'s a2bp
+// is no push-time contamination scan at all — the contamination scan
+// (scripts/lib/contamination.mts) runs only from `scripts/blueprint.mts`'s a2bp
 // path. The ABSENCE of a push-time call site is the finding. The founder chose
 // the CI-only route (PLAN-TASK-062.md §"Founder decisions" #3,
 // 2026-09-22): "The existing checker scans the pushed diff, with no duplicated
@@ -11,9 +11,9 @@
 // moves."
 //
 // REUSE, NOT A FORK. Every contamination pattern lives in
-// scripts/lib/contamination.sh and nowhere else. This script extracts the
+// scripts/lib/contamination.mts and nowhere else. This script extracts the
 // ADDED lines of each file a push touches and hands them to the real
-// `contamination_scan` — sourced, not copied. A line blocked here is blocked
+// `contaminationScan` — imported, not copied. A line blocked here is blocked
 // by the same regex a2bp would apply, including the `a2bp-allow:
 // <justification>` suppression, which works unchanged because it sits on the
 // added line itself.
@@ -48,7 +48,7 @@
 //      archive drops (tests/contamination-push-scan #9, tests/suite-sync #1c).
 //      Skipped files are counted in the summary, never dropped silently.
 //
-//   3. THE RESIDUAL-NAME CLASS HAS NO OPERAND HERE. contamination_scan's third
+//   3. THE RESIDUAL-NAME CLASS HAS NO OPERAND HERE. contaminationScan's third
 //      BLOCK class flags a project's name that survived reverse-substitution —
 //      meaningful on the a2bp path, where the name is the project's own. On a
 //      push to the blueprint there is no reverse-substitution and no single
@@ -78,18 +78,15 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { basename, dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { basename, join } from 'node:path'
+import { contaminationScan } from './lib/contamination.mts'
 
-const HERE = dirname(fileURLToPath(import.meta.url))
-const CONTAMINATION_LIB = join(HERE, 'lib', 'contamination.sh')
-
-/** The reason prefix contamination_scan prints for its residual-name class. */
+/** The reason prefix contaminationScan prints for its residual-name class. */
 const NAME_CLASS_REASON = 'project name survived reverse-substitution'
 
 interface Finding {
   readonly file: string
-  /** One raw `lineno|CLASS|reason|text` line from contamination_scan. */
+  /** One raw `lineno|CLASS|reason|text` line from contaminationScan. */
   readonly line: string
 }
 
@@ -245,30 +242,6 @@ function addedLines(repo: string, range: string, file: string): string[] {
     .map((line) => line.slice(1))
 }
 
-/** Run the REAL contamination_scan over content, for logical path `file`. */
-function scan(contentFile: string, projName: string, file: string): { code: number; out: string } {
-  try {
-    const out = execFileSync(
-      'bash',
-      ['-c', '. "$1" && contamination_scan "$2" "$3" "$4"', 'bash', CONTAMINATION_LIB, contentFile, projName, file],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-    )
-    return { code: 0, out }
-  } catch (err) {
-    const e = err as { status?: number; stdout?: string; stderr?: string }
-    const code = e.status ?? 127
-    if (code !== 1) {
-      // contamination_scan returns only 0 or 1. Anything else means the
-      // checker did not run — fail closed rather than report a clean scan.
-      console.error(
-        `::error::contamination_scan did not run for ${file} (exit ${code}): ${e.stderr ?? ''}`,
-      )
-      process.exit(1)
-    }
-    return { code, out: typeof e.stdout === 'string' ? e.stdout : '' }
-  }
-}
-
 function main(): void {
   const opts = parseArgs(process.argv.slice(2))
   const repo =
@@ -314,9 +287,10 @@ function main(): void {
       scannedLines += added.length
       const contentFile = join(tmp, 'added-lines')
       writeFileSync(contentFile, `${added.join('\n')}\n`)
-      const r = scan(contentFile, projName, file)
-      for (const line of r.out.split('\n')) {
-        if (line.trim() === '') continue
+      // The REAL checker, for logical path `file`. A checker that cannot run
+      // throws out of main() — a non-zero exit with no PASS line, never a
+      // clean scan it did not make.
+      for (const line of contaminationScan(contentFile, projName, file).findings) {
         const fields = line.split('|')
         const finding: Finding = { file, line }
         if (fields[2]?.startsWith(NAME_CLASS_REASON)) {

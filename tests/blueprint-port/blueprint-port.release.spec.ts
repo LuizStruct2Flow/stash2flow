@@ -316,10 +316,19 @@ async function installShellCli(s: Scenario, dir: string): Promise<void> {
 
 /** TASK-088 deleted scripts/lib/gate.sh, but the historical shell CLI still
  * sources it to arm the gate, so OLD's fixtures carry the adapter it sourced
- * (the file as of beef710), beside the live gate.mts it forwards to. */
+ * (the file as of beef710), beside the live gate.mts it forwards to. The same
+ * for scripts/lib/contamination.sh, one of cmd_a2bp's required libs, which
+ * BUG-155 ports and deletes: OLD keeps the shell lib as of e3fd8d8. It sits
+ * under historical/, not beside historical-gate.sh, because tests/<suite>/*.sh
+ * is git-isolation's population and the lib's known-dotdir list spells `git`
+ * in code, which that scan reads as driving git. */
 async function installHistoricalGate(libDir: string): Promise<void> {
   await mkdir(libDir, { recursive: true })
   await copyFile(join(REPO_ROOT, 'tests/blueprint-port/historical-gate.sh'), join(libDir, 'gate.sh'))
+  await copyFile(
+    join(REPO_ROOT, 'tests/blueprint-port/historical/contamination.sh'),
+    join(libDir, 'contamination.sh'),
+  )
 }
 
 /** A standalone materialized copy for the handful of rows that run the shell
@@ -3740,9 +3749,17 @@ async function assertNoA2bpScratch(s: Scenario): Promise<void> {
  * `--dry-run`'s "Full diff" preview line (the `git -C <scratch>/bare diff …`
  * command it shows rather than runs). Everything else on that line —
  * including the workspace root ahead of it, identical under same-path-twice
- * — is compared unnormalised. */
+ * — is compared unnormalised.
+ *
+ * The second replacement is BUG-155's: the historical shell CLI's `--force`
+ * refusal names the guard it sourced, `scripts/lib/contamination.sh`, and the
+ * live CLI names the `.mts` that replaced it. The path is the only byte that
+ * differs, so OLD's spelling is read as NEW's; every other word of the
+ * refusal is still compared. */
 function normalizeA2bpScratch(text: string): string {
-  return text.replace(/\ba2bp\.[A-Za-z0-9]+\b/g, 'a2bp.<scratch>')
+  return text
+    .replace(/\ba2bp\.[A-Za-z0-9]+\b/g, 'a2bp.<scratch>')
+    .replace(/scripts\/lib\/contamination\.sh\b/g, 'scripts/lib/contamination.mts')
 }
 
 interface A2bpRowOptions {
@@ -4376,7 +4393,7 @@ describe('blueprint-port differential — a2bp / prs', () => {
     await scenario('blueprint-port-a2bp-contamination', async (s) => {
       // Built at runtime, never as one literal: this spec file SHIPS to
       // derived projects, and the pushed-diff contamination scan
-      // (scripts/lib/contamination.sh's own "absolute host home path" BLOCK)
+      // (scripts/lib/contamination.mts's own "absolute host home path" BLOCK)
       // reads source text, not just executed strings — a literal host home
       // path spelled out here would be flagged in THIS file the same way the
       // planted fixture is meant to be flagged in the a2bp payload below.

@@ -451,15 +451,19 @@ file, move it to the right `project_config_*.md` before committing.
 On the blueprint's own pushes this is scanned, not just advised — enforced by:
 tests/contamination-push-scan "TASK-079: a planted contaminated line fails the
 pushed-diff scan, and removing it passes", via the `contamination` job in
-`.github/workflows/security.yml`, which hands the pushed diff's added lines to
-`scripts/lib/contamination.sh`'s own checker — for the files that ship: a path
+`.github/workflows/security.yml` and the pre-push gate's
+`contamination · TASK-090` stage, both handing the pushed diff's added lines to
+`scripts/lib/contamination.mts`'s own checker — for the files that ship: a path
 whose `export-ignore` attribute is set reaches no project, and this repo's own
-incident records quote host paths on purpose. That is after-the-fact by design
-(TASK-079, founder decision 2026-09-22): once contamination lands on `main` it
-publishes to every downstream project on the next `blueprint pull`, and the CI
-scan detects it after the push — the release job's `needs` list is what keeps
-a red result from advancing `released`. The only pre-publication stop is still
-`a2bp`'s own scan at filing time.
+incident records quote host paths on purpose. The gate stage runs on every push
+profile — a text-only push included, through the docs stage, because shipped
+markdown is exactly what the scan judges — and blocks the push on a BLOCK
+finding before publication, not after. CI stays the backstop for a
+`--no-verify` bypass: the release job's `needs` list keeps a red result from
+advancing `released`. Both routes were founder decisions (CI-only
+2026-09-22, TASK-079; gate-added 2026-10-05, TASK-090) after the CI-only gap
+turned `main` red three times. A derived project's pre-publication stop
+remains `a2bp`'s own scan at filing time.
 
 ### Your project's `.gitignore` is yours (TASK-048)
 

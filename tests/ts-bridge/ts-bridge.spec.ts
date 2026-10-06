@@ -192,6 +192,30 @@
  *       passes either way, and the missing-ShellCheck block comes before sh_lint.
  *   On the parent of the fix (the reproducer commit), #6 found no call, #6b–#6e
  *   failed with `sh_lint_stage: not found`, and #7 found no step.
+ *
+ * TASK-090 — THE CONTAMINATION PUSH SCAN IN THE GATE (#cps-0–#cps-4), founder
+ * decision 2026-10-05: the blueprint's own pre-push gate runs the same scan
+ * CI's `contamination` job runs, over the pushed range, and blocks on a BLOCK
+ * finding. The CI-only gap turned main red three times (4a2b7e2, 5966207,
+ * d334541). The stage lives in the bridge (scripts/run-ts-suites.sh), not in
+ * the hooks, because editing a legacy shell hook forces its whole-file port;
+ * it is wired into BOTH gate profiles — sh_lint_stage's chain on a full push,
+ * ts_docs_stage on a text-only push, the only bridge function that profile
+ * calls. #cps-0 pins both call sites and the hook links in live code; #cps-1
+ * plants a host path in a fixture blueprint push and fails the stage through
+ * the real checker; #cps-2 shows the same push without the plant passing, so
+ * #cps-1 is not a stage that always fails; #cps-3 drives the text-only entry
+ * point (ts_docs_stage) and shows the scan running there; #cps-4 shows a
+ * derived project skipping with the reason.
+ *
+ *   M16 delete `ts_contamination_stage "$_td_root"` from ts_docs_stage
+ *       Red: #cps-0, #cps-3.
+ *   M17 delete `ts_contamination_stage "$_sl_root"` from sh_lint_stage
+ *       Red: #cps-0.
+ *   Both applied from a green baseline and observed red, then reverted; the
+ *   execution cases #cps-1–#cps-4 stayed green under each mutant, correctly —
+ *   they drive the stage function, which is why #cps-0 exists to pin the
+ *   wiring itself.
  */
 
 import { describe, it, expect, vi } from 'vitest'
@@ -1639,6 +1663,96 @@ describe('TASK-033 — the gate and CI lint the shipped shell scripts through on
   })
 })
 
+describe('TASK-090 — the contamination push scan runs in the pre-push gate, on every profile', () => {
+  it('#cps-0 both gate profiles reach the stage: live code calls it from sh_lint_stage and ts_docs_stage, and the hook calls those', async () => {
+    // Text, and only for the links execution cannot reach — the fixture cases
+    // below drive the stage functions, but nothing executes the gate's two
+    // profiles end to end. A mutant that removes either call site turns this
+    // case red before any push scans nothing.
+    const bridge = await readFile(join(REPO_ROOT, 'scripts/run-ts-suites.sh'), 'utf8')
+    const live = liveCmds(bridge)
+    expect(
+      live,
+      'the full-push chain lost the contamination stage — a full gate push scans nothing again',
+    ).toMatch(/^[ \t]*ts_contamination_stage[ \t]+"\$_sl_root"[ \t]*$/m)
+    expect(
+      live,
+      'the text-only chain lost the contamination stage — a text-only push scans nothing, and shipped markdown is exactly what the scan judges',
+    ).toMatch(/^[ \t]*ts_contamination_stage[ \t]+"\$_td_root"[ \t]*$/m)
+
+    // The hook side of both chains: the full branch calls sh_lint_stage (pinned
+    // by #6 too), the text-only branch calls ts_docs_stage — the ONLY bridge
+    // function it calls, which is why the scan rides inside ts_docs_stage.
+    const hook = await readFile(join(REPO_ROOT, '.githooks/pre-push-project'), 'utf8')
+    const end = hook.search(/^# BLUEPRINT:END/m)
+    expect(end, 'the hook has no managed region').toBeGreaterThan(0)
+    const hookLive = liveCmds(hook.slice(0, end))
+    expect(hookLive).toMatch(/^[ \t]*sh_lint_stage[ \t]+"\$BP_CODE_ROOT"[ \t]*$/m)
+    expect(hookLive).toMatch(/^[ \t]*ts_docs_stage[ \t]+"\$BP_CODE_ROOT"[ \t]*$/m)
+  })
+
+  it('#cps-1 a fixture blueprint push with a planted contaminated line FAILS the stage, names the finding, and stops the gate', async () => {
+    await scenario('tsbridge-ct-1', async (s) => {
+      const f = await contaminationFixture(s, { name: 'ctred' })
+      // The pushed range: one shipped file gains a host path — the BUG-002 shape.
+      await s.fs.write('ctred/AGENTS.md', 'shared rules\nsee /home/fixture-operator/notes/private for details\n') // a2bp-allow: fixture plant, not a live path
+      await f.commit('plant a host path')
+
+      const r = await f.runStage()
+
+      expect(r.code, describeRun('a planted contaminated line passed the gate stage', r)).not.toBe(0)
+      expect(r.output, describeRun('the stage failed without naming the BLOCK finding', r)).toContain('host home path')
+      expect(r.output, `no failed contamination stage rendered\n${r.output}`).toMatch(new RegExp(`✗\\s+${CT_STAGE}`))
+      expect(r.output, 'the gate carried on past a failed contamination stage').not.toContain(AFTER)
+    })
+  })
+
+  it('#cps-2 the same push without the plant PASSES and the gate continues', async () => {
+    await scenario('tsbridge-ct-2', async (s) => {
+      const f = await contaminationFixture(s, { name: 'ctgreen' })
+      await s.fs.write('ctgreen/AGENTS.md', 'shared rules\nmore generic rules\n')
+      await f.commit('an innocuous text change')
+
+      const r = await f.runStage()
+
+      expect(r.code, describeRun('a clean text push failed the contamination stage', r)).toBe(0)
+      expect(r.output, `no passing contamination stage rendered\n${r.output}`).toMatch(new RegExp(`✓\\s+${CT_STAGE}\\s`))
+      expect(r.output).toContain(AFTER)
+    })
+  })
+
+  it('#cps-3 a text-only push still runs the stage: the text-only profile’s only bridge call, ts_docs_stage, scans before the doc suites', async () => {
+    await scenario('tsbridge-ct-3', async (s) => {
+      const f = await contaminationFixture(s, { name: 'cttext' })
+      await s.fs.write('cttext/docs/guide.md', 'docs only\n')
+      await f.commit('a text-only change')
+
+      const r = await f.runDocsStage()
+
+      expect(r.code, describeRun('the text-only entry point failed on a clean push', r)).toBe(0)
+      expect(
+        r.output,
+        `the text-only profile never ran the contamination stage — shipped markdown is exactly what the scan judges\n${r.output}`,
+      ).toMatch(new RegExp(`✓\\s+${CT_STAGE}\\s`))
+      expect(r.output, 'the doc stage itself never rendered').toContain('docs · TASK-053')
+    })
+  })
+
+  it('#cps-4 a derived project (no .blueprint-root) SKIPS with the reason and never blocks', async () => {
+    await scenario('tsbridge-ct-4', async (s) => {
+      const f = await contaminationFixture(s, { name: 'ctderived', blueprint: false })
+      await s.fs.write('ctderived/AGENTS.md', 'shared rules\nsee /home/fixture-operator/notes/private for details\n') // a2bp-allow: fixture plant, not a live path
+      await f.commit('plant a host path — irrelevant: a derived push publishes nothing')
+
+      const r = await f.runStage()
+
+      expect(r.code, describeRun('a derived project was blocked by a blueprint-only scan', r)).toBe(0)
+      expect(r.output, `the skip gave no reason\n${r.output}`).toContain('skipped · blueprint-only: no .blueprint-root here')
+      expect(r.output).toContain(AFTER)
+    })
+  })
+})
+
 interface LintFixture {
   /** The names ShellCheck's stub was handed, or null if it never ran. */
   seenEnv(): Promise<string[] | null>
@@ -1707,6 +1821,83 @@ async function lintFixture(
       }
     },
     ...stageDrivers(s, name, repo.dir, `sh_lint_stage ${JSON.stringify(repo.dir)}`, path),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TASK-090 — the contamination stage fixture: a fixture BLUEPRINT git repo
+// (.blueprint-root, the real scan script + its checker, one shipped markdown
+// file), whose base commit is recorded as refs/remotes/origin/main so the
+// stage's base resolution walks the documented fallback chain.
+// ---------------------------------------------------------------------------
+
+const CT_STAGE = 'contamination · TASK-090'
+
+interface ContaminationFixture {
+  readonly dir: string
+  /** Commit every change under the fixture dir since the previous commit. */
+  commit(message: string): Promise<void>
+  /** Run the stage the way the FULL gate reaches it: its own stage function under set -e. */
+  runStage(): Promise<FixtureRun>
+  /** Run the stage the way the TEXT-ONLY profile reaches it: through ts_docs_stage. */
+  runDocsStage(): Promise<FixtureRun>
+}
+
+/**
+ * The bridge, the renderer, the scan script and its checker are copied in
+ * UNTRACKED-of-the-push — they only have to EXIST for the stage to start them;
+ * what the push adds is the tracked markdown. NO GIT DECOYS here, unlike
+ * stageDrivers: the base resolution runs git in the CALLER's shell, BEFORE
+ * ts_scrubbed's scrub (that is the stage's own contract), so a planted GIT_DIR
+ * would break resolution for a reason the stage never claimed to cover.
+ */
+async function contaminationFixture(
+  s: Scenario,
+  opts: { name: string; blueprint?: boolean },
+): Promise<ContaminationFixture> {
+  const repo = await s.gitRepo(opts.name)
+  for (const lib of [
+    'scripts/lib/pipeline.sh',
+    'scripts/run-ts-suites.sh',
+    'scripts/contamination-push-scan.mts',
+    'scripts/lib/contamination.mts',
+  ]) {
+    await s.fs.copyIn(join(REPO_ROOT, lib), `${opts.name}/${lib}`)
+  }
+  if (opts.blueprint !== false) await s.fs.write(`${opts.name}/.blueprint-root`, 'blueprint\n')
+  await s.fs.write(`${opts.name}/README.md`, 'generic docs\n')
+
+  let based = false
+  const commit = async (message: string) => {
+    await repo.commitAll(message)
+    if (based) return
+    based = true
+    const base = await repo.git(['rev-parse', 'HEAD'])
+    expect(base.code, base.output).toBe(0)
+    const ref = await repo.git(['update-ref', 'refs/remotes/origin/main', base.stdout.trim()])
+    expect(ref.code, ref.output).toBe(0)
+  }
+  await commit('base')
+
+  const driverFor = async (file: string, stageCall: string): Promise<FixtureRun> => {
+    const body =
+      `cd ${JSON.stringify(repo.dir)}\n` +
+      `set -e\n` +
+      `. ./scripts/lib/pipeline.sh\n` +
+      `pipe_init '${opts.name} fixture' >/dev/null 2>&1 || true\n` +
+      `. ./scripts/run-ts-suites.sh\n` +
+      `${stageCall}\n` +
+      `echo ${AFTER}\n`
+    const driver = await s.fs.write(file, body)
+    const r = await s.run('sh', [driver], { cwd: repo.dir, timeoutMs: 120_000 })
+    return { code: r.code, signal: r.signal, stdout: r.stdout, stderr: r.stderr, output: r.output, command: body }
+  }
+
+  return {
+    dir: repo.dir,
+    commit,
+    runStage: () => driverFor(`${opts.name}-stage.sh`, `ts_contamination_stage ${JSON.stringify(repo.dir)}`),
+    runDocsStage: () => driverFor(`${opts.name}-docs-stage.sh`, `ts_docs_stage ${JSON.stringify(repo.dir)}`),
   }
 }
 
