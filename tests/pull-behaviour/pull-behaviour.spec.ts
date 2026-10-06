@@ -358,6 +358,86 @@ describe('TASK-021 §4.2 — a full pull retires what the blueprint stopped ship
 })
 
 /**
+ * BUG-162 — observed in stash2flow (`git show 12ba44b` there: pull kept
+ * `scripts/lib/contamination.sh` with "this copy differs from every version
+ * the blueprint shipped"). BUG-155's port moved the substitution exemption
+ * from `contamination.sh` to `contamination.mts`
+ * (scripts/lib/placeholders.sh), and `bpRetire`'s unedited-proof substituted
+ * the shipped blob whenever TODAY's exemption list said so. The deleted .sh
+ * lost its exemption, its shipped copies carried literal {{PROJECT_NAME}}
+ * tokens (never substituted on arrival, since the OLD list exempted it), the
+ * comparison ran against a substituted form, nothing matched, and the file
+ * was reported "yours now" and kept forever. The fix: a copy is unedited
+ * when it byte-matches EITHER the raw shipped blob OR its substituted form.
+ *
+ * The fixture reproduces the port's shape exactly: the blueprint ships a
+ * token-carrying file, then deletes it; the checkout's real
+ * scripts/lib/placeholders.sh (post-BUG-155) is what bpShouldSubstitute
+ * reads, so the deleted path is no longer exempt — the same condition every
+ * derived project pulls under.
+ */
+describe('BUG-162 — retire-on-pull proves "unedited" against the raw shipped blob too', () => {
+  it('#12 BUG-162: a raw copy of a deleted whose-exemption-moved file is retired, an edited copy stays "yours now"', async () => {
+    await scenario('pull-behaviour-12', async (s) => {
+      const bp = await s.workspace.dir('r12', 'bp')
+      await s.fs.write(join(bp, 'CLAUDE.md'), '# CLAUDE\nfor {{PROJECT_NAME}}\n')
+      await s.fs.write(join(bp, 'tests/fixture/test.sh'), 'echo fixture\n')
+      // Shipped while exempt, carrying the literal token — the pre-port
+      // arrival form, exactly like the blueprint's last
+      // scripts/lib/contamination.sh (git show e3fd8d8:scripts/lib/contamination.sh).
+      await s.fs.write(join(bp, 'scripts/lib/contamination.sh'), '# contamination for {{PROJECT_NAME}}\n')
+      // Same shape, but the project really edited this one: it must stay
+      // "yours now" before and after the fix.
+      await s.fs.write(join(bp, 'scripts/lib/edited.sh'), '# edited for {{PROJECT_NAME}}\n')
+      await initRepo(s, bp)
+      await git(s, bp, ['add', '-A'])
+      await git(s, bp, ['commit', '-q', '-m', 'one'])
+      const first = (await git(s, bp, ['rev-parse', 'HEAD'])).stdout.trim()
+
+      // The port: the file is deleted and its exemption moves to another
+      // path. The exemption half lives in the checkout's real
+      // scripts/lib/placeholders.sh, which is what the CLI consults.
+      await git(s, bp, ['rm', '-q', 'scripts/lib/contamination.sh', 'scripts/lib/edited.sh'])
+      await git(s, bp, ['add', '-A'])
+      await git(s, bp, ['commit', '-q', '-m', 'two'])
+
+      const p = await s.workspace.dir('r12', 'retiree')
+      await s.fs.write(join(p, 'CLAUDE.md'), '# CLAUDE\nfor retiree\n')
+      // The RAW shipped bytes: the pull that delivered this file ran while
+      // the old path was still exempt, so the token was never substituted.
+      await s.fs.write(join(p, 'scripts/lib/contamination.sh'), '# contamination for {{PROJECT_NAME}}\n')
+      await s.fs.write(join(p, 'scripts/lib/edited.sh'), '# edited for {{PROJECT_NAME}}\n# and this project wrote more\n')
+      await s.fs.write(
+        join(p, '.blueprint-source'),
+        [
+          'config_version   = 2',
+          `blueprint_remote = ${bp}`,
+          'blueprint_branch = main',
+          `bootstrap_sha    = ${first}`,
+          'bootstrap_date   = 2026-01-01',
+          '',
+        ].join('\n'),
+      )
+      await initRepo(s, p)
+      await git(s, p, ['add', '-A'])
+      await git(s, p, ['commit', '-q', '-m', 'init'])
+
+      const r = await s.run('node', [CLI, 'pull', '--yes'], { cwd: p })
+      expect(r.code, r.output).toBe(0)
+
+      expect(
+        await s.fs.exists(join(p, 'scripts/lib/contamination.sh')),
+        `a copy byte-identical to a shipped version was not retired:\n${r.output}`,
+      ).toBe(false)
+      expect(r.output, 'the retirement was not reported').toMatch(/retired\s+scripts\/lib\/contamination\.sh/)
+
+      expect(await s.fs.exists(join(p, 'scripts/lib/edited.sh')), 'an EDITED copy was deleted').toBe(true)
+      expect(r.output, 'the edited copy was not reported as the project\'s').toMatch(/yours now\s+scripts\/lib\/edited\.sh/)
+    })
+  })
+})
+
+/**
  * TASK-081 slice 6 (Vitali review of e943ae5). `cmdPull` only spliced the
  * closure's dependency-first order into `files` when `partial` is true
  * (`if (!rest.includes(lib) && partial) files.push(lib)`); on a FULL pull
