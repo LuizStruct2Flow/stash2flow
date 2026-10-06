@@ -2240,22 +2240,32 @@ export async function bpRetire(autoYes: boolean): Promise<boolean> {
           bpGit(['-C', SYNC.blueprintRoot, 'show', `${c}:${p}`], { stdout: { file: blob }, stderr: 'ignore' }),
         )
         if (showR.status !== 0) continue
-        let cmpTarget = blob
-        if (await bpShouldSubstitute(p)) {
-          const subOut = `${blob}.s`
-          const ok = await bpSubstituteStream(blob, name, subOut)
-          if (!ok) {
-            await unchecked(() => run('rm', ['-f', subOut], { stdout: 'ignore', stderr: 'ignore' }))
-            continue
-          }
-          cmpTarget = subOut
-        }
+        // The RAW blob is compared first, unconditionally. A byte match means
+        // the copy is literally a version the blueprint shipped, so retiring
+        // it loses nothing — and the exemption-gated substitution below alone
+        // is not enough: bpShouldSubstitute reads TODAY's exemption list, so
+        // when a port moves an exemption to a new path (BUG-155 moved
+        // contamination.sh to contamination.mts), the deleted file loses its
+        // exemption while its shipped copies were never substituted, the
+        // comparison runs against a substituted form, nothing matches, and the
+        // file is reported "yours now" and kept forever (BUG-162).
         // `-s` silences cmp's OWN differ output, never bash's diagnostic for a
         // missing binary — the shell's `cmp -s "$blob" "$p"` (:1500) carries no
         // `2>` redirect either, so that diagnostic reaches the real stderr.
         // 'ignore' here swallowed it (TASK-081, cmp-missing differential row).
-        const cmpR = await unchecked(() => run('cmp', ['-s', cmpTarget, p], { stdout: 'ignore', stderr: 'inherit' }))
-        if (cmpTarget !== blob) await unchecked(() => run('rm', ['-f', cmpTarget], { stdout: 'ignore', stderr: 'ignore' }))
+        const cmpRawR = await unchecked(() => run('cmp', ['-s', blob, p], { stdout: 'ignore', stderr: 'inherit' }))
+        if (cmpRawR.status === 0) {
+          match = true
+          break
+        }
+        const subOut = `${blob}.s`
+        const ok = await bpSubstituteStream(blob, name, subOut)
+        if (!ok) {
+          await unchecked(() => run('rm', ['-f', subOut], { stdout: 'ignore', stderr: 'ignore' }))
+          continue
+        }
+        const cmpR = await unchecked(() => run('cmp', ['-s', subOut, p], { stdout: 'ignore', stderr: 'inherit' }))
+        await unchecked(() => run('rm', ['-f', subOut], { stdout: 'ignore', stderr: 'ignore' }))
         if (cmpR.status === 0) {
           match = true
           break
