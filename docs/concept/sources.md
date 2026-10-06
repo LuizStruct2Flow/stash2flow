@@ -46,7 +46,7 @@ a [shared account](domain-language.md#shared-account). Its
 | `email` | Gmail API, read-only | the [server](domain-language.md#server) |
 | `icloud_photos` | the program `osxphotos` on a Mac | a Mac [collector](domain-language.md#collector) |
 | `icloud_drive` | the iCloud Drive folder on a Mac | a Mac [collector](domain-language.md#collector) |
-| a folder on a network storage device | the folder itself, on the local network | the [server](domain-language.md#server) |
+| `network_folder` | a folder on the local network, such as one on a network storage device | the [server](domain-language.md#server) |
 
 A [user](domain-language.md#user) can have several
 [accounts](domain-language.md#account) per
