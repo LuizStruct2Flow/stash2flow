@@ -89,10 +89,11 @@ Nobody knows how much stored data is trash in general, but one case can be
 measured: the [user](domain-language.md#user)'s own. The app measures it before and after.
 
 - **Before.** The first full [run](domain-language.md#run) of each [source](domain-language.md#source) records how many [assets](domain-language.md#asset) and how
-  many [bytes](domain-language.md#bytes) that source holds. Once [duplicates](domain-language.md#duplicate) are grouped, it records what
-  share of them are duplicates. It also records how many assets are
+  many [bytes](domain-language.md#bytes) that source holds. Once [duplicates](domain-language.md#duplicate) are grouped, it records how
+  many of them are [exact](domain-language.md#exact) duplicates and how many are [near](domain-language.md#near) duplicates. It also records how many assets are
   [blacklisted](domain-language.md#blacklist),
-  [advertisements](domain-language.md#advertisement) included. These figures are kept unchanged
+  [advertisements](domain-language.md#advertisement) included. Over all sources together it records the number of
+  sources an asset is found in. These figures are kept unchanged
   afterwards. They are the [baseline](domain-language.md#baseline).
 - **After.** The same figures, read again once the user has organized and
   cleaned up. This belongs to the later steps, not to the index.
@@ -101,8 +102,12 @@ The "before" can only be taken once, which is why recording it is part of the
 index. The app tracks the figures locally and publishes nothing. A user who
 wants to make his figures public does that himself.
 
-Which figures exactly is still open:
-[open question: baseline figures](open-questions.md#question-baseline-figures).
+The figures of the [baseline](domain-language.md#baseline):
+
+| Counted | Figures |
+|---|---|
+| per [source](domain-language.md#source) | [assets](domain-language.md#asset), [bytes](domain-language.md#bytes), [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate), [near](domain-language.md#near) duplicates, and [blacklisted](domain-language.md#blacklist) assets, [advertisements](domain-language.md#advertisement) included |
+| overall | the number of [sources](domain-language.md#source) an [asset](domain-language.md#asset) is found in |
 
 ## What the app is not
 

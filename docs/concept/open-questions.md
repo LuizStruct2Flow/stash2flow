@@ -33,62 +33,6 @@ body: the message's id plus "body".
 Background:
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
 
-### Question: office documents
-
-`#question-office-documents`
-
-**Question.** Word-processor and spreadsheet files are not among the
-[file types](sources.md#file-types) today, so the app would not know what is
-inside them. Are they read?
-
-**Recommendation.** Yes, their text is read. Their macros are never run, and
-taking the text out does not need them.
-
-### Question: archives
-
-`#question-archives`
-
-**Question.** An archive, such as a zip file, holds other files. Does the app
-open it and read what is inside?
-
-**Recommendation.** Not at first. An archive is recorded by its name, size and
-hash, and listed so the [user](domain-language.md#user) sees what is not
-covered.
-
-### Question: programs and unknown file types
-
-`#question-programs-and-unknown-file-types`
-
-**Question.** What does the app do with a program, or with a file whose type it
-does not know?
-
-**Recommendation.** It records the name, size and hash only. It never reads
-such a file.
-
-### Question: limits on size and pages
-
-`#question-limits-on-size-and-pages`
-
-**Question.** A file can be built to exhaust the
-[server](domain-language.md#server), for example with an enormous size or
-number of pages. Does the app refuse a file beyond a limit?
-
-**Recommendation.** Yes, with limits on size and on the number of pages that
-the [user](domain-language.md#user) can set.
-
-### Question: antivirus scan
-
-`#question-antivirus-scan`
-
-**Question.** Is an [asset](domain-language.md#asset) checked by an antivirus
-scan before it is read? A flagged asset would be
-[blacklisted](domain-language.md#blacklist) by a rule, and would carry a
-visible warning wherever the [user](domain-language.md#user) can open or
-download it.
-
-**Recommendation.** Yes, as a second line behind trust and isolation, since
-what such a scan detects is modest.
-
 ### Question: how reading is isolated
 
 `#question-how-reading-is-isolated`
@@ -127,19 +71,6 @@ deletes it by itself after a period; the app shows them together, as one
 [quarantine](domain-language.md#quarantine). To verify per provider before
 relying on it: that the period is 30 days.
 
-### Question: whitelisted by default
-
-`#question-whitelisted-by-default`
-
-**Question.** Which rules make an [asset](domain-language.md#asset)
-[whitelisted](domain-language.md#whitelist) by default, and who keeps them?
-
-**Recommendation.** Rules the [user](domain-language.md#user) keeps: by
-[sender](domain-language.md#sender), when the sender is a
-[person](domain-language.md#person) on the user's list, and by
-[source](domain-language.md#source), for example the photo library of his
-phone.
-
 ### Question: whitelisted asset in the quarantine
 
 `#question-whitelisted-asset-in-the-quarantine`
@@ -157,32 +88,6 @@ protects what the asset is, not every copy of it.
 ## Duplicates
 
 Background: [how duplicates work](how-it-works.md#duplicates).
-
-### Question: one group per asset
-
-`#question-one-group-per-asset`
-
-**Question.** An [asset](domain-language.md#asset) could be in an
-[exact](domain-language.md#exact) group and in a
-[near](domain-language.md#near) group at the same time, but an asset can point to
-one group only. Which is it?
-
-**Recommendation.** One group per [asset](domain-language.md#asset). Assets showing
-the same image are one group; it is [exact](domain-language.md#exact) when all
-[bytes](domain-language.md#bytes) match, otherwise
-[near](domain-language.md#near).
-
-### Question: which hash decides exact
-
-`#question-which-hash-decides-exact`
-
-**Question.** Two hashes are computed on the
-[bytes](domain-language.md#bytes), [md5 and sha256](domain-language.md#md5-and-sha256).
-Which one decides that two [assets](domain-language.md#asset) are
-[exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate)?
-
-**Recommendation.** [sha256](domain-language.md#md5-and-sha256) decides.
-[md5](domain-language.md#md5-and-sha256) is stored because it is required.
 
 ### Question: near matching PDFs
 
@@ -208,32 +113,6 @@ write to a source.
 **Recommendation.** No. The index reports only. Moving is a later item with its
 own specifications.
 
-## Search and dates
-
-Background: [how search works](how-it-works.md#search).
-
-### Question: date filter
-
-`#question-date-filter`
-
-**Question.** Which date do the date filters of search and of photo search
-use?
-
-**Recommendation.** For documents the [doc_date](domain-language.md#doc_date),
-falling back to the [asset_date](domain-language.md#asset_date). For photos the
-asset_date. Known limit: a wrongly read doc_date hides the
-[asset](domain-language.md#asset) from a date filter.
-
-### Question: vanished in search
-
-`#question-vanished-in-search`
-
-**Question.** Do [vanished](domain-language.md#vanished)
-[assets](domain-language.md#asset) show up in search?
-
-**Recommendation.** Hidden by default and shown with a flag. The answer says
-how many were left out.
-
 ## Pipeline and models
 
 Background: [pipeline steps](how-it-works.md#pipeline-steps).
@@ -253,48 +132,9 @@ files per hour for OCR and both
 same way when descriptions are built. Candidates must run on the
 [server](domain-language.md#server)'s hardware.
 
-### Question: which assets get OCR
-
-`#question-which-assets-get-ocr`
-
-**Question.** OCR runs before the [kind](domain-language.md#kind) of an
-[asset](domain-language.md#asset) is known. Which files get it?
-
-**Recommendation.** Every image and every PDF without a
-[text layer](domain-language.md#text-layer); videos never. If the measured
-files per hour make the first
-[run](domain-language.md#run) too slow, the founder decides then whether photos
-from iCloud Photos skip OCR.
-
-### Question: kind rules
-
-`#question-kind-rules`
-
-**Question.** Three rules are not defined: how a screenshot is told from a
-photo, how much text makes [has_text](domain-language.md#has_text) true, and
-what "complete" photo metadata means for the
-[keeper](domain-language.md#keeper) tie-break.
-
-**Recommendation.** Settle them as examples in the slice-0 feature files, for
-the founder's review.
-
 ## Local copies
 
 Background: [a local copy of every asset](principles.md#a-local-copy-of-every-asset).
-
-### Question: videos
-
-`#question-videos`
-
-**Question.** Videos may be large. Does the
-[server](domain-language.md#server) keep a
-[local copy](domain-language.md#local-copy) of them too? Until this is
-ruled, a video keeps only its metadata and
-[provider hash](domain-language.md#provider-hash).
-
-**Recommendation.** The first [run](domain-language.md#run) reports each
-[source](domain-language.md#source)'s total size before it downloads anything,
-and the founder decides about videos with real numbers.
 
 ### Question: disk encryption
 
@@ -308,47 +148,7 @@ that keeps [assets](domain-language.md#asset) on the server.
 
 ## Sources and collectors
 
-### Question: network storage as a source
-
-`#question-network-storage-as-a-source`
-
-**Question.** A network storage device holds [assets](domain-language.md#asset)
-too, and it may be switched off while a copy of it exists somewhere else. Is
-the device itself the [source](domain-language.md#source), or its copy? And
-which slice of the plan adds it?
-
-**Recommendation.** A new [location](domain-language.md#location) for a folder
-the [server](domain-language.md#server) can reach, fetched like any other
-source, with the server as its [reader](domain-language.md#reader). Index
-whichever of the two is reachable; if both are, the same
-[bytes](domain-language.md#bytes) form
-[exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate)
-and the [order of sources](domain-language.md#order-of-sources) decides the
-[keeper](domain-language.md#keeper). Add it in the slice that adds the
-remaining file sources, since reading a folder is the simplest kind of
-[fetching](domain-language.md#fetching).
-
 Background: [the Mac collector](sources.md#mac-collector).
-
-### Question: two collectors, one source
-
-`#question-two-collectors-one-source`
-
-**Question.** Two Macs can only see the same
-[asset](domain-language.md#asset) if both
-[fetch](domain-language.md#fetching) the same
-[source](domain-language.md#source), but a source has one
-[reader](domain-language.md#reader). What happens when a second
-[collector](domain-language.md#collector) reports it?
-
-**Recommendation.** A [source](domain-language.md#source) is unique by
-[location](domain-language.md#location) and
-[account](domain-language.md#account). The
-[reader](domain-language.md#reader) is the machine that normally
-[fetches](domain-language.md#fetching) it.
-[Asset records](domain-language.md#asset-record) from another
-[collector](domain-language.md#collector) for the same source update the same
-row, and [collected_by](domain-language.md#collected_by) records who sent them.
 
 ### Question: photo originals
 
@@ -378,17 +178,6 @@ timer) installed and kept running?
 **Recommendation.** Scripted in `infra/` as system services rather than
 containers, because the models need the machine's hardware. Settled in slice 1.
 The machine can be rebuilt from the repository.
-
-### Question: authentication
-
-`#question-authentication`
-
-**Question.** Who must authenticate to the [API](domain-language.md#api) besides
-the [collectors](domain-language.md#collector): the command line, the
-[duplicate report](domain-language.md#duplicate-report) in a browser?
-
-**Recommendation.** Everything authenticates. One token per client. HTTPS on
-the local network.
 
 ### Question: public repository check
 
@@ -435,38 +224,6 @@ public file. Whose?
 **Recommendation.** E-mail or a chat webhook; the founder picks. Counts only,
 no file names and no text.
 
-## Measuring
-
-Background: [measuring before and after](mission.md#measuring-before-and-after).
-
-### Question: baseline figures
-
-`#question-baseline-figures`
-
-**Question.** Which figures exactly make up the
-[baseline](domain-language.md#baseline)?
-
-**Recommendation.** Per [source](domain-language.md#source):
-[assets](domain-language.md#asset), [bytes](domain-language.md#bytes),
-[exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate),
-[near](domain-language.md#near) duplicates, and
-[blacklisted](domain-language.md#blacklist) assets,
-[advertisements](domain-language.md#advertisement) included. Overall: the
-number of sources an asset is found in.
-
-## Order of work
-
-### Question: e-mail slice order
-
-`#question-e-mail-slice-order`
-
-**Question.** [E-mail](domain-language.md#e-mail) is built early, before
-descriptions and duplicates. Keep that order?
-
-**Recommendation.** Keep it. The first use case may live only in an
-[e-mail](domain-language.md#e-mail)
-[attachment](domain-language.md#attachment).
-
 ## Frontend and later steps
 
 Background: [the four steps](mission.md#four-steps). A frontend is coming as its
@@ -486,20 +243,18 @@ anyway?
 choices it stores ([keeper](domain-language.md#keeper),
 [reviewed](domain-language.md#reviewed)) do not change.
 
-### Question: which step builds what
+### Question: antivirus scan
 
-`#question-which-step-builds-what`
+`#question-antivirus-scan`
 
-**Question.** Which of the [four steps](mission.md#four-steps) builds which part
-of organizing: the index or the frontend?
+**Question.** Is an [asset](domain-language.md#asset) checked by an antivirus
+scan, and where does the [user](domain-language.md#user) see the warning for a
+flagged asset?
 
-**Recommendation.** The index finds the [persons](domain-language.md#person):
-they come with a document's [description](domain-language.md#description) and
-from the photo library. The [taxonomy](domain-language.md#taxonomy), the
-[contexts](domain-language.md#context) and the
-[tags](domain-language.md#tag) the [user](domain-language.md#user) makes belong
-to the frontend. Settle it before the slice of the index that builds
-descriptions.
+**Recommendation.** Not in the index: the index runs no antivirus scan. Decide
+it together with the frontend, because the place a warning matters is where the
+[user](domain-language.md#user) opens or downloads an
+[asset](domain-language.md#asset) on his own computer.
 
 ### Question: how an asset gets its context
 

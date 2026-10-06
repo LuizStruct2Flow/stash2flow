@@ -66,7 +66,9 @@ The choices that are the [user](domain-language.md#user)'s:
 | The [order of sources](domain-language.md#order-of-sources) | Uses it to suggest a [keeper](domain-language.md#keeper) in each [duplicate group](domain-language.md#duplicate-group). |
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
 | Which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) | Trusts a sender the [user](domain-language.md#user) has written to himself. Lists every [undecided sender](domain-language.md#undecided-sender); he says once per sender whether he trusts it. Until then the app only records that sender's [e-mails](domain-language.md#e-mail). A sender he says no to is a [rejected sender](domain-language.md#rejected-sender), and its e-mails are [blacklisted](domain-language.md#blacklist) by a rule. |
-| Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies rules from where the asset came from. Who keeps the rules is open: [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default). |
+| Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies the rules the [user](domain-language.md#user) keeps: by [sender](domain-language.md#sender), when the sender is a [person](domain-language.md#person) on his list, and by [source](domain-language.md#source), for example the photo library of his phone. |
+| Whether the [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of videos | Reports each [source](domain-language.md#source)'s total size at its first [run](domain-language.md#run), before it downloads anything. Until the [user](domain-language.md#user) decides, a video keeps only its metadata and [provider hash](domain-language.md#provider-hash). |
+| The limits on a file's size and number of pages | Refuses a file beyond them: the [guardian](domain-language.md#guardian) does not read it. |
 | What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as a [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset). After 30 days it deletes what the [user](domain-language.md#user) left there. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
 | Running a new [pipeline](domain-language.md#pipeline) step over [assets](domain-language.md#asset) already indexed | Does it only when asked. |
@@ -194,6 +196,14 @@ execute. The app does the first and never the second.
   database. A deliberately crafted file that breaks the reading library
   reaches nothing. See
   [reading in isolation](architecture.md#reading-in-isolation).
+- **It refuses a file built to exhaust the
+  [server](domain-language.md#server).** The
+  [guardian](domain-language.md#guardian) does not read a file beyond a limit
+  on its size or on its number of pages. The
+  [user](domain-language.md#user) sets both limits.
+- **It never reads a program or a file whose file type it does not know.** It
+  records the name, size and hash of such a file only. An archive is not
+  opened either. See [file types](sources.md#file-types).
 - **Nothing else touches the inside of an
   [asset](domain-language.md#asset).** Only the
   [guardian](domain-language.md#guardian) takes text and pictures out of one.
@@ -262,8 +272,13 @@ What follows from it:
   document, so it must be encrypted:
   [disk encryption](infrastructure.md#disk-encryption).
 
-Whether videos are copied too is open, because they may be large:
-[open question: videos](open-questions.md#question-videos).
+Videos may be large, so whether the [server](domain-language.md#server) keeps
+a [local copy](domain-language.md#local-copy) of them is the
+[user](domain-language.md#user)'s decision. The first
+[run](domain-language.md#run) of a [source](domain-language.md#source) reports
+the source's total size before it downloads anything, and he decides with
+those numbers. Until he decides, a video keeps only its metadata and its
+[provider hash](domain-language.md#provider-hash).
 
 ## Read-only on sources
 

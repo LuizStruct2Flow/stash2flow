@@ -25,6 +25,12 @@ when its last [run](domain-language.md#run) finished, and its rank in the
 [user](domain-language.md#user)'s
 [order of sources](domain-language.md#order-of-sources).
 
+A [source](domain-language.md#source) is unique by its
+[location](domain-language.md#location) and its
+[account](domain-language.md#account). Its
+[reader](domain-language.md#reader) is the machine that normally
+[fetches](domain-language.md#fetching) it.
+
 An [account](domain-language.md#account) that belongs to more than one person is
 a [shared account](domain-language.md#shared-account). Its
 [assets](domain-language.md#asset) are flagged as also belonging to someone else.
@@ -40,6 +46,7 @@ a [shared account](domain-language.md#shared-account). Its
 | `email` | Gmail API, read-only | the [server](domain-language.md#server) |
 | `icloud_photos` | the program `osxphotos` on a Mac | a Mac [collector](domain-language.md#collector) |
 | `icloud_drive` | the iCloud Drive folder on a Mac | a Mac [collector](domain-language.md#collector) |
+| a folder on a network storage device | the folder itself, on the local network | the [server](domain-language.md#server) |
 
 A [user](domain-language.md#user) can have several
 [accounts](domain-language.md#account) per
@@ -48,11 +55,17 @@ A [user](domain-language.md#user) can have several
 
 Other mailboxes, fetched over IMAP, are not part of the index item.
 
-A network storage device is to be a [source](domain-language.md#source) too:
-a folder on the network that the [server](domain-language.md#server)
-[fetches](domain-language.md#fetching). It is not in the table yet because two
-points are open:
-[open question: network storage as a source](open-questions.md#question-network-storage-as-a-source).
+A network storage device is a [source](domain-language.md#source): a folder on
+the network that the [server](domain-language.md#server) can reach. It is
+[fetched](domain-language.md#fetching) like any other source, with the server
+as its [reader](domain-language.md#reader).
+
+Such a device may be switched off while a copy of it exists somewhere else.
+The app indexes whichever of the two is reachable. If both are, the same
+[bytes](domain-language.md#bytes) form [exact](domain-language.md#exact)
+[duplicates](domain-language.md#duplicate), and the
+[order of sources](domain-language.md#order-of-sources) decides the
+[keeper](domain-language.md#keeper).
 
 ## Who fetches a source
 
@@ -71,6 +84,9 @@ text and pictures out, is done only by the
   [providers](domain-language.md#provider), with a
   [puller](domain-language.md#puller) per source. No Mac needs to be on for
   them.
+- **The [server](domain-language.md#server)
+  [fetches](domain-language.md#fetching) a folder on a network storage device
+  directly too**, because it can reach the folder itself.
 - **Folders that a desktop program syncs onto a Mac are not used as
   [sources](domain-language.md#source).** Otherwise the same
   [asset](domain-language.md#asset) would be indexed twice, through two machines.
@@ -106,12 +122,18 @@ the first does not, and enabling it is configuration only.
   Mac, the [guardian](domain-language.md#guardian) reads it there, in the same
   isolation as on the [server](domain-language.md#server).
 
-Two points are open: what happens when two
-[collectors](domain-language.md#collector) report the same
-[source](domain-language.md#source)
-([open question: two collectors, one source](open-questions.md#question-two-collectors-one-source)),
-and what to do when the photo originals are not stored on the Mac
-([open question: photo originals](open-questions.md#question-photo-originals)).
+Two Macs can see the same [asset](domain-language.md#asset) only when both
+[fetch](domain-language.md#fetching) the same
+[source](domain-language.md#source). The source stays one source, because it is
+unique by its [location](domain-language.md#location) and its
+[account](domain-language.md#account). The
+[asset records](domain-language.md#asset-record) a second
+[collector](domain-language.md#collector) sends for it update the same rows,
+and [collected_by](domain-language.md#collected_by) records which machine sent
+them.
+
+What to do when the photo originals are not stored on the Mac is open:
+[open question: photo originals](open-questions.md#question-photo-originals).
 
 ## Identity of an asset
 
@@ -131,16 +153,21 @@ writes them in another.
 
 `#file-types`
 
-The app indexes PDF, JPG, PNG, HEIC, TIFF and GIF
-[assets](domain-language.md#asset). Videos (MOV, MP4) get
-their metadata and hashes and no OCR.
+What the app does with a file depends on its file type:
 
-What the app does with other files is open: office documents
-([open question: office documents](open-questions.md#question-office-documents)),
-archives ([open question: archives](open-questions.md#question-archives)),
-and programs and unknown file types
-([open question: programs and unknown file types](open-questions.md#question-programs-and-unknown-file-types)).
-Whatever is ruled, nothing inside a file is ever run:
+| File | What the app does |
+|---|---|
+| PDF, JPG, PNG, HEIC, TIFF, GIF | indexes it fully, through the whole [pipeline](domain-language.md#pipeline) |
+| an office document: a word-processor or spreadsheet file | the [guardian](domain-language.md#guardian) reads its text. Its macros are never run, and taking the text out does not need them |
+| a video (MOV, MP4) | records its metadata and its [provider hash](domain-language.md#provider-hash); no OCR. Whether the [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of videos is the [user](domain-language.md#user)'s decision: [a local copy of every asset](principles.md#a-local-copy-of-every-asset) |
+| an archive, such as a zip file | does not open it. Records its name, size and hash, and lists it so the [user](domain-language.md#user) sees what is not covered |
+| a program, or a file whose file type the app does not know | records its name, size and hash only. The [guardian](domain-language.md#guardian) never reads such a file |
+
+A file beyond a limit on its size or on its number of pages is refused: the
+[guardian](domain-language.md#guardian) does not read it. The
+[user](domain-language.md#user) sets both limits.
+
+Nothing inside a file is ever run:
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
 
 ## Fetching changes
@@ -340,8 +367,12 @@ Rules:
   and never has to open each mailbox to see what is about to be deleted.
 - **[Whitelisted](domain-language.md#whitelist) is a default, not a
   guarantee.** A personal [e-mail](domain-language.md#e-mail) from a family
-  member is usually whitelisted. Which rules give the default is open:
-  [open question: whitelisted by default](open-questions.md#question-whitelisted-by-default).
+  member is usually whitelisted. The default comes from rules the
+  [user](domain-language.md#user) keeps: by
+  [sender](domain-language.md#sender), when the sender is a
+  [person](domain-language.md#person) on his list, and by
+  [source](domain-language.md#source), for example the photo library of his
+  phone.
 - A no-reply address is **not** a sign of
   [advertisement](domain-language.md#advertisement). Invoices and receipts come
   from such [senders](domain-language.md#sender).

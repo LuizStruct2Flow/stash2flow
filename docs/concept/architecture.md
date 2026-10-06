@@ -47,11 +47,11 @@ No port is added before a slice of the
 
 | Port | What it does | Adapters | First needed in slice |
 |---|---|---|---|
-| [Fetching](domain-language.md#fetching) | lists a [source](domain-language.md#source), reports changes since a [cursor](domain-language.md#cursor), brings the [bytes](domain-language.md#bytes) | Google Drive, OneDrive, Gmail, iCloud Drive (a folder), iCloud Photos (`osxphotos`); a fake | 2 |
+| [Fetching](domain-language.md#fetching) | lists a [source](domain-language.md#source), reports changes since a [cursor](domain-language.md#cursor), brings the [bytes](domain-language.md#bytes) | Google Drive, OneDrive, a folder on a network storage device, Gmail, iCloud Drive (a folder), iCloud Photos (`osxphotos`); a fake | 2 |
 | [Ledger](domain-language.md#ledger) | narrow: all that a [run](domain-language.md#run) needs, see [one use-case, two programs](#one-use-case-two-programs) | onto the index ([server](domain-language.md#server)); an [API](domain-language.md#api) client ([collector](domain-language.md#collector)); a fake | 2; [cursor](domain-language.md#cursor) and [checkpoint](domain-language.md#checkpoint) in 3 |
 | Index | wide, [server](domain-language.md#server) only: [assets](domain-language.md#asset), [OCR text](domain-language.md#ocr-text), [embeddings](domain-language.md#embedding), [duplicate groups](domain-language.md#duplicate-group), [runs](domain-language.md#run), [completed steps](domain-language.md#completed-steps), whether an asset is [whitelisted](domain-language.md#whitelist) or [blacklisted](domain-language.md#blacklist) | PostgreSQL; an in-memory fake | 2 |
 | OCR | page image to text | the engine chosen in slice 1; a fake that replays fixtures | 2 |
-| File reading | metadata, [phash](domain-language.md#phash), PDF [text layer](domain-language.md#text-layer) and page rendering, thumbnail; for an [e-mail](domain-language.md#e-mail), its text and its [attachments](domain-language.md#attachment). Its adapters are the [guardian](domain-language.md#guardian)'s and run in isolation: [reading in isolation](#reading-in-isolation) | image and PDF libraries; an e-mail parsing library in slice 5 | 2 |
+| File reading | metadata, [phash](domain-language.md#phash), PDF [text layer](domain-language.md#text-layer) and page rendering, thumbnail; the text of an office document; for an [e-mail](domain-language.md#e-mail), its text and its [attachments](domain-language.md#attachment). Its adapters are the [guardian](domain-language.md#guardian)'s and run in isolation: [reading in isolation](#reading-in-isolation) | image, PDF and office document libraries; an e-mail parsing library in slice 5 | 2 |
 | [Stash](domain-language.md#stash) | keeps each [asset](domain-language.md#asset)'s [local copy](domain-language.md#local-copy), addressed by [sha256](domain-language.md#md5-and-sha256) | a directory on the [server](domain-language.md#server) | 2 |
 | Token store | keeps the [providers](domain-language.md#provider)' access tokens | an encrypted file on the [server](domain-language.md#server) | 2 |
 | Clock | the time | the system | 2 |
@@ -78,7 +78,7 @@ with different adapters:
 
 | | Server | Collector |
 |---|---|---|
-| [Sources](domain-language.md#source) [fetched](domain-language.md#fetching) | OneDrive, Google Drive, Gmail | iCloud Photos, iCloud Drive |
+| [Sources](domain-language.md#source) [fetched](domain-language.md#fetching) | OneDrive, Google Drive, a folder on a network storage device, Gmail | iCloud Photos, iCloud Drive |
 | [Ledger](domain-language.md#ledger) | straight onto the index | an [API](domain-language.md#api) client, to the [server](domain-language.md#server)'s API |
 | [Guardian](domain-language.md#guardian) | yes | yes, in the same isolation: [reading in isolation](#reading-in-isolation) |
 | OCR, [embeddings](domain-language.md#embedding), [description](domain-language.md#description) | yes | no |
@@ -98,6 +98,7 @@ The [ledger](domain-language.md#ledger) has five operations and nothing else:
 | Question | Answer |
 |---|---|
 | Where does a [collector](domain-language.md#collector)'s [cursor](domain-language.md#cursor) live? | On the [server](domain-language.md#server), with the [source](domain-language.md#source), like every other. The collector keeps no state. |
+| What when a second [collector](domain-language.md#collector) sends [asset records](domain-language.md#asset-record) for the same [source](domain-language.md#source)? | They update the same rows, because a source is unique by its [location](domain-language.md#location) and its [account](domain-language.md#account). [collected_by](domain-language.md#collected_by) records which machine sent them. |
 | Who decides "unchanged"? | One domain rule, applied on the [server](domain-language.md#server) when the [asset record](domain-language.md#asset-record) arrives. The [puller](domain-language.md#puller) or [collector](domain-language.md#collector) never decides. The rule is [unchanged assets](how-it-works.md#unchanged-assets). |
 | When may a [cursor](domain-language.md#cursor) or [checkpoint](domain-language.md#checkpoint) advance? | After the [server](domain-language.md#server) has stored the batch and its position together and acknowledged. |
 | A batch delivered twice? | Changes nothing. |
@@ -121,7 +122,7 @@ deliberately crafted file that breaks a reading library then reaches nothing.
 
 | The [guardian](domain-language.md#guardian)'s reading | |
 |---|---|
-| What runs there | every adapter that opens an [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes) with a library: the file-reading adapters (images, PDFs, [e-mails](domain-language.md#e-mail)) and an OCR engine that runs inside the app's process |
+| What runs there | every adapter that opens an [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes) with a library: the file-reading adapters (images, PDFs, office documents, [e-mails](domain-language.md#e-mail)) and an OCR engine that runs inside the app's process |
 | What goes in | the [bytes](domain-language.md#bytes) of one [asset](domain-language.md#asset) |
 | What comes out | text, pictures and metadata, as data |
 | What it cannot reach | the network; the token store; the index and the database behind it |
@@ -261,6 +262,7 @@ Candidates, to be proven in slice 1 before anything is built on them:
 | Need | Candidate | Known risk |
 |---|---|---|
 | PDF [text layer](domain-language.md#text-layer), page rendering | `mupdf` or `pdfjs-dist` | none known |
+| Text of an office document | none named yet | the library must take the text out without running a macro |
 | Photo metadata | `exifr` | none known |
 | [phash](domain-language.md#phash) | `sharp` plus one small hash function | HEIC is not in `sharp`'s prebuilt binaries; it needs a separate decoder, on Linux and on the Mac |
 | OCR | as in [where models run](#where-models-run); chosen by the benchmark | quality on poor Portuguese and German [scans](domain-language.md#scan) |

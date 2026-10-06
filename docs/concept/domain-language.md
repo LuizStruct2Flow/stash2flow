@@ -37,7 +37,9 @@ deliberately not used.
 The person who runs the app and makes its choices: the [order of sources](#order-of-sources), the
 [keeper](#keeper), which [senders](#sender) are [trusted](#trusted) and which
 are [rejected](#rejected-sender), the rules that make an
-[asset](#asset) [whitelisted](#whitelist) by default, what is restored from the
+[asset](#asset) [whitelisted](#whitelist) by default, whether the
+[server](#server) keeps a [local copy](#local-copy) of videos, the limits on a
+file's size and number of pages, what is restored from the
 [quarantine](#quarantine), starting a [run](#run).
 
 ### Server
@@ -53,7 +55,8 @@ The one local machine that runs the database, the [API](#api), the [pullers](#pu
 `#api`
 
 What the [server](#server) serves to its clients: the [collectors](#collector), the command line and the
-browser. Taking [asset records](#asset-record) in is one part of the API.
+browser. Taking [asset records](#asset-record) in is one part of the API. Every client
+authenticates, each with its own token.
 
 ### Worker
 
@@ -88,7 +91,7 @@ pictures.
 `#source`
 
 One configured place [assets](#asset) come from: a [location](#location) plus an [account](#account), [fetched](#fetching) by one
-[reader](#reader). A source is fetched; an asset is read. Example: one Google Drive of one account is a source; the mailbox of the
+[reader](#reader). A source is unique by its location and its account. A source is fetched; an asset is read. Example: one Google Drive of one account is a source; the mailbox of the
 same account is another.
 
 ### Location
@@ -97,7 +100,8 @@ same account is another.
 
 Which kind of place a [source](#source) is. It is an open list, with one value per source
 adapter. Shipped: `onedrive`, `gdrive`, `icloud_drive`, `icloud_photos`,
-`email`.
+`email`, and one for a folder on a network storage device that the
+[server](#server) can reach.
 
 ### Account
 
@@ -116,9 +120,11 @@ belonging to someone else, so the [user](#user) never treats them as his alone.
 
 `#reader`
 
-The machine that [fetches](#fetching) a [source](#source): the [server](#server), or a Mac that runs a [collector](#collector).
+The machine that normally [fetches](#fetching) a [source](#source): the [server](#server), or a Mac that runs a [collector](#collector).
 Example: a cloud drive's reader is the server; a photo library that only a Mac
-can open has that Mac as its reader. The reader does not read an
+can open has that Mac as its reader. When another collector sends
+[asset records](#asset-record) for the same source, the reader stays the same
+and [collected_by](#collected_by) records who sent them. The reader does not read an
 [asset](#asset): that is what the [guardian](#guardian) does.
 
 ### Order of sources
@@ -228,7 +234,8 @@ What an [asset](#asset) consists of. The word is always bytes, never "content".
 The copy of an [asset](#asset)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
 in the [stash](#stash). An [advertisement](#advertisement) and [spam](#spam)
 have none, and neither has an [e-mail](#e-mail) from an
-[undecided sender](#undecided-sender).
+[undecided sender](#undecided-sender). A video has none until the
+[user](#user) decides whether videos are kept.
 
 ### Stash
 
@@ -282,7 +289,9 @@ photo library, or the date an e-mail was received.
 The [assets](#asset) the [user](#user) keeps. An asset on it is **whitelisted**.
 Whitelisted is a verdict on one asset, of any kind and from any
 [source](#source); it is not a list of [senders](#sender). It is a default, not
-a guarantee: rules give it from where the asset came from. Example: a personal
+a guarantee: rules the user keeps give it from where the asset came from, by
+sender, when the sender is a [person](#person) on his list, and by source.
+Example: a personal
 [e-mail](#e-mail) from a family member is usually whitelisted, and so is a
 photo from the user's phone.
 
@@ -467,7 +476,8 @@ the [cursor](#cursor).
 `#vanished`
 
 An [asset](#asset) that is no longer in its [source](#source). The row stays, and its `deleted_at` is
-set. The word is vanished, because the index never deletes.
+set. The word is vanished, because the index never deletes. In search a
+vanished asset is hidden by default and shown with a flag.
 
 ### Ledger
 
@@ -490,8 +500,11 @@ The message sent when a [run](#run) finishes.
 `#baseline`
 
 The figures recorded at the first full [run](#run) of a [source](#source) and kept unchanged: what
-the user had before organizing and cleaning up, including how many
-[assets](#asset) were [blacklisted](#blacklist).
+the user had before organizing and cleaning up. Per source: the
+[assets](#asset), the [bytes](#bytes), the [exact](#exact)
+[duplicates](#duplicate), the [near](#near) duplicates, and the
+[blacklisted](#blacklist) assets, [advertisements](#advertisement) included.
+Overall: the number of sources an asset is found in.
 
 ## The pipeline
 
@@ -529,7 +542,9 @@ unchanged without fetching its [bytes](#bytes).
 
 `#md5-and-sha256`
 
-Hashes computed on the [asset](#asset)'s [bytes](#bytes).
+Hashes computed on the [asset](#asset)'s [bytes](#bytes). The sha256 decides
+that two assets are [exact](#exact) [duplicates](#duplicate). The md5 is
+stored because it is required.
 
 ### phash
 
@@ -653,13 +668,15 @@ An [asset](#asset) that is the same as another asset. The word is always written
 
 `#duplicate-group`
 
-[Assets](#asset) that are the same. A group is [exact](#exact) or [near](#near).
+[Assets](#asset) that are the same. A group is [exact](#exact) or [near](#near), and an
+asset is in one group only. Assets showing the same image are one group; it is
+exact when all [bytes](#bytes) match, otherwise near.
 
 ### Exact
 
 `#exact`
 
-The same [bytes](#bytes).
+The same [bytes](#bytes), told by the same [sha256](#md5-and-sha256).
 
 ### Near
 
