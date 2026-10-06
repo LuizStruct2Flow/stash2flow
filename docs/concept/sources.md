@@ -48,6 +48,12 @@ A [user](domain-language.md#user) can have several
 
 Other mailboxes, fetched over IMAP, are not part of the index item.
 
+A network storage device is to be a [source](domain-language.md#source) too:
+a folder on the network that the [server](domain-language.md#server)
+[fetches](domain-language.md#fetching). It is not in the table yet because two
+points are open:
+[open question: network storage as a source](open-questions.md#question-network-storage-as-a-source).
+
 ## Who fetches a source
 
 `#who-fetches-a-source`

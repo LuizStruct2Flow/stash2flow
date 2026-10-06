@@ -156,6 +156,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-limits-on-size-and-pages](open-questions.md#question-limits-on-size-and-pages)
 - [#question-moving-non-keepers](open-questions.md#question-moving-non-keepers)
 - [#question-near-matching-pdfs](open-questions.md#question-near-matching-pdfs)
+- [#question-network-storage-as-a-source](open-questions.md#question-network-storage-as-a-source)
 - [#question-notification-channel](open-questions.md#question-notification-channel)
 - [#question-office-documents](open-questions.md#question-office-documents)
 - [#question-one-group-per-asset](open-questions.md#question-one-group-per-asset)
