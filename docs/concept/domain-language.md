@@ -100,8 +100,8 @@ same account is another.
 
 Which kind of place a [source](#source) is. It is an open list, with one value per source
 adapter. Shipped: `onedrive`, `gdrive`, `icloud_drive`, `icloud_photos`,
-`email`, and one for a folder on a network storage device that the
-[server](#server) can reach.
+`email`, and `network_folder`, a folder on the network that the
+[server](#server) can reach, such as one on a network storage device.
 
 ### Account
 

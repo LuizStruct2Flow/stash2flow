@@ -150,6 +150,43 @@ that keeps [assets](domain-language.md#asset) on the server.
 
 Background: [the Mac collector](sources.md#mac-collector).
 
+### Question: what tells two network folders apart
+
+`#question-what-tells-two-network-folders-apart`
+
+**Question.** A [source](domain-language.md#source) is a
+[location](domain-language.md#location) plus an
+[account](domain-language.md#account), and that is what tells two sources
+apart. A `network_folder` has no account. What tells a network storage device
+and its copy apart?
+
+**Recommendation.** For a `network_folder`, the address of the folder takes
+the place of the account.
+
+### Question: local copy of a file that is not read
+
+`#question-local-copy-of-a-file-that-is-not-read`
+
+**Question.** An archive, a program or a file over the limits is recorded by
+name, size and hash and is not read. Does the
+[server](domain-language.md#server) keep a
+[local copy](domain-language.md#local-copy) of it?
+
+**Recommendation.** Yes. It may matter to the
+[user](domain-language.md#user) even though the app cannot look inside it, and
+the path ends with one copy of everything that matters.
+
+### Question: office documents as attachments
+
+`#question-office-documents-as-attachments`
+
+**Question.** An [attachment](domain-language.md#attachment) is described as a
+PDF or an image. Is an office document attached to an
+[e-mail](domain-language.md#e-mail) an attachment too?
+
+**Recommendation.** Yes. From a [trusted](domain-language.md#trusted)
+[sender](domain-language.md#sender) it is read like any other office document.
+
 ### Question: photo originals
 
 `#question-photo-originals`
