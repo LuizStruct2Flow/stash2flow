@@ -59,13 +59,17 @@ The database holds things a [run](domain-language.md#run) cannot rebuild: the
 [user](domain-language.md#user)'s choices
 ([reviewed](domain-language.md#reviewed) groups,
 [keepers](domain-language.md#keeper), the
-[order of sources](domain-language.md#order-of-sources), the rules that make
-an [asset](domain-language.md#asset)
-[whitelisted](domain-language.md#whitelist) by default, which
+[order of sources](domain-language.md#order-of-sources), which
 [senders](domain-language.md#sender) are
 [trusted](domain-language.md#trusted) and which are
 [rejected](domain-language.md#rejected-sender)) and the
 [baseline](domain-language.md#baseline). That is why it is backed up.
+
+The rules that make an [asset](domain-language.md#asset)
+[whitelisted](domain-language.md#whitelist) by default and the list of
+[persons](domain-language.md#person) are not in the database: the
+[user](domain-language.md#user) keeps both in the configuration file, which
+the [backup](#backup) covers too.
 
 ## Model server
 
@@ -86,7 +90,9 @@ Its address is configuration and must be a local one. Details are in
 
 The access tokens for the [providers](domain-language.md#provider) are stored
 encrypted, in a file on the [server](domain-language.md#server). Every
-permission asked of a provider is read-only.
+permission asked of a provider is read-only. A token is stored when the
+[user](domain-language.md#user) adds a [source](domain-language.md#source):
+[adding a source](sources.md#adding-a-source).
 
 ## Logs
 

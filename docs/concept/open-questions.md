@@ -163,6 +163,33 @@ and its copy apart?
 **Recommendation.** For a `network_folder`, the address of the folder takes
 the place of the account.
 
+### Question: how long a sign-in stays valid
+
+`#question-how-long-a-sign-in-stays-valid`
+
+**Question.** Signing in to a [provider](domain-language.md#provider) means
+registering the app with that provider. Does a sign-in made that way stay
+valid for the [30 days](how-it-works.md#thirty-days) between
+[runs](domain-language.md#run)?
+
+**Recommendation.** Verify it in the first search slice, for each
+[provider](domain-language.md#provider), before the slice is called done. A
+sign-in that expires sooner would break the rhythm in which a
+[source](domain-language.md#source) is [fetched](domain-language.md#fetching)
+by itself.
+
+### Question: a provider's own documents
+
+`#question-a-providers-own-documents`
+
+**Question.** A [provider](domain-language.md#provider)'s own document, for
+example a word-processor or spreadsheet document that lives only in the
+provider's web application, is not a file: it has no
+[bytes](domain-language.md#bytes) to fetch. What does the app do with it?
+
+**Recommendation.** The app exports each one as a PDF and reads that, so they
+are searchable like everything else.
+
 ### Question: local copy of a file that is not read
 
 `#question-local-copy-of-a-file-that-is-not-read`

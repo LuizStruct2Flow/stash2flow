@@ -136,8 +136,9 @@ look-alikes:
   [e-mails](domain-language.md#e-mail): an invoice and an offer from the same
   invented online shop, an invoice that carries an unsubscribe header, an
   e-mail with an attached PDF whose
-  [mail_label](domain-language.md#mail_label) says promotions, a personal
-  e-mail, and [spam](domain-language.md#spam) whose mail_label says spam;
+  [mail_label](domain-language.md#mail_label) says promotions and one whose
+  mail_label says spam, a personal e-mail, and
+  [spam](domain-language.md#spam) whose mail_label says spam;
 - among those invented [senders](domain-language.md#sender): one the
   [user](domain-language.md#user) has written to, one he marked as
   [trusted](domain-language.md#trusted), a
@@ -203,6 +204,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 **Runs**
 
+- [2] The [user](domain-language.md#user) adds a [source](domain-language.md#source) with a command, which takes him through the [provider](domain-language.md#provider)'s sign-in once and stores read-only access *(new)*
 - [2] The [user](domain-language.md#user) can start a [run](domain-language.md#run) at any time
 - [2] † A run never writes to a [source](domain-language.md#source)
 - [2] The first [run](domain-language.md#run) of a [source](domain-language.md#source) reports the source's total size before it downloads anything *(new)*
@@ -218,6 +220,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [3] The [user](domain-language.md#user) can see a [run](domain-language.md#run)'s state and its errors
 - [3] † A [source](domain-language.md#source)'s [cursor](domain-language.md#cursor) moves only when every [asset record](domain-language.md#asset-record) up to it is stored
 - [4] A folder on a network storage device is [fetched](domain-language.md#fetching) by the [server](domain-language.md#server) like any other [source](domain-language.md#source) *(new)*
+- [4] A folder on a network storage device is added as a [source](domain-language.md#source) by its address, with no sign-in *(new)*
 - [9] A full [run](domain-language.md#run) over all [sources](domain-language.md#source) finishes
 - [11] A [run](domain-language.md#run) starts by itself only when 30 days have passed since the [source](domain-language.md#source)'s last finished run
 - [11] A [source](domain-language.md#source) with no finished [run](domain-language.md#run) does not start by itself
@@ -236,7 +239,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] Of a program, or of a file whose file type the app does not know, only the name, size and hash are recorded, and it is never read *(new)*
 - [2] A file beyond the [user](domain-language.md#user)'s limit on size or on the number of pages is not read *(new)*
 - [2] [asset_date](domain-language.md#asset_date) uses the best available date and records its source
-- [4] A video gets metadata and its [provider hash](domain-language.md#provider-hash) and never gets OCR; until the [user](domain-language.md#user) decides about videos it is not downloaded *(new)*
+- [4] A video gets the metadata the [provider](domain-language.md#provider)'s listing gives (name, size and dates) and its [provider hash](domain-language.md#provider-hash), and never gets OCR; until the [user](domain-language.md#user) decides about videos it is not downloaded *(new)*
 - [6] [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text) follow the agreed examples: a screenshot and a photo, enough text and too little *(new)*
 - [6] Only an [asset](domain-language.md#asset) of [kind](domain-language.md#kind) document gets a [description](domain-language.md#description)
 - [6] A [description](domain-language.md#description) is one English line and keeps proper names verbatim
@@ -279,13 +282,15 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says promotions is an [advertisement](domain-language.md#advertisement) *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) that carries an unsubscribe header and whose [mail_label](domain-language.md#mail_label) does not say promotions is not an [advertisement](domain-language.md#advertisement) *(new)*
 - [5] An invoice that carries an unsubscribe header, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is indexed fully *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF is not [blacklisted](domain-language.md#blacklist) by its [mail_label](domain-language.md#mail_label) alone *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says spam, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is not [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says spam, from a [sender](domain-language.md#sender) that is not [trusted](domain-language.md#trusted), is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with no attached PDF whose [mail_label](domain-language.md#mail_label) says spam is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from a [rejected sender](domain-language.md#rejected-sender) is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description), no other [pipeline](domain-language.md#pipeline) step *(new)*
 - [5] [Spam](domain-language.md#spam) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) that arrived less than one week ago is neither [whitelisted](domain-language.md#whitelist) nor [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) that arrived more than one week ago is [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] An [advertisement](domain-language.md#advertisement) recorded in its week is [blacklisted](domain-language.md#blacklist) at the first [run](domain-language.md#run) of the mailbox after the week has passed, although it is unchanged *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) that is neither [advertisement](domain-language.md#advertisement) nor [spam](domain-language.md#spam) is indexed fully: its [message body](domain-language.md#message-body) and its [attachments](domain-language.md#attachment) *(new)*
 - [5] An [attachment](domain-language.md#attachment) of an [e-mail](domain-language.md#e-mail) that is indexed fully is indexed as an [asset](domain-language.md#asset) and goes through the same [pipeline](domain-language.md#pipeline) *(new)*
 - [5] The same [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) can send an invoice that is indexed fully and an offer that is an [advertisement](domain-language.md#advertisement) *(new)*
@@ -312,9 +317,10 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] The [user](domain-language.md#user) decides once per [sender](domain-language.md#sender), not per [e-mail](domain-language.md#e-mail), and the sender is not listed again *(new)*
 - [5] Once an [undecided sender](domain-language.md#undecided-sender) is [trusted](domain-language.md#trusted), the next [run](domain-language.md#run) reads its recorded [e-mails](domain-language.md#e-mail) *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from a [rejected sender](domain-language.md#rejected-sender) is not read *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) whose [mail_label](domain-language.md#mail_label) says promotions is still an [advertisement](domain-language.md#advertisement) and is not read *(new)*
-- [5] An [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) whose [mail_label](domain-language.md#mail_label) says spam is still [spam](domain-language.md#spam) and is not read *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with no attached PDF, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), whose [mail_label](domain-language.md#mail_label) says promotions is still an [advertisement](domain-language.md#advertisement) and is not read *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with no attached PDF, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), whose [mail_label](domain-language.md#mail_label) says spam is still [spam](domain-language.md#spam) and is not read *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is read like any other e-mail from that sender *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says spam, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is read like any other e-mail from that sender *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions, from an [undecided sender](domain-language.md#undecided-sender), is only recorded *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) is not [blacklisted](domain-language.md#blacklist) for that reason *(new)*
 - [5] † Reading an [e-mail](domain-language.md#e-mail) loads nothing from the internet: no remote image and no link *(new)*

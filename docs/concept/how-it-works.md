@@ -118,6 +118,12 @@ is an asset already read: its date is updated and no step of the
 A changed asset is processed again. An unchanged asset whose pipeline steps are
 all done costs nothing.
 
+The verdict of a recorded [advertisement](domain-language.md#advertisement) is
+not a [pipeline](domain-language.md#pipeline) step, so this rule does not
+affect it: it is worked out at every [run](domain-language.md#run) of the
+mailbox, as said in
+[whitelisted, blacklisted or neither](#whitelisted-blacklisted-or-neither).
+
 The first [run](domain-language.md#run) fetches every
 [asset](domain-language.md#asset) once, because the
 [sha256](domain-language.md#md5-and-sha256) needs the
@@ -162,7 +168,7 @@ e-mails are [spam](domain-language.md#spam).
 
 | Verdict | Meaning | How an [asset](domain-language.md#asset) gets it |
 |---|---|---|
-| [whitelisted](domain-language.md#whitelist) | kept | By default, from rules the [user](domain-language.md#user) keeps about where the asset came from: by [sender](domain-language.md#sender), when the sender is a [person](domain-language.md#person) on his list, and by [source](domain-language.md#source), for example the photo library of his phone. So a personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from his phone. It is a default, not a guarantee. |
+| [whitelisted](domain-language.md#whitelist) | kept | By default, from rules the [user](domain-language.md#user) keeps in configuration about where the asset came from: by [sender](domain-language.md#sender), when the sender is a [person](domain-language.md#person) on his list, and by [source](domain-language.md#source), for example the photo library of his phone. So a personal [e-mail](domain-language.md#e-mail) from a family member is usually whitelisted, and so is a photo from his phone. It is a default, not a guarantee. |
 | [blacklisted](domain-language.md#blacklist) | trash | Clear-cut, and always by a rule, never by a model: an [advertisement](domain-language.md#advertisement) that arrived more than one week ago, and [spam](domain-language.md#spam), which is an [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam or an e-mail from a [rejected sender](domain-language.md#rejected-sender). |
 | neither | not judged yet | Everything else, for example an invoice from an online shop, or an advertisement in its week of validity. |
 
@@ -170,9 +176,20 @@ e-mails are [spam](domain-language.md#spam).
   [advertisement](domain-language.md#advertisement) is a rule in code: one week
   after it arrived, whether or not the [user](domain-language.md#user) was
   interested.
-- An [e-mail](domain-language.md#e-mail) with an attached PDF is never
-  [blacklisted](domain-language.md#blacklist) by its
-  [mail_label](domain-language.md#mail_label) alone.
+- The verdict of a recorded
+  [advertisement](domain-language.md#advertisement) is worked out from its
+  recorded arrival date at every [run](domain-language.md#run) of the mailbox.
+  It is date arithmetic in code, not a
+  [pipeline](domain-language.md#pipeline) step, so it is not affected by the
+  rule that an unchanged [asset](domain-language.md#asset) runs no pipeline
+  step again: [unchanged assets](#unchanged-assets).
+- An [e-mail](domain-language.md#e-mail) with an attached PDF whose
+  [mail_label](domain-language.md#mail_label) says promotions or spam is read
+  like any other e-mail from that [sender](domain-language.md#sender) when the
+  sender is [trusted](domain-language.md#trusted). From any other sender the
+  mail_label stands: one that says promotions is only recorded, and one that
+  says spam is [spam](domain-language.md#spam) and is
+  [blacklisted](domain-language.md#blacklist).
 - The index only records the verdict. It deletes nothing and moves nothing.
 - Whatever could be deleted is moved to the
   [quarantine](domain-language.md#quarantine): one for all
@@ -214,12 +231,13 @@ The rules are in
 [each e-mail is judged by what it is](sources.md#each-e-mail-is-judged-by-what-it-is).
 
 One [e-mail](domain-language.md#e-mail) does not stop there: one with an
-attached PDF whose [mail_label](domain-language.md#mail_label) says
-promotions. It goes on to the next step like an e-mail that no mail_label
-marks, so from a [trusted](domain-language.md#trusted)
-[sender](domain-language.md#sender) it is read like any other e-mail from that
-sender, and from an [undecided sender](domain-language.md#undecided-sender) it
-is only recorded.
+attached PDF whose [mail_label](domain-language.md#mail_label) says promotions
+or spam, from a [trusted](domain-language.md#trusted)
+[sender](domain-language.md#sender). It is read like any other e-mail from
+that sender. From any other sender the mail_label stands and the e-mail stops
+there: one that says promotions is only recorded, and one that says spam is
+[spam](domain-language.md#spam) and is
+[blacklisted](domain-language.md#blacklist).
 
 Then the [guardian](domain-language.md#guardian) decides, by the
 [sender](domain-language.md#sender), whether the
@@ -290,6 +308,9 @@ Every [asset](domain-language.md#asset) that is read goes through the same
    - Photos from iCloud Photos: the library's id, date,
      [place](domain-language.md#place), albums,
      [persons](domain-language.md#person) and favorites.
+   - Videos: what the [provider](domain-language.md#provider)'s listing gives:
+     name, size and dates. A video's [bytes](domain-language.md#bytes) are not
+     fetched.
    - The raw metadata of the [source](domain-language.md#source) is kept as it
      is.
    - From these the [asset_date](domain-language.md#asset_date) is chosen: the
@@ -357,15 +378,17 @@ The index runs no antivirus scan. Whether an
 frontend:
 [open question: antivirus scan](open-questions.md#question-antivirus-scan).
 
-**Videos** get their metadata and no OCR. The first
+**Videos** get no OCR. A video's [bytes](domain-language.md#bytes) are not
+fetched, so its metadata is what the [provider](domain-language.md#provider)'s
+listing gives: name, size and dates. The first
 [run](domain-language.md#run) of a [source](domain-language.md#source) reports
 the source's total size before it downloads anything, and with those numbers
 the [user](domain-language.md#user) decides whether the
 [server](domain-language.md#server) keeps a
 [local copy](domain-language.md#local-copy) of videos. Until he decides, a
-video is not fetched: only its
+video is not fetched: of the hashes only its
 [provider hash](domain-language.md#provider-hash) is stored, so the same video
-at two different [providers](domain-language.md#provider) is not recognised as
+at two different providers is not recognised as
 an [exact](domain-language.md#exact) duplicate.
 
 Every step that uses a model uses a local one:
@@ -407,7 +430,7 @@ when [assets](domain-language.md#asset) are already indexed. So:
 | Each [advertisement](domain-language.md#advertisement) and each [spam](domain-language.md#spam) e-mail | only its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label), and whether it is [blacklisted](domain-language.md#blacklist) |
 | Each [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) | only its sender, subject, date and [mail_label](domain-language.md#mail_label) |
 | Each [sender](domain-language.md#sender) | whether the [user](domain-language.md#user) has written to it, and whether it is [trusted](domain-language.md#trusted), [undecided](domain-language.md#undecided-sender) or [rejected](domain-language.md#rejected-sender) |
-| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) and which are [rejected](domain-language.md#rejected-sender), the rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default |
+| The [user](domain-language.md#user)'s choices | the [order of sources](domain-language.md#order-of-sources), [keepers](domain-language.md#keeper) and [reviewed](domain-language.md#reviewed) groups, which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) and which are [rejected](domain-language.md#rejected-sender). The rules that make an [asset](domain-language.md#asset) [whitelisted](domain-language.md#whitelist) by default and the list of [persons](domain-language.md#person) are not in the index: the user keeps both in configuration |
 | The [baseline](domain-language.md#baseline) | see [measuring before and after](mission.md#measuring-before-and-after) |
 
 ## Duplicates
