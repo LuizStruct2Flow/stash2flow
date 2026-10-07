@@ -1,0 +1,23 @@
+{
+  "name": "stash2flow-backend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:coverage": "node --test --test-reporter=spec \"features/support/*.spec.ts\" && node features/support/pending-check.ts"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.0.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^10.12.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}
