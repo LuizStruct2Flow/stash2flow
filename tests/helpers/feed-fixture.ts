@@ -349,19 +349,44 @@ export async function feedFixture(
       return { supervisors: Number(sup), tails: Number(tails) }
     },
 
-    // 4 s IS THE SHELL'S BOUND EXACTLY — `wait_sup`'s 40 x 0.1 s
-    // (agent-activity-bound test.sh:207, subagent-feed test.sh:139). The port
-    // shipped 30 s, then 10 s on the reasoning below; neither was measured, and
-    // both were wider than the shell's.
+    // THE BOUND IS SPLIT BY DIRECTION (BUG-163) — startup (want = 1) and
+    // shutdown (want = 0) are different operations with different legitimate
+    // latency, and one number no longer covers both honestly.
     //
-    // MEASURED here over 4 full runs (180 + 60 samples): p50 39 ms, p99 47 ms,
-    // worst 120 ms. 4 s is 33x the worst observation.
+    // want = 0 — SHUTDOWN: 4 s IS THE SHELL'S BOUND EXACTLY — `wait_sup`'s
+    // 40 x 0.1 s (agent-activity-bound test.sh:207, subagent-feed test.sh:139).
+    // `--stop` signals synchronously, so a supervisor still resident after the
+    // bound is a leak, not a slow machine. The bound matters on the FAILING
+    // side, not the passing one: under the RC-1 mutant (instance guard deleted)
+    // every case burns the whole ceiling twice, which at 30 s turned a 40 s
+    // spec into a 36 minute one and made the equivalence sweep impractical —
+    // so the shutdown bound stays at the shell's 4 s.
     //
-    // The bound matters on the FAILING side, not the passing one: under the RC-1
-    // mutant (instance guard deleted) every case burns the whole ceiling twice,
-    // which at 30 s turned a 40 s spec into a 36 minute one and made the
-    // equivalence sweep impractical.
-    async expectSupervisors(want, timeoutMs = 4_000) {
+    // want = 1 — STARTUP: 10 s, after BUG-163. The port shipped 30 s, then
+    // 10 s, then 4 s; the last narrowing predates the CI evidence that 4 s is
+    // not enough on a contended runner. Twice on 2026-10-06 (CI runs
+    // 37508990126 and 37511640067, the second a docs-only push) #14b and #9
+    // saw `expected 1 owned supervisor(s), saw 0` for the whole 4 s after
+    // `--daemon`; each re-run passed with no change.
+    //
+    // MEASURED for BUG-163, 40 cycles each, idle and under the full suite
+    // pinned to 4 cores (`taskset -c 0-3`), in a fixture-shaped tree with the
+    // supervisor counted exactly the way `ownedProcesses` counts it: HEAD and
+    // c38993a~1 are IDENTICAL — daemon-to-supervisor p50 ~171 ms, p99 ~176 ms,
+    // worst 187 ms; after `cmd_daemon` returns, residue p50 23 ms, worst 54 ms.
+    // The suspected cause is REFUTED by that: TASK-088 slice 6 (c38993a) made
+    // `--daemon` run two `node scripts/lib/gate.mts` calls before the
+    // supervisor starts, but `copyLibs` copies only `scripts/lib/*.sh` into
+    // the fixture, so gate.mts is absent there and the guarded calls never
+    // run. What CI has that this host does not is the runner itself: on a
+    // shared 4-core box the daemon's startup chain (bash plus sourced libs,
+    // setsid re-exec, lock — `cmd_daemon` waits at most 5 s internally, and
+    // the fixture ignores its exit code) can outrun 4 s where a fast 32-core
+    // host pinned to 4 cores cannot move it past ~190 ms. 10 s is ~53x the
+    // measured loaded worst; added to `cmd_daemon`'s internal 5 s it covers a
+    // 15 s total startup, while keeping the RC-1 failing-side cost at 10 s
+    // per burn, not 30 s.
+    async expectSupervisors(want, timeoutMs = want === 1 ? 10_000 : 4_000) {
       await vi.waitFor(
         async () => {
           const { supervisors } = await fixture.ownedProcesses()
