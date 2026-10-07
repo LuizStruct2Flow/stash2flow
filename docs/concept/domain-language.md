@@ -150,8 +150,8 @@ model's guess.
 The [mail_label](#mail_label) is applied before trust: an [e-mail](#e-mail)
 whose mail_label says promotions or spam is not read, even from a trusted
 [sender](#sender). The one exception is an e-mail with an attached PDF whose
-mail_label says promotions: from a trusted sender it is read like any other
-e-mail from that sender.
+mail_label says promotions or spam: from a trusted sender it is read like any
+other e-mail from that sender. From any other sender the mail_label stands.
 
 Trusted is not a verdict. It is about where an asset comes from;
 [whitelisted](#whitelist) and [blacklisted](#blacklist) are verdicts on the
@@ -290,7 +290,8 @@ The [assets](#asset) the [user](#user) keeps. An asset on it is **whitelisted**.
 Whitelisted is a verdict on one asset, of any kind and from any
 [source](#source); it is not a list of [senders](#sender). It is a default, not
 a guarantee: rules the user keeps give it from where the asset came from, by
-sender, when the sender is a [person](#person) on his list, and by source.
+sender, when the sender is a [person](#person) on his list, and by source. He
+keeps these rules in configuration.
 Example: a personal
 [e-mail](#e-mail) from a family member is usually whitelisted, and so is a
 photo from the user's phone.
@@ -318,8 +319,12 @@ An [asset](#asset) is blacklisted by a rule, never by a model:
 A blacklisted [asset](#asset) could be deleted, so it is moved to the
 [quarantine](#quarantine).
 
-An [e-mail](#e-mail) with an attached PDF is never blacklisted by its
-[mail_label](#mail_label) alone.
+An [e-mail](#e-mail) with an attached PDF whose [mail_label](#mail_label) says
+promotions or spam is read like any other e-mail from that [sender](#sender)
+when the sender is [trusted](#trusted), so its mail_label does not make it
+blacklisted. From any other sender the mail_label stands: one that says
+promotions is only recorded, and one that says spam is [spam](#spam) and is
+blacklisted.
 
 An [undecided sender](#undecided-sender) does not make an [asset](#asset)
 blacklisted. Its [e-mail](#e-mail) is not read, and that is all.
@@ -407,7 +412,9 @@ shop. An e-mail is an advertisement only when its [mail_label](#mail_label)
 says promotions; an unsubscribe header or a no-reply address never makes it
 one, so an invoice is not taken for an advertisement. It is valid for one week
 after it arrived, whether or not the [user](#user) was interested; after that
-it is [blacklisted](#blacklist). The [server](#server) keeps only its
+it is [blacklisted](#blacklist). The verdict of a recorded advertisement is
+worked out from its recorded arrival date at every [run](#run) of the mailbox.
+The [server](#server) keeps only its
 [sender](#sender), subject, date and mail_label: no
 [local copy](#local-copy), no [description](#description), no other
 [pipeline](#pipeline) step. It is not read, even from a
@@ -415,8 +422,8 @@ it is [blacklisted](#blacklist). The [server](#server) keeps only its
 
 One [e-mail](#e-mail) whose [mail_label](#mail_label) says promotions is
 handled differently: one with an attached PDF. From a [trusted](#trusted)
-[sender](#sender) it is read like any other e-mail from that sender; from an
-[undecided sender](#undecided-sender) it is only recorded.
+[sender](#sender) it is read like any other e-mail from that sender. From any
+other sender the mail_label stands, and it is only recorded.
 
 ### Spam
 
@@ -430,6 +437,12 @@ for spam. Spam is [blacklisted](#blacklist), and it is not read, even from a
 it keeps of an [advertisement](#advertisement): its sender, subject, date and
 mail_label, with no [local copy](#local-copy) and no
 [description](#description).
+
+One [e-mail](#e-mail) whose [mail_label](#mail_label) says spam is handled
+differently: one with an attached PDF. From a [trusted](#trusted)
+[sender](#sender) it is read like any other e-mail from that sender. From any
+other sender the mail_label stands: it is spam and is
+[blacklisted](#blacklist).
 
 ### Attachment
 
@@ -633,7 +646,7 @@ cannot know or what the user decides deliberately.
 `#person`
 
 A kind of [tag](#tag): someone the [asset](#asset) is about or shows, from a list the
-[user](#user) keeps. An asset can have several persons: a photo with several people,
+[user](#user) keeps in configuration. An asset can have several persons: a photo with several people,
 or a document relevant for two people. The same word is used for a person on a
 document and a person recognised in a photo.
 
