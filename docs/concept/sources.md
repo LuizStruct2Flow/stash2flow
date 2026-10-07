@@ -32,8 +32,9 @@ Whether videos are [fetched](domain-language.md#fetching) is set per
 [user](domain-language.md#user) sets whether its videos are fetched and kept
 as a [local copy](domain-language.md#local-copy). For example, the videos in a
 photo library are the user's own and are kept, and the videos in another
-source may be left unfetched. What the app does with a video in each case is
-in [file types](#file-types).
+source may be left unfetched. Until the user has set it for a source, that
+source's videos are not fetched. What the app does with a video in each case
+is in [file types](#file-types).
 
 A [source](domain-language.md#source) is unique by its
 [location](domain-language.md#location) and its
