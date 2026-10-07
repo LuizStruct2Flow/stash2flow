@@ -239,7 +239,9 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] Of a program, or of a file whose file type the app does not know, only the name, size and hash are recorded, and it is never read *(new)*
 - [2] A file beyond the [user](domain-language.md#user)'s limit on size or on the number of pages is not read *(new)*
 - [2] [asset_date](domain-language.md#asset_date) uses the best available date and records its source
-- [4] A video gets the metadata the [provider](domain-language.md#provider)'s listing gives (name, size and dates) and its [provider hash](domain-language.md#provider-hash), and never gets OCR; until the [user](domain-language.md#user) decides about videos it is not downloaded *(new)*
+- [4] For each [source](domain-language.md#source) the [user](domain-language.md#user) sets whether its videos are [fetched](domain-language.md#fetching) and kept as a [local copy](domain-language.md#local-copy) *(new)*
+- [4] Where a [source](domain-language.md#source)'s videos are [fetched](domain-language.md#fetching), a video is read like any other file and gets its hashes and its [local copy](domain-language.md#local-copy), and never gets OCR *(new)*
+- [4] Where a [source](domain-language.md#source)'s videos are not [fetched](domain-language.md#fetching), a video is not downloaded: only what the [provider](domain-language.md#provider)'s listing gives (name, size and dates) is stored, with its [provider hash](domain-language.md#provider-hash) *(new)*
 - [6] [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text) follow the agreed examples: a screenshot and a photo, enough text and too little *(new)*
 - [6] Only an [asset](domain-language.md#asset) of [kind](domain-language.md#kind) document gets a [description](domain-language.md#description)
 - [6] A [description](domain-language.md#description) is one English line and keeps proper names verbatim
@@ -252,6 +254,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [8] The same [bytes](domain-language.md#bytes) in two [sources](domain-language.md#source) form one [exact](domain-language.md#exact) group
 - [8] An [attachment](domain-language.md#attachment) that also exists in Google Drive lands in the same [exact](domain-language.md#exact) group
 - [8] The same [bytes](domain-language.md#bytes) on a network storage device and on its copy form [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate), and the [order of sources](domain-language.md#order-of-sources) decides the [keeper](domain-language.md#keeper) *(new)*
+- [8] A video of a [source](domain-language.md#source) whose videos are not [fetched](domain-language.md#fetching) is not recognised as an [exact](domain-language.md#exact) [duplicate](domain-language.md#duplicate) of a copy at another [provider](domain-language.md#provider) *(new)*
 - [8] A resized or recompressed copy joins the [near](domain-language.md#near) group
 - [8] Different photos are not grouped
 - [8] An [asset](domain-language.md#asset) is in one [duplicate group](domain-language.md#duplicate-group) only: assets showing the same image are one group, [exact](domain-language.md#exact) when all [bytes](domain-language.md#bytes) match, otherwise [near](domain-language.md#near) *(new)*
@@ -284,6 +287,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] An invoice that carries an unsubscribe header, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is indexed fully *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says spam, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is not [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says spam, from a [sender](domain-language.md#sender) that is not [trusted](domain-language.md#trusted), is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
+- [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions, from an [undecided sender](domain-language.md#undecided-sender), is an [advertisement](domain-language.md#advertisement) like any other: it is [blacklisted](domain-language.md#blacklist) one week after it arrived *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with no attached PDF whose [mail_label](domain-language.md#mail_label) says spam is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from a [rejected sender](domain-language.md#rejected-sender) is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) *(new)*
 - [5] An [advertisement](domain-language.md#advertisement) is recorded with its [sender](domain-language.md#sender), subject, date and [mail_label](domain-language.md#mail_label) only: no [local copy](domain-language.md#local-copy), no [description](domain-language.md#description), no other [pipeline](domain-language.md#pipeline) step *(new)*

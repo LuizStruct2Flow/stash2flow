@@ -187,9 +187,11 @@ e-mails are [spam](domain-language.md#spam).
   [mail_label](domain-language.md#mail_label) says promotions or spam is read
   like any other e-mail from that [sender](domain-language.md#sender) when the
   sender is [trusted](domain-language.md#trusted). From any other sender the
-  mail_label stands: one that says promotions is only recorded, and one that
-  says spam is [spam](domain-language.md#spam) and is
-  [blacklisted](domain-language.md#blacklist).
+  mail_label stands: one that says promotions is an
+  [advertisement](domain-language.md#advertisement) like any other, only
+  recorded and [blacklisted](domain-language.md#blacklist) one week after it
+  arrived; one that says spam is [spam](domain-language.md#spam) and is
+  blacklisted.
 - The index only records the verdict. It deletes nothing and moves nothing.
 - Whatever could be deleted is moved to the
   [quarantine](domain-language.md#quarantine): one for all
@@ -235,9 +237,11 @@ attached PDF whose [mail_label](domain-language.md#mail_label) says promotions
 or spam, from a [trusted](domain-language.md#trusted)
 [sender](domain-language.md#sender). It is read like any other e-mail from
 that sender. From any other sender the mail_label stands and the e-mail stops
-there: one that says promotions is only recorded, and one that says spam is
-[spam](domain-language.md#spam) and is
-[blacklisted](domain-language.md#blacklist).
+there: one that says promotions is an
+[advertisement](domain-language.md#advertisement) like any other, only
+recorded and [blacklisted](domain-language.md#blacklist) one week after it
+arrived; one that says spam is [spam](domain-language.md#spam) and is
+blacklisted.
 
 Then the [guardian](domain-language.md#guardian) decides, by the
 [sender](domain-language.md#sender), whether the
@@ -308,9 +312,10 @@ Every [asset](domain-language.md#asset) that is read goes through the same
    - Photos from iCloud Photos: the library's id, date,
      [place](domain-language.md#place), albums,
      [persons](domain-language.md#person) and favorites.
-   - Videos: what the [provider](domain-language.md#provider)'s listing gives:
-     name, size and dates. A video's [bytes](domain-language.md#bytes) are not
-     fetched.
+   - Videos of a [source](domain-language.md#source) whose videos are not
+     [fetched](domain-language.md#fetching): what the
+     [provider](domain-language.md#provider)'s listing gives: name, size and
+     dates.
    - The raw metadata of the [source](domain-language.md#source) is kept as it
      is.
    - From these the [asset_date](domain-language.md#asset_date) is chosen: the
@@ -378,18 +383,26 @@ The index runs no antivirus scan. Whether an
 frontend:
 [open question: antivirus scan](open-questions.md#question-antivirus-scan).
 
-**Videos** get no OCR. A video's [bytes](domain-language.md#bytes) are not
-fetched, so its metadata is what the [provider](domain-language.md#provider)'s
-listing gives: name, size and dates. The first
-[run](domain-language.md#run) of a [source](domain-language.md#source) reports
-the source's total size before it downloads anything, and with those numbers
-the [user](domain-language.md#user) decides whether the
-[server](domain-language.md#server) keeps a
-[local copy](domain-language.md#local-copy) of videos. Until he decides, a
-video is not fetched: of the hashes only its
-[provider hash](domain-language.md#provider-hash) is stored, so the same video
-at two different providers is not recognised as
-an [exact](domain-language.md#exact) duplicate.
+**Whether videos are [fetched](domain-language.md#fetching) is set per
+[source](domain-language.md#source).** For each source the
+[user](domain-language.md#user) sets whether its videos are fetched and kept
+as a [local copy](domain-language.md#local-copy). For example, the videos in a
+photo library are the user's own and are kept, and the videos in another
+source may be left unfetched. The first [run](domain-language.md#run) of a
+source reports the source's total size before it downloads anything, so he
+sets this for each source with real numbers.
+
+- Where a [source](domain-language.md#source)'s videos are
+  [fetched](domain-language.md#fetching), a video is read like any other file
+  and gets its hashes and its [local copy](domain-language.md#local-copy).
+- Where a [source](domain-language.md#source)'s videos are not
+  [fetched](domain-language.md#fetching), only what the
+  [provider](domain-language.md#provider)'s listing gives is stored (name,
+  size and dates), with the video's
+  [provider hash](domain-language.md#provider-hash). Such a video is not
+  recognised as an [exact](domain-language.md#exact)
+  [duplicate](domain-language.md#duplicate) of a copy at another provider.
+- No video gets OCR.
 
 Every step that uses a model uses a local one:
 [local models only](principles.md#local-models-only). Which models is open:
@@ -421,7 +434,7 @@ when [assets](domain-language.md#asset) are already indexed. So:
 
 | About | What is kept |
 |---|---|
-| Each [source](domain-language.md#source) | [location](domain-language.md#location), [account](domain-language.md#account), [reader](domain-language.md#reader), [cursor](domain-language.md#cursor), [checkpoint](domain-language.md#checkpoint), whether it is enabled, when its last [run](domain-language.md#run) finished, its rank in the [order of sources](domain-language.md#order-of-sources) |
+| Each [source](domain-language.md#source) | [location](domain-language.md#location), [account](domain-language.md#account), [reader](domain-language.md#reader), [cursor](domain-language.md#cursor), [checkpoint](domain-language.md#checkpoint), whether it is enabled, whether its videos are [fetched](domain-language.md#fetching), when its last [run](domain-language.md#run) finished, its rank in the [order of sources](domain-language.md#order-of-sources) |
 | Each [asset](domain-language.md#asset) | its identity; path, name and [ext](domain-language.md#ext); size and modification time; [asset_date](domain-language.md#asset_date) and where it came from; the hashes; [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text); [description](domain-language.md#description), [doc_type](domain-language.md#doc_type), [doc_date](domain-language.md#doc_date), [issuer](domain-language.md#issuer); its [persons](domain-language.md#person), which are [tags](domain-language.md#tag), so there can be several; coordinates, dimensions, page count; [source_link](domain-language.md#source_link); for an [e-mail](domain-language.md#e-mail) and an [attachment](domain-language.md#attachment) the [sender](domain-language.md#sender), subject, thread and [mail_label](domain-language.md#mail_label); whether it is [whitelisted](domain-language.md#whitelist), [blacklisted](domain-language.md#blacklist) or neither; the raw metadata; which machine sent it; its [duplicate group](domain-language.md#duplicate-group); when it was first and last seen, and when it [vanished](domain-language.md#vanished) |
 | Text | the [OCR text](domain-language.md#ocr-text) per page, searchable without accents and tolerant of misreadings |
 | [Embeddings](domain-language.md#embedding) | per [asset](domain-language.md#asset), with the name of the model that made them |
