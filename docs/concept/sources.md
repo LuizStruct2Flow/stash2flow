@@ -21,10 +21,19 @@ A [source](domain-language.md#source) is one configured place
 [Sources](domain-language.md#source) are configured centrally on the
 [server](domain-language.md#server). A source is stored with its position in the
 [provider](domain-language.md#provider)'s change feed, whether it is enabled,
+whether its videos are [fetched](domain-language.md#fetching),
 when its last [run](domain-language.md#run) finished, and its rank in the
 [user](domain-language.md#user)'s
 [order of sources](domain-language.md#order-of-sources). How the user adds
 one is in [adding a source](#adding-a-source).
+
+Whether videos are [fetched](domain-language.md#fetching) is set per
+[source](domain-language.md#source): for each source the
+[user](domain-language.md#user) sets whether its videos are fetched and kept
+as a [local copy](domain-language.md#local-copy). For example, the videos in a
+photo library are the user's own and are kept, and the videos in another
+source may be left unfetched. What the app does with a video in each case is
+in [file types](#file-types).
 
 A [source](domain-language.md#source) is unique by its
 [location](domain-language.md#location) and its
@@ -160,7 +169,7 @@ What the app does with a file depends on its file type:
 |---|---|
 | PDF, JPG, PNG, HEIC, TIFF, GIF | indexes it fully, through the whole [pipeline](domain-language.md#pipeline) |
 | an office document: a word-processor or spreadsheet file | the [guardian](domain-language.md#guardian) reads its text. Its macros are never run, and taking the text out does not need them |
-| a video (MOV, MP4) | does not fetch its [bytes](domain-language.md#bytes), so its metadata is what the [provider](domain-language.md#provider)'s listing gives: name, size and dates. Records that and its [provider hash](domain-language.md#provider-hash); no OCR. Whether the [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of videos is the [user](domain-language.md#user)'s decision: [a local copy of every asset](principles.md#a-local-copy-of-every-asset) |
+| a video (MOV, MP4) | depends on its [source](domain-language.md#source): for each source the [user](domain-language.md#user) sets whether its videos are [fetched](domain-language.md#fetching) and kept as a [local copy](domain-language.md#local-copy). Where they are, reads the video like any other file, and it gets its hashes and its local copy. Where they are not, does not fetch its [bytes](domain-language.md#bytes): records only what the [provider](domain-language.md#provider)'s listing gives (name, size and dates) and its [provider hash](domain-language.md#provider-hash). No video gets OCR. See [a local copy of every asset](principles.md#a-local-copy-of-every-asset) |
 | an archive, such as a zip file | does not open it. Records its name, size and hash, and lists it so the [user](domain-language.md#user) sees what is not covered |
 | a program, or a file whose file type the app does not know | records its name, size and hash only. The [guardian](domain-language.md#guardian) never reads such a file |
 
@@ -266,7 +275,7 @@ The [mail_label](domain-language.md#mail_label) is applied before trust:
 | The [user](domain-language.md#user)'s own drives and photo libraries, which are [trusted](domain-language.md#trusted) | reads the [asset](domain-language.md#asset) fully |
 | An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says spam, with no attached PDF | does not read it, even from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender); records its sender, subject, date and mail_label; it is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) by a rule |
 | An [e-mail](domain-language.md#e-mail) whose [mail_label](domain-language.md#mail_label) says promotions, with no attached PDF | does not read it, even from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender); records the same four things; it is an [advertisement](domain-language.md#advertisement) |
-| An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions or spam | from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), reads it like any other e-mail from that sender; from any other sender the mail_label stands: it only records the same four things, and one whose mail_label says spam is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) by a rule |
+| An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions or spam | from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), reads it like any other e-mail from that sender; from any other sender the mail_label stands: it only records the same four things; one whose mail_label says promotions is an [advertisement](domain-language.md#advertisement) like any other and is [blacklisted](domain-language.md#blacklist) one week after it arrived, and one whose mail_label says spam is [spam](domain-language.md#spam) and is blacklisted by a rule |
 | Any other [e-mail](domain-language.md#e-mail) from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender) | reads the text and the [attachments](domain-language.md#attachment) |
 | Any other [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) | does not read it; records the same four things and lists the sender for the [user](domain-language.md#user) |
 | An [e-mail](domain-language.md#e-mail) from a [rejected sender](domain-language.md#rejected-sender) | does not read it; records the same four things; it is [spam](domain-language.md#spam) and is [blacklisted](domain-language.md#blacklist) by a rule |
@@ -348,9 +357,11 @@ Rules:
   [mail_label](domain-language.md#mail_label) says promotions or spam** is
   read like any other e-mail from that [sender](domain-language.md#sender)
   when the sender is [trusted](domain-language.md#trusted). From any other
-  sender the mail_label stands: one that says promotions is only recorded, and
-  one that says spam is [spam](domain-language.md#spam) and is
-  [blacklisted](domain-language.md#blacklist).
+  sender the mail_label stands: one that says promotions is an
+  [advertisement](domain-language.md#advertisement) like any other, only
+  recorded and [blacklisted](domain-language.md#blacklist) one week after it
+  arrived; one that says spam is [spam](domain-language.md#spam) and is
+  blacklisted.
 - **An [advertisement](domain-language.md#advertisement) is valid for one week
   after it arrived**, whether or not the [user](domain-language.md#user) was
   interested. After that it is [blacklisted](domain-language.md#blacklist).

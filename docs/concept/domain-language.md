@@ -37,8 +37,9 @@ deliberately not used.
 The person who runs the app and makes its choices: the [order of sources](#order-of-sources), the
 [keeper](#keeper), which [senders](#sender) are [trusted](#trusted) and which
 are [rejected](#rejected-sender), the rules that make an
-[asset](#asset) [whitelisted](#whitelist) by default, whether the
-[server](#server) keeps a [local copy](#local-copy) of videos, the limits on a
+[asset](#asset) [whitelisted](#whitelist) by default, for each
+[source](#source) whether its videos are [fetched](#fetching) and kept as a
+[local copy](#local-copy), the limits on a
 file's size and number of pages, what is restored from the
 [quarantine](#quarantine), starting a [run](#run).
 
@@ -91,7 +92,7 @@ pictures.
 `#source`
 
 One configured place [assets](#asset) come from: a [location](#location) plus an [account](#account), [fetched](#fetching) by one
-[reader](#reader). A source is unique by its location and its account. A source is fetched; an asset is read. Example: one Google Drive of one account is a source; the mailbox of the
+[reader](#reader). A source is unique by its location and its account. A source is fetched; an asset is read. For each source the [user](#user) sets whether its videos are fetched and kept as a [local copy](#local-copy). Example: one Google Drive of one account is a source; the mailbox of the
 same account is another.
 
 ### Location
@@ -234,8 +235,9 @@ What an [asset](#asset) consists of. The word is always bytes, never "content".
 The copy of an [asset](#asset)'s [bytes](#bytes) that the [server](#server) keeps. Local copies are kept
 in the [stash](#stash). An [advertisement](#advertisement) and [spam](#spam)
 have none, and neither has an [e-mail](#e-mail) from an
-[undecided sender](#undecided-sender). A video has none until the
-[user](#user) decides whether videos are kept.
+[undecided sender](#undecided-sender). A video has one only where the
+[user](#user) has set that the videos of its [source](#source) are
+[fetched](#fetching).
 
 ### Stash
 
@@ -323,8 +325,9 @@ An [e-mail](#e-mail) with an attached PDF whose [mail_label](#mail_label) says
 promotions or spam is read like any other e-mail from that [sender](#sender)
 when the sender is [trusted](#trusted), so its mail_label does not make it
 blacklisted. From any other sender the mail_label stands: one that says
-promotions is only recorded, and one that says spam is [spam](#spam) and is
-blacklisted.
+promotions is an [advertisement](#advertisement) like any other, only recorded
+and blacklisted one week after it arrived; one that says spam is [spam](#spam)
+and is blacklisted.
 
 An [undecided sender](#undecided-sender) does not make an [asset](#asset)
 blacklisted. Its [e-mail](#e-mail) is not read, and that is all.
@@ -423,7 +426,8 @@ The [server](#server) keeps only its
 One [e-mail](#e-mail) whose [mail_label](#mail_label) says promotions is
 handled differently: one with an attached PDF. From a [trusted](#trusted)
 [sender](#sender) it is read like any other e-mail from that sender. From any
-other sender the mail_label stands, and it is only recorded.
+other sender the mail_label stands: it is an advertisement like any other,
+only recorded, and [blacklisted](#blacklist) one week after it arrived.
 
 ### Spam
 

@@ -67,7 +67,7 @@ The choices that are the [user](domain-language.md#user)'s:
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
 | Which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) | Trusts a sender the [user](domain-language.md#user) has written to himself. Lists every [undecided sender](domain-language.md#undecided-sender); he says once per sender whether he trusts it. Until then the app only records that sender's [e-mails](domain-language.md#e-mail). A sender he says no to is a [rejected sender](domain-language.md#rejected-sender), and its e-mails are [blacklisted](domain-language.md#blacklist) by a rule. |
 | Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies the rules the [user](domain-language.md#user) keeps in configuration: by [sender](domain-language.md#sender), when the sender is a [person](domain-language.md#person) on his list, and by [source](domain-language.md#source), for example the photo library of his phone. |
-| Whether the [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of videos | Reports each [source](domain-language.md#source)'s total size at its first [run](domain-language.md#run), before it downloads anything. Until the [user](domain-language.md#user) decides, a video keeps only its [provider hash](domain-language.md#provider-hash) and the metadata the [provider](domain-language.md#provider)'s listing gives: name, size and dates. |
+| For each [source](domain-language.md#source), whether its videos are [fetched](domain-language.md#fetching) and kept as a [local copy](domain-language.md#local-copy) | Reports each source's total size at its first [run](domain-language.md#run), before it downloads anything, so the [user](domain-language.md#user) sets this with real numbers. Where a source's videos are fetched, it reads a video like any other file, and the video gets its hashes and its local copy. Where they are not, it stores only what the [provider](domain-language.md#provider)'s listing gives (name, size and dates) and the video's [provider hash](domain-language.md#provider-hash). |
 | The limits on a file's size and number of pages | Refuses a file beyond them: the [guardian](domain-language.md#guardian) does not read it. |
 | What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as a [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset). After 30 days it deletes what the [user](domain-language.md#user) left there. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
@@ -189,9 +189,11 @@ execute. The app does the first and never the second.
   [sender](domain-language.md#sender). The one exception is an e-mail with an
   attached PDF whose mail_label says promotions or spam: from a trusted sender
   it is read like any other e-mail from that sender. From any other sender the
-  mail_label stands: one that says promotions is only recorded, and one that
-  says spam is [spam](domain-language.md#spam) and is
-  [blacklisted](domain-language.md#blacklist).
+  mail_label stands: one that says promotions is an
+  [advertisement](domain-language.md#advertisement) like any other, only
+  recorded and [blacklisted](domain-language.md#blacklist) one week after it
+  arrived; one that says spam is [spam](domain-language.md#spam) and is
+  blacklisted.
 - **It reads in isolation.** The [guardian](domain-language.md#guardian) reads
   an [asset](domain-language.md#asset) with no network access and no access to
   the [providers](domain-language.md#provider)' access tokens or to the
@@ -274,14 +276,25 @@ What follows from it:
   document, so it must be encrypted:
   [disk encryption](infrastructure.md#disk-encryption).
 
-Videos may be large, so whether the [server](domain-language.md#server) keeps
-a [local copy](domain-language.md#local-copy) of them is the
-[user](domain-language.md#user)'s decision. The first
-[run](domain-language.md#run) of a [source](domain-language.md#source) reports
-the source's total size before it downloads anything, and he decides with
-those numbers. Until he decides, a video keeps only its
-[provider hash](domain-language.md#provider-hash) and the metadata the
-[provider](domain-language.md#provider)'s listing gives: name, size and dates.
+Videos may be large, so whether they are
+[fetched](domain-language.md#fetching) is set per
+[source](domain-language.md#source): for each source the
+[user](domain-language.md#user) sets whether its videos are fetched and kept
+as a [local copy](domain-language.md#local-copy). For example, the videos in a
+photo library are the user's own and are kept, and the videos in another
+source may be left unfetched. The first [run](domain-language.md#run) of a
+source reports the source's total size before it downloads anything, so he
+sets this for each source with real numbers.
+
+Where a [source](domain-language.md#source)'s videos are
+[fetched](domain-language.md#fetching), a video is read like any other file
+and gets its hashes and its [local copy](domain-language.md#local-copy). Where
+they are not, a video has no local copy: only what the
+[provider](domain-language.md#provider)'s listing gives is stored (name, size
+and dates), with the video's
+[provider hash](domain-language.md#provider-hash). Such a video is not
+recognised as an [exact](domain-language.md#exact)
+[duplicate](domain-language.md#duplicate) of a copy at another provider.
 
 ## Read-only on sources
 
