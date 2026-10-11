@@ -291,7 +291,7 @@ function main(): void {
       .toString('utf8')
       .split('\0')
     for (let i = 0; i < tokens.length; i++) {
-      const raw = tokens[i]
+      const raw = tokens[i] ?? ''
       const token = raw.startsWith('\n') ? raw.slice(1) : raw
       if (token.trim() === '') continue
       if (/^[0-9a-f]{40}$/.test(token)) {
