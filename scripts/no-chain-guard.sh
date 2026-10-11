@@ -15,7 +15,7 @@
 # same conclusion BUG-004 reached about "flip the mic last", and BUG-014 about
 # fixture isolation. Prose describes; a hook enforces.
 #
-# Ported from the peer stream (`the peer stream's blueprint`
+# Ported from the peer stream (its blueprint's
 # `scripts/no-chain-guard.sh`, landed 2026-07-30, founder-accepted), where it
 # reports blocking a dozen-plus calls per session. Not re-derived — room Rule 1.
 #

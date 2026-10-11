@@ -75,7 +75,7 @@ const CHECKER = join(REPO_ROOT, 'scripts/check-commit-subjects.sh')
 const HOOK = join(REPO_ROOT, '.githooks/commit-msg')
 
 /**
- * The exact subject of `5fe89e0`, and of a commit that satisfies the rule.
+ * The shape of `5fe89e0`'s subject, and of a commit that satisfies the rule.
  *
  * Written as literals so this suite states what it is protecting rather than
  * deriving it from the very history it is checking.

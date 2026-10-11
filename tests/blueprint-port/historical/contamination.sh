@@ -16,7 +16,7 @@
 #            derived project.
 #   A-09     dispatchers wrote a literal, never-substituted
 #            `~/.{{PROJECT_NAME}}/`,  a2bp-allow: incident record, not a live path
-#            shared by every checkout — a the peer stream Codex verdict surfaced live
+#            shared by every checkout — a peer-stream Codex verdict surfaced live
 #            in this repo's feed. Eight four-eyes rounds to close.
 #
 # Both arrived through a2bp. Guarding the pipe stops the next one at source.

@@ -12,7 +12,7 @@
 # unremarkable alone and conclusive together. Nothing compared them, so a
 # dispatch into silence was indistinguishable from an agent thinking: the baton
 # read OVER_TO_CODEX, the feed was quiet, and the run log — the only honest
-# surface — is the one nobody reads. the peer stream lost ~40 minutes to this shape
+# surface — is the one nobody reads. The peer stream lost ~40 minutes to this shape
 # (their BUG-033) and this repo lost a BA dispatch to it on 2026-08-05.
 #
 # WHY A LOCK, AND NEVER THE PROCESS TABLE

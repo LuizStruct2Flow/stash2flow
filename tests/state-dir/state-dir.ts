@@ -5,7 +5,7 @@
  * Codex/Gemini dispatchers hardcoded a literal, never-substituted bootstrap
  * placeholder as their state dir. So EVERY blueprint-derived checkout's
  * dispatcher wrote into that one shared directory, and any feed pointed there saw
- * every other project's Codex output interleaved. Not hypothetical: a the peer stream
+ * every other project's Codex output interleaved. Not hypothetical: a peer-stream
  * acceptance verdict surfaced live in this project's feed.
  *
  * The fix is ONE mechanism — `scripts/lib/state-dir.sh` — sourced by the feed AND
