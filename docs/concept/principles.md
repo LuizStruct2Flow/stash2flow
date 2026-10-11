@@ -343,7 +343,7 @@ The app is open source under the MIT licence, for people with other
 infrastructure and other [sources](domain-language.md#source) than the
 founder's.
 
-What that binds:
+What that requires:
 
 1. A new kind of [source](domain-language.md#source) is a new adapter and a
    configuration entry, with no change to the domain or the use-cases. See
@@ -376,9 +376,13 @@ the rules that make an [asset](domain-language.md#asset)
 They live outside the repository. None of them is written into the code.
 
 A [credential](domain-language.md#credential) is neither in the code nor in
-the configuration: it is kept only in the
+the configuration. What the app holds after the
+[user](domain-language.md#user) signed in for a
+[source](domain-language.md#source) lives in the
 [token store](infrastructure.md#token-store) on the
-[server](domain-language.md#server).
+[server](domain-language.md#server), encrypted. A
+[binding](domain-language.md#binding) the user keeps himself, for example in
+his password manager, and gives to the app once.
 
 ## Public repository
 

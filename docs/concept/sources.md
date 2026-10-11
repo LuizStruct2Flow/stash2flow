@@ -429,9 +429,12 @@ and, where the folder needs them, a user name and a password. Those are that
 [credential](domain-language.md#credential).
 
 A [source](domain-language.md#source) can be added at a
-[provider](domain-language.md#provider) only once the app is registered with
-that provider. Until then the command says so and adds nothing. What comes
-after the first sign-in is in [credentials](#credentials).
+[provider](domain-language.md#provider) only once the app is
+[bound](domain-language.md#binding) to that provider. Until then the command
+says so and adds nothing. Binding the app is not adding a source: the
+[user](domain-language.md#user) binds the app once per provider, and adds one
+source per [account](domain-language.md#account). What comes after the first
+sign-in is in [credentials](#credentials).
 
 Whether a sign-in stays valid for the
 [30 days](how-it-works.md#thirty-days) between
@@ -455,23 +458,34 @@ kinds, and they are kept apart:
 | Kind | What it is | How many | How the app gets it |
 |---|---|---|---|
 | a [source](domain-language.md#source)'s [credential](domain-language.md#credential) | what the app holds after the [user](domain-language.md#user) signed in to the [provider](domain-language.md#provider) for that source; it lets the app [fetch](domain-language.md#fetching) that source, read-only | one per source | from the sign-in, when the user adds the source or signs in again |
-| the app's registration with a [provider](domain-language.md#provider) | what identifies this installation of the app to that provider | one per provider | the [user](domain-language.md#user) registers the app at the provider once, and stores what he gets there with a command |
+| the app's [binding](domain-language.md#binding) to a [provider](domain-language.md#provider) | what identifies this installation of the app to that provider | one per provider | the [user](domain-language.md#user) binds the app to the provider once, with a command: he gives the app what he got at the provider |
 
 Which [location](domain-language.md#location) needs what:
 
-| [Location](domain-language.md#location) | Registration | The [source](domain-language.md#source)'s [credential](domain-language.md#credential) |
+| [Location](domain-language.md#location) | [Binding](domain-language.md#binding) | The [source](domain-language.md#source)'s [credential](domain-language.md#credential) |
 |---|---|---|
 | `onedrive`, `gdrive`, `email` | needed | comes out of the [provider](domain-language.md#provider)'s sign-in |
 | `network_folder` | none | a user name and a password where the folder needs them, otherwise none |
 | `icloud_photos`, `icloud_drive` | none | none: a Mac [collector](domain-language.md#collector) [fetches](domain-language.md#fetching) them on the Mac and holds no [credential](domain-language.md#credential) for a [provider](domain-language.md#provider) |
 
-**Where they are kept.** Both kinds are kept in the
-[token store](infrastructure.md#token-store) on the
-[server](domain-language.md#server), encrypted, and nowhere else: not in the
-repository and not in the configuration file. No command and no log prints a
-[credential](domain-language.md#credential) in full. The
-[backup](infrastructure.md#backup) covers the token store. Where the key that
-encrypts it comes from is open:
+**Where they are kept.** The two kinds are kept differently:
+
+- A [binding](domain-language.md#binding) almost never changes. The
+  [user](domain-language.md#user) keeps it himself, for example in his
+  password manager, and gives it to the app once, when he binds the app to a
+  [provider](domain-language.md#provider). The app keeps what he gave it in
+  the [token store](infrastructure.md#token-store), and does not reach into
+  his password manager.
+- A [source](domain-language.md#source)'s
+  [credential](domain-language.md#credential) is renewed by the app, often.
+  It lives in the [token store](infrastructure.md#token-store) on the
+  [server](domain-language.md#server), encrypted.
+
+No [credential](domain-language.md#credential) is in the repository or in the
+configuration file, and no command and no log prints one in full. The
+[backup](infrastructure.md#backup) covers the
+[token store](infrastructure.md#token-store). Where the key that encrypts it
+comes from is open:
 [open question: the key of the token store](open-questions.md#question-the-key-of-the-token-store).
 
 **Read-only.** Every sign-in, the first and each later one, asks the
@@ -498,11 +512,12 @@ nothing more: [read-only on sources](principles.md#read-only-on-sources).
   [run](domain-language.md#run) of it starts. The source and everything
   indexed from it stay untouched, and signing in again brings the source back
   into the runs.
-- **Store the app's registration with a
-  [provider](domain-language.md#provider), and replace it.** The same command
-  does both. Where the provider no longer accepts a
+- **[Bind](domain-language.md#binding) the app to a
+  [provider](domain-language.md#provider), and replace the binding.** The
+  same command does both.
+  Where the provider no longer accepts a
   [source](domain-language.md#source)'s
-  [credential](domain-language.md#credential) after the registration was
+  [credential](domain-language.md#credential) after the binding was
   replaced, the [user](domain-language.md#user) signs in again for that
   source.
 

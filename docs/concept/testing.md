@@ -255,7 +255,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 **Credentials**
 
-- [2] The [user](domain-language.md#user) stores the app's registration with a [provider](domain-language.md#provider) with a command, and replaces it with the same command *(new)*
+- [2] The [user](domain-language.md#user) [binds](domain-language.md#binding) the app to a [provider](domain-language.md#provider) with a command, and replaces the binding with the same command *(new)*
 - [2] The [user](domain-language.md#user) sees every [source](domain-language.md#source) with the state of its [credential](domain-language.md#credential) (valid, expires on a date, expired or missing) and when it was last used *(new)*
 - [2] No command and no log prints a [credential](domain-language.md#credential) in full *(new)*
 - [2] The app renews a [source](domain-language.md#source)'s [credential](domain-language.md#credential) by itself when it can be renewed without the [user](domain-language.md#user) *(new)*
@@ -314,7 +314,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 **Collectors**
 
 - [2] The [API](domain-language.md#api) refuses a call without valid [credentials](domain-language.md#credential)
-- [2] Each client of the [API](domain-language.md#api) authenticates with its own token: a [collector](domain-language.md#collector), the command line and the browser *(new)*
+- [2] Each client of the [API](domain-language.md#api) authenticates with a [credential](domain-language.md#credential) of its own: a [collector](domain-language.md#collector), the command line and the browser *(new)*
 - [2] The [API](domain-language.md#api) is served over HTTPS only *(new)*
 - [9] The same [asset](domain-language.md#asset) seen by both Macs is one row
 - [9] [Asset records](domain-language.md#asset-record) from a second [collector](domain-language.md#collector) for the same [source](domain-language.md#source) update the same rows, and [collected_by](domain-language.md#collected_by) records which machine sent them *(new)*
@@ -353,7 +353,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] A script inside a PDF is never run *(new)*
 - [2] A macro in an office document is never run *(new)*
 - [2] The [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
-- [2] The [guardian](domain-language.md#guardian) cannot reach the [providers](domain-language.md#provider)' access tokens or the database while it reads an [asset](domain-language.md#asset) *(new)*
+- [2] The [guardian](domain-language.md#guardian) cannot reach the [credentials](domain-language.md#credential) for the [sources](domain-language.md#source) or the database while it reads an [asset](domain-language.md#asset) *(new)*
 - [9] On a Mac the [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
 - [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) has written to is [trusted](domain-language.md#trusted) *(new)*
 - [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) marked as [trusted](domain-language.md#trusted) is trusted *(new)*
@@ -381,7 +381,7 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 **Privacy**
 
 - [2] Processing an [asset](domain-language.md#asset) uses local models only
-- [2] OAuth tokens are stored encrypted and every scope is read-only
+- [2] A [source](domain-language.md#source)'s [credential](domain-language.md#credential) is kept encrypted in the [token store](infrastructure.md#token-store), and every permission asked of a [provider](domain-language.md#provider) is read-only *(new)*
 - [9] iCloud Photos is [fetched](domain-language.md#fetching) only through osxphotos
 
 **Baseline**

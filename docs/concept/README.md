@@ -48,6 +48,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#authentication](infrastructure.md#authentication)
 - [#backup](infrastructure.md#backup)
 - [#baseline](domain-language.md#baseline)
+- [#binding](domain-language.md#binding)
 - [#blacklist](domain-language.md#blacklist)
 - [#bytes](domain-language.md#bytes)
 - [#checkpoint](domain-language.md#checkpoint)

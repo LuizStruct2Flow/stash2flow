@@ -171,21 +171,25 @@ Google's Drive API.
 `#credential`
 
 What one side holds so that another lets it in. For its [sources](#source) the
-app holds two kinds: what it holds after the [user](#user) signed in to a
-[provider](#provider) for one source, which lets the app
-[fetch](#fetching) that source, read-only; and what identifies this
-installation of the app to a provider, which the user obtains once per provider
-by registering the app there.
+app holds two kinds: a source's credential, which is what the app holds after
+the [user](#user) signed in to a [provider](#provider) for one source and
+which lets the app [fetch](#fetching) that source, read-only; and a
+[binding](#binding), which identifies this installation of the app to a
+provider.
 
-The two kinds are kept apart. The first belongs to one [source](#source): it is
-the one that expires, is renewed and is removed. The second belongs to the
-installation and to one [provider](#provider). Example: the app is registered
-once with the provider behind `gdrive`; two Google Drive
+The two kinds are kept apart. A [source](#source)'s credential belongs to one
+source: the app renews it, often, and it is the one that expires and is
+removed. It lives in the [token store](infrastructure.md#token-store) on the
+[server](#server), encrypted. A [binding](#binding) belongs to the
+installation and to one [provider](#provider), and almost never changes: the
+[user](#user) keeps it himself, for example in his password manager, and gives
+it to the app once, when he binds the app to the provider. Example: the app is
+bound once to the provider behind `gdrive`; two Google Drive
 [accounts](#account) are two sources, and each has a credential of its own.
 
-A `network_folder` has neither sign-in nor registration. Where the folder needs
-a user name and a password, those are that [source](#source)'s credential, of
-the first kind.
+A `network_folder` has neither sign-in nor [binding](#binding). Where the
+folder needs a user name and a password, those are that [source](#source)'s
+credential.
 
 A client of the [API](#api), such as a [collector](#collector), holds a
 credential too. It lets the client into the [server](#server) and into no
@@ -202,7 +206,30 @@ How the words next to it differ:
   app tokens, and a client of the [API](#api) holds one. A user name with a
   password is another form.
 - The [token store](infrastructure.md#token-store) is where the app keeps the
-  credentials for its [sources](#source), of both kinds.
+  credentials for its [sources](#source): each source's credential, and each
+  [binding](#binding) the [user](#user) gave it.
+
+### Binding
+
+`#binding`
+
+The app's binding to a [provider](#provider): what identifies this
+installation of the app to that provider. It is one of the two kinds of
+[credential](#credential). The [user](#user) binds the app to a provider once:
+he makes the app known at the provider, gets there what identifies it, and
+gives that to the app. Until the app is bound to a provider, no
+[source](#source) can be added there.
+
+A binding almost never changes. The [user](#user) keeps it himself, for
+example in his password manager, and gives it to the app once. The app keeps
+what he gave it in the [token store](infrastructure.md#token-store), and does
+not reach into his password manager.
+
+Binding the app is not adding a [source](#source): a binding is per
+[provider](#provider), a source is per [account](#account). Example: the
+[user](#user) binds the app to the provider behind `gdrive` once; after that
+he adds each of his Google Drive accounts as a source, each with a sign-in of
+its own.
 
 ### Fetching
 

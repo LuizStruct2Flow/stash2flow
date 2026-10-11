@@ -109,11 +109,20 @@ Its address is configuration and must be a local one. Details are in
 The token store is where the app keeps the
 [credentials](domain-language.md#credential) for its
 [sources](domain-language.md#source): each source's credential, and the app's
-registration with each [provider](domain-language.md#provider). It is a file
-on the [server](domain-language.md#server), encrypted.
+[binding](domain-language.md#binding) to each
+[provider](domain-language.md#provider). It is a file on the
+[server](domain-language.md#server), encrypted.
 
-- A [credential](domain-language.md#credential) is kept there and nowhere
-  else: not in the repository and not in the configuration file.
+- A [source](domain-language.md#source)'s
+  [credential](domain-language.md#credential) is renewed by the app, often.
+  It lives here and nowhere else.
+- A [binding](domain-language.md#binding) almost never changes. The
+  [user](domain-language.md#user) keeps it himself, for example in his
+  password manager, and gives it to the app once, when he binds the app to a
+  [provider](domain-language.md#provider). The app keeps here what he gave
+  it, and does not reach into his password manager.
+- No [credential](domain-language.md#credential) is in the repository or in
+  the configuration file.
 - No command and no log prints a [credential](domain-language.md#credential)
   in full.
 - Every permission asked of a [provider](domain-language.md#provider) is
@@ -121,9 +130,15 @@ on the [server](domain-language.md#server), encrypted.
 - A [source](domain-language.md#source)'s
   [credential](domain-language.md#credential) is stored when the
   [user](domain-language.md#user) adds the source or signs in again for it,
-  and is deleted when he removes it. The registration is stored when he
-  stores or replaces it. What he can do with them, and what the app does by
-  itself, is in [credentials](sources.md#credentials).
+  and is deleted when he removes it. A
+  [binding](domain-language.md#binding) is stored when he binds the app to a
+  [provider](domain-language.md#provider) or replaces the binding. What he
+  can do with them, and what the app does by itself, is in
+  [credentials](sources.md#credentials).
+- The place where [credentials](domain-language.md#credential) are kept is a
+  port. The token store is the one adapter this item builds; a vault or
+  another secret store can be an adapter behind the port later:
+  [ports and adapters](architecture.md#ports-and-adapters).
 - The [backup](#backup) covers the token store.
 - The [guardian](domain-language.md#guardian) cannot reach it:
   [isolation of reading](#isolation-of-reading).

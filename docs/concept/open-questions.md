@@ -205,8 +205,9 @@ the place of the account.
 
 `#question-how-long-a-sign-in-stays-valid`
 
-**Question.** Signing in to a [provider](domain-language.md#provider) means
-registering the app with that provider. Does a sign-in made that way stay
+**Question.** A sign-in at a [provider](domain-language.md#provider) is made
+through the app's [binding](domain-language.md#binding) to that provider.
+Does a sign-in made that way stay
 valid for the [30 days](how-it-works.md#thirty-days) between
 [runs](domain-language.md#run)?
 
@@ -307,8 +308,10 @@ does the backup carry it?
 installed, kept in a file of its own on the server that only the app can read,
 outside the repository and outside the configuration file. The backup carries
 it, inside the encrypted backup, so that a restored server needs no new
-sign-in for every [source](domain-language.md#source). A key on the same disk
-does not protect against a stolen disk: that is what
+sign-in for every [source](domain-language.md#source). A key kept on the same
+disk protects little until the server's disk is encrypted
+([open question: disk encryption](#question-disk-encryption)): it does not
+protect against a stolen disk, which is what
 [disk encryption](infrastructure.md#disk-encryption) is for. Rule it before
 the first search slice, which stores the first
 [credential](domain-language.md#credential).
