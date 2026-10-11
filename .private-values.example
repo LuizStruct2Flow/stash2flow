@@ -9,6 +9,11 @@
 # an abbreviation); anything else matches anywhere and needs at least four
 # characters. A shorter value is refused: it would match everywhere.
 #
+# The files this project receives from the blueprint (what `blueprint files`
+# lists as managed) are exempt: they are already public in the blueprint's own
+# repository and cannot be changed here. The check says how many were exempt.
+# When that list cannot be read, nothing is exempt.
+#
 # This file is the tracked template, with invented values. Copy it to
 # .private-values (untracked, gitignored) and replace them with the real ones.
 quibblewick@example.test

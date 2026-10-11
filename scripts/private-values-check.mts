@@ -21,6 +21,20 @@
 // (so a name does not fire inside a longer word); anything else (an address,
 // a path, a title with spaces) matches as a substring.
 //
+// FILES THIS PROJECT RECEIVES FROM THE BLUEPRINT ARE EXEMPT. They are identical
+// to what the blueprint's own public repository already publishes, this project
+// cannot change them, and the blueprint has its own scan. A hit in one of them,
+// at the tip or in a line a pull adds, is counted and not reported. The managed
+// set is what `blueprint files` prints (AGENTS.md §"What blueprint sync
+// covers"): the blueprint's own archive listing, read over the network on every
+// run, because this project holds no copy of the blueprint's `.gitattributes`
+// and a list kept here would be a second source of truth. The seeds that
+// command lists as template files are project-owned and always checked, and so
+// is every commit message. FAIL SAFE: when the set cannot be determined (no
+// `.blueprint-source`, the command fails, offline, empty output) NOTHING is
+// exempt and the summary says why. The summary always states how many files
+// were exempt and how many hits in them were suppressed, never the values.
+//
 // WHAT IS PRINTED NEVER INCLUDES A VALUE IN FULL: gate output ends up in logs
 // and feeds. A hit names the file and line, or the commit, plus the value's
 // line in the list and a mask (first and last character).
@@ -84,6 +98,36 @@ function mask(text: string): string {
   return `${text[0]}***${text[text.length - 1]}`
 }
 
+/**
+ * The blueprint-managed files, from `blueprint files`. Returns the reason
+ * instead of a set when it cannot be determined: the caller then exempts
+ * nothing. The project's own CLI is run, so BLUEPRINT_ROOT and every other
+ * override the blueprint documents apply here too.
+ */
+function managedFiles(repo: string): Set<string> | string {
+  if (!existsSync(join(repo, '.blueprint-source'))) return 'no .blueprint-source, so this checkout is not registered with a blueprint'
+  const cli = join(repo, 'scripts', 'blueprint.mts')
+  if (!existsSync(cli)) return `no ${cli}`
+  let out: string
+  try {
+    out = execFileSync(process.execPath, [cli, 'files'], { cwd: repo, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' })
+  } catch (e) {
+    const { status, stderr } = e as { status?: number | null; stderr?: string }
+    const why = (stderr ?? '').split('\n').find((l) => l.trim() !== '') ?? `exit ${status ?? '?'}`
+    return `blueprint files failed: ${why.trim()}`
+  }
+  const lines = out.split('\n')
+  const start = lines.findIndex((l) => l.startsWith('Blueprint-managed files'))
+  if (start < 0) return 'blueprint files printed no managed-files section'
+  const set = new Set<string>()
+  for (const line of lines.slice(start + 1)) {
+    if (line.trim() === '') break
+    set.add(line.trim())
+  }
+  if (set.size === 0) return 'blueprint files listed no managed file'
+  return set
+}
+
 /** Read the list. Returns null when there is no list to read. */
 function readList(repo: string): Value[] | null {
   const path = join(repo, LIST)
@@ -141,12 +185,20 @@ function main(): void {
     return
   }
 
+  const managed = managedFiles(repo)
+  const exempt = (path: string) => typeof managed !== 'string' && managed.has(path)
+
   const hits = new Set<string>()
-  const hit = (where: string, v: Value) => hits.add(`${where}  ${LIST}:${v.line} (${mask(v.text)})`)
-  const judge = (where: string, text: string) => {
-    for (const v of values) if (v.regex.test(text)) hit(where, v)
+  let suppressed = 0
+  const judge = (where: string, text: string, isExempt = false) => {
+    for (const v of values) {
+      if (!v.regex.test(text)) continue
+      if (isExempt) suppressed++
+      else hits.add(`${where}  ${LIST}:${v.line} (${mask(v.text)})`)
+    }
   }
   let files = 0
+  const exemptFiles = new Set<string>()
   let commits = 0
   let added = 0
 
@@ -169,12 +221,13 @@ function main(): void {
       const size = Number(header[2])
       const content = blobs.subarray(headerEnd + 1, headerEnd + 1 + size)
       offset = headerEnd + 1 + size + 1
-      files++
+      if (exempt(path)) exemptFiles.add(path)
+      else files++
       if (content.includes(0)) continue // binary: no text to judge
       content
         .toString('utf8')
         .split('\n')
-        .forEach((line, i) => judge(`${path}:${i + 1} (at ${short})`, line))
+        .forEach((line, i) => judge(`${path}:${i + 1} (at ${short})`, line, exempt(path)))
     }
 
     // (b) every commit message, (c) every added line, from one log each.
@@ -195,8 +248,9 @@ function main(): void {
         if (line.startsWith('+++ b/')) path = line.slice(6)
         else if (line.startsWith('@@')) lineNo = Number(/\+(\d+)/.exec(line)?.[1] ?? 0)
         else if (line.startsWith('+') && !line.startsWith('+++')) {
-          added++
-          judge(`commit ${sha} ${path}:${lineNo}`, line.slice(1))
+          if (exempt(path)) exemptFiles.add(path)
+          else added++
+          judge(`commit ${sha} ${path}:${lineNo}`, line.slice(1), exempt(path))
           lineNo++
         }
       }
@@ -204,13 +258,17 @@ function main(): void {
   }
 
   const tally = `checked ${files} tracked file(s) at the tip, ${commits} commit message(s) and ${added} added line(s) in ${ranges.join(' ')}`
+  const exemption =
+    typeof managed === 'string'
+      ? `0 file(s) exempt as blueprint-managed: the managed set could not be determined (${managed})`
+      : `${exemptFiles.size} file(s) exempt as blueprint-managed, ${suppressed} hit(s) in them suppressed`
   if (hits.size > 0) {
     console.log(`private-values-check: ${hits.size} hit(s). Nothing about one installation may reach the public repository.`)
     for (const h of hits) console.log(`  ${h}`)
-    console.log(`  ${tally}`)
+    console.log(`  ${tally}; ${exemption}`)
     process.exit(1)
   }
-  console.log(`private-values-check: no hits; ${tally} against ${values.length} value(s). PASS.`)
+  console.log(`private-values-check: no hits; ${tally} against ${values.length} value(s); ${exemption}. PASS.`)
 }
 
 main()

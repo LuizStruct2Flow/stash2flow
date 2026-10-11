@@ -17,6 +17,7 @@ import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { REPO_ROOT, scenario, type Scenario } from './harness/index.js'
+import type { FixtureRepo } from './harness/fixture-repo.js'
 
 const SCRIPT = join(REPO_ROOT, 'scripts/private-values-check.mts')
 
@@ -36,7 +37,79 @@ async function fixture(s: Scenario, list: string | null = LIST) {
   return { repo, check }
 }
 
+/**
+ * Register the fixture with a made-up blueprint that ships `managed`, so the
+ * check's `blueprint files` call (the project's own CLI, copied in) reads that
+ * checkout through BLUEPRINT_ROOT and nothing goes near the network.
+ */
+async function withBlueprint(s: Scenario, repo: FixtureRepo, managed: string[]) {
+  const blueprint = await s.gitRepo('blueprint')
+  for (const f of managed) await s.fs.write(`blueprint/${f}`, 'shipped by the blueprint\n')
+  await blueprint.commitAll('blueprint tip')
+  await s.fs.copyIn(join(REPO_ROOT, 'scripts/blueprint.mts'), 'project/scripts/blueprint.mts')
+  await s.fs.write(
+    'project/.blueprint-source',
+    'config_version = 2\nbootstrap_sha = 0000000\nbootstrap_date = 2026-01-01\n' +
+      'blueprint_remote = git@example.test:owner/blueprint.git\nblueprint_branch = main\n',
+  )
+  for (const f of managed) await s.fs.write(`project/${f}`, 'shipped by the blueprint\n')
+  await repo.commitAll('register with the blueprint')
+  const env = { BLUEPRINT_ROOT: blueprint.dir }
+  const check = (range: string, overrides = env) =>
+    s.run('node', [SCRIPT, '--repo', repo.dir, '--range', range], { cwd: repo.dir, env: overrides })
+  return check
+}
+
 describe('FEATURE-001 — a push carrying a private value is refused', () => {
+  const MANAGED = 'scripts/lib/shipped.sh'
+
+  it('#11 a value in a blueprint-managed file is not reported and is counted as exempt; the same value in a project-owned file is refused', async () => {
+    await scenario('pv-managed', async (s) => {
+      const { repo } = await fixture(s)
+      const check = await withBlueprint(s, repo, [MANAGED])
+      await s.fs.write(`project/${MANAGED}`, `shipped by the blueprint\nsee ${NAME}\n`)
+      await repo.commitAll('a pull adds a line')
+      const clean = await check('HEAD~1..HEAD')
+      expect(clean.code).toBe(0)
+      expect(clean.output).toContain('1 file(s) exempt as blueprint-managed, 2 hit(s) in them suppressed')
+      expect(clean.output).not.toContain(NAME)
+      await s.fs.write('project/notes.md', `nothing personal here\nsee ${NAME}\n`)
+      await repo.commitAll('a line of our own')
+      const own = await check('HEAD~1..HEAD')
+      expect(own.code).toBe(1)
+      expect(own.output).toContain('notes.md:2')
+      expect(own.output).not.toContain(`${MANAGED}:2`)
+      expect(own.output).toContain('1 file(s) exempt as blueprint-managed, 1 hit(s) in them suppressed')
+    })
+  })
+
+  it('#12 a value in a commit message is refused even when the commit touches only managed files', async () => {
+    await scenario('pv-managed-message', async (s) => {
+      const { repo } = await fixture(s)
+      const check = await withBlueprint(s, repo, [MANAGED])
+      await s.fs.write(`project/${MANAGED}`, 'shipped by the blueprint\nand one more line\n')
+      const sha = await repo.commitAll(`tidy the ${NAME.toLowerCase()} folder`)
+      const r = await check('HEAD~1..HEAD')
+      expect(r.code).toBe(1)
+      expect(r.output).toContain(`commit ${sha} message`)
+      expect(r.output).toContain('1 file(s) exempt as blueprint-managed')
+    })
+  })
+
+  it('#13 when the managed set cannot be determined nothing is exempt, the summary says why, and the value in the managed file is refused', async () => {
+    await scenario('pv-managed-unknown', async (s) => {
+      const { repo } = await fixture(s)
+      const check = await withBlueprint(s, repo, [MANAGED])
+      await s.fs.write(`project/${MANAGED}`, `shipped by the blueprint\nsee ${NAME}\n`)
+      await repo.commitAll('a pull adds a line')
+      const r = await check('HEAD~1..HEAD', { BLUEPRINT_ROOT: await s.fs.mkdirp('empty') })
+      expect(r.code).toBe(1)
+      expect(r.output).toContain(`${MANAGED}:2`)
+      expect(r.output).toContain('0 file(s) exempt as blueprint-managed: the managed set could not be determined')
+      expect(r.output).not.toContain(NAME)
+    })
+  })
+
   it('#1 a value in a tracked file is refused, named by file and line, and never printed in full', async () => {
     await scenario('pv-file', async (s) => {
       const { repo, check } = await fixture(s)
