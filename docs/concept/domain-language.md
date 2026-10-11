@@ -166,6 +166,44 @@ and its offer becomes trash.
 The company's [API](#api) behind a [location](#location). Example: the provider behind `gdrive` is
 Google's Drive API.
 
+### Credential
+
+`#credential`
+
+What one side holds so that another lets it in. For its [sources](#source) the
+app holds two kinds: what it holds after the [user](#user) signed in to a
+[provider](#provider) for one source, which lets the app
+[fetch](#fetching) that source, read-only; and what identifies this
+installation of the app to a provider, which the user obtains once per provider
+by registering the app there.
+
+The two kinds are kept apart. The first belongs to one [source](#source): it is
+the one that expires, is renewed and is removed. The second belongs to the
+installation and to one [provider](#provider). Example: the app is registered
+once with the provider behind `gdrive`; two Google Drive
+[accounts](#account) are two sources, and each has a credential of its own.
+
+A `network_folder` has neither sign-in nor registration. Where the folder needs
+a user name and a password, those are that [source](#source)'s credential, of
+the first kind.
+
+A client of the [API](#api), such as a [collector](#collector), holds a
+credential too. It lets the client into the [server](#server) and into no
+[provider](#provider).
+
+How the words next to it differ:
+
+- The [account](#account) says whose login a [source](#source) is
+  [fetched](#fetching) with. The credential is what the app holds once the
+  [user](#user) has signed in with that login.
+- Signing in is what the [user](#user) does at the [provider](#provider) to
+  give the app a credential for one [source](#source).
+- A token is the form most credentials have: a [provider](#provider) hands the
+  app tokens, and a client of the [API](#api) holds one. A user name with a
+  password is another form.
+- The [token store](infrastructure.md#token-store) is where the app keeps the
+  credentials for its [sources](#source), of both kinds.
+
 ### Fetching
 
 `#fetching`
@@ -511,15 +549,17 @@ the [API](#api).
 
 `#summary-notification`
 
-The message sent when a [run](#run) finishes. It is sent to the [user](#user), where the
-[run summary](#run-summary) is what the app reports.
+The message sent when a [run](#run) finishes, or when it does not start or stops
+because its [source](#source) needs the [user](#user) to sign in again. It is
+sent to the user, where the [run summary](#run-summary) is what the app reports.
 
 ### Run summary
 
 `#run-summary`
 
 What a [run](#run) reports in the app when it finishes: the counts, the
-[undecided senders](#undecided-sender) that wait for the [user](#user), and the errors. The
+[undecided senders](#undecided-sender) that wait for the [user](#user), the errors, and
+whether its [source](#source) needs the user to sign in again. The
 [summary notification](#summary-notification) is the message sent to the user; the run summary is
 the report kept in the app.
 

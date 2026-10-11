@@ -28,6 +28,21 @@ were new, changed and [vanished](domain-language.md#vanished), and its errors.
 An asset that fails is recorded in the run's errors and the run goes on. The
 [user](domain-language.md#user) can see a run's state and its errors.
 
+Where a [source](domain-language.md#source) needs a
+[credential](domain-language.md#credential), a
+[run](domain-language.md#run) of it uses that credential. The app renews a credential by
+itself where that needs no [user](domain-language.md#user). When the
+credential is missing, or is expired and cannot be renewed, the run does not
+start; when that shows during a run, the run stops. The
+[server](domain-language.md#server) records why, with the run. The
+[run summary](domain-language.md#run-summary) and the
+[summary notification](domain-language.md#summary-notification) then say that
+the source needs the user to sign in again. Only that source is affected: the
+other sources run. Once he has signed in again, the next run goes on from the
+stored [cursor](domain-language.md#cursor) or
+[checkpoint](domain-language.md#checkpoint). What the user can do with a
+credential is in [credentials](sources.md#credentials).
+
 When a [run](domain-language.md#run) finishes, a
 [summary notification](domain-language.md#summary-notification) reports new
 [assets](domain-language.md#asset), new [duplicates](domain-language.md#duplicate)
@@ -37,7 +52,9 @@ and errors. For a mailbox it also counts the
 [blacklisted](domain-language.md#blacklist), and it says how many
 [undecided senders](domain-language.md#undecided-sender) wait for the
 [user](domain-language.md#user)'s decision. The
-[run summary](domain-language.md#run-summary) in the app lists those senders. Through which channel the notification is sent is open:
+[run summary](domain-language.md#run-summary) in the app lists those senders.
+The notification is also sent when a run does not start or stops because its
+[source](domain-language.md#source) needs the user to sign in again. Through which channel the notification is sent is open:
 [open question: notification channel](open-questions.md#question-notification-channel).
 
 ## Starting a run
@@ -540,7 +557,7 @@ the [server](domain-language.md#server).
 The page takes two changes from the [user](domain-language.md#user): the
 [keeper](domain-language.md#keeper) of a group, and
 [reviewed](domain-language.md#reviewed). It refuses a change without valid
-credentials.
+[credentials](domain-language.md#credential).
 
 The [report](domain-language.md#duplicate-report) only reports. Nothing is
 deleted or moved. Whether [non-keepers](domain-language.md#non-keeper) may be

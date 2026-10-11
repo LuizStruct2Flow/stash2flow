@@ -1,8 +1,9 @@
 # Sources
 
 Where [assets](domain-language.md#asset) come from: which places the app
-[fetches](domain-language.md#fetching), which machine fetches each, and how
-[e-mail](domain-language.md#e-mail) is handled. Read this to understand what the app can reach and how a new kind of
+[fetches](domain-language.md#fetching), which machine fetches each, how
+[e-mail](domain-language.md#e-mail) is handled, and how the
+[credentials](domain-language.md#credential) of the sources are administered. Read this to understand what the app can reach and how a new kind of
 [source](domain-language.md#source) would be added.
 
 ## What a source is
@@ -25,7 +26,9 @@ whether its videos are [fetched](domain-language.md#fetching),
 when its last [run](domain-language.md#run) finished, and its rank in the
 [user](domain-language.md#user)'s
 [order of sources](domain-language.md#order-of-sources). How the user adds
-one is in [adding a source](#adding-a-source).
+one is in [adding a source](#adding-a-source). Its
+[credential](domain-language.md#credential) is not stored with it: see
+[credentials](#credentials).
 
 Whether videos are [fetched](domain-language.md#fetching) is set per
 [source](domain-language.md#source): for each source the
@@ -416,9 +419,19 @@ apply to every asset, not only to e-mail:
 The [user](domain-language.md#user) adds a
 [source](domain-language.md#source) with a command. The command takes him
 through the [provider](domain-language.md#provider)'s sign-in once and stores
-the access the app needs, which is read-only, in the
-[token store](infrastructure.md#token-store). A `network_folder` needs no
-sign-in: the command takes the folder's address.
+the [credential](domain-language.md#credential) that comes out of it in the
+[token store](infrastructure.md#token-store). At every sign-in the app asks the
+provider for its read-only permission and for nothing more.
+
+A `network_folder` needs no sign-in: the command takes the folder's address
+and, where the folder needs them, a user name and a password. Those are that
+[source](domain-language.md#source)'s
+[credential](domain-language.md#credential).
+
+A [source](domain-language.md#source) can be added at a
+[provider](domain-language.md#provider) only once the app is registered with
+that provider. Until then the command says so and adds nothing. What comes
+after the first sign-in is in [credentials](#credentials).
 
 Whether a sign-in stays valid for the
 [30 days](how-it-works.md#thirty-days) between
@@ -430,3 +443,110 @@ configuration entry. Nothing in the domain rules or the use-cases changes, which
 is why [location](domain-language.md#location) is an open list. The layering
 that makes this possible is described in
 [ports and adapters](architecture.md#ports-and-adapters).
+
+## Credentials
+
+`#credentials`
+
+A [credential](domain-language.md#credential) is what the app holds so that it
+is let in where a [source](domain-language.md#source) is. The app holds two
+kinds, and they are kept apart:
+
+| Kind | What it is | How many | How the app gets it |
+|---|---|---|---|
+| a [source](domain-language.md#source)'s [credential](domain-language.md#credential) | what the app holds after the [user](domain-language.md#user) signed in to the [provider](domain-language.md#provider) for that source; it lets the app [fetch](domain-language.md#fetching) that source, read-only | one per source | from the sign-in, when the user adds the source or signs in again |
+| the app's registration with a [provider](domain-language.md#provider) | what identifies this installation of the app to that provider | one per provider | the [user](domain-language.md#user) registers the app at the provider once, and stores what he gets there with a command |
+
+Which [location](domain-language.md#location) needs what:
+
+| [Location](domain-language.md#location) | Registration | The [source](domain-language.md#source)'s [credential](domain-language.md#credential) |
+|---|---|---|
+| `onedrive`, `gdrive`, `email` | needed | comes out of the [provider](domain-language.md#provider)'s sign-in |
+| `network_folder` | none | a user name and a password where the folder needs them, otherwise none |
+| `icloud_photos`, `icloud_drive` | none | none: a Mac [collector](domain-language.md#collector) [fetches](domain-language.md#fetching) them on the Mac and holds no [credential](domain-language.md#credential) for a [provider](domain-language.md#provider) |
+
+**Where they are kept.** Both kinds are kept in the
+[token store](infrastructure.md#token-store) on the
+[server](domain-language.md#server), encrypted, and nowhere else: not in the
+repository and not in the configuration file. No command and no log prints a
+[credential](domain-language.md#credential) in full. The
+[backup](infrastructure.md#backup) covers the token store. Where the key that
+encrypts it comes from is open:
+[open question: the key of the token store](open-questions.md#question-the-key-of-the-token-store).
+
+**Read-only.** Every sign-in, the first and each later one, asks the
+[provider](domain-language.md#provider) for its read-only permission and for
+nothing more: [read-only on sources](principles.md#read-only-on-sources).
+
+**What the [user](domain-language.md#user) can do**, each with a command:
+
+- **See every [source](domain-language.md#source) with the state of its
+  [credential](domain-language.md#credential)**, and when the credential was
+  last used. The states are in the table below.
+- **Sign in again for a [source](domain-language.md#source)** whose
+  [credential](domain-language.md#credential) expires on a date, is expired
+  or is missing. The source stays the same source: its [cursor](domain-language.md#cursor), its
+  [checkpoint](domain-language.md#checkpoint), its
+  [baseline](domain-language.md#baseline) and everything indexed from it stay,
+  and the next [run](domain-language.md#run) goes on from where the last one
+  stopped. The sign-in must be made with the source's own
+  [account](domain-language.md#account): one made with another account is
+  refused, and nothing changes.
+- **Remove a [source](domain-language.md#source)'s
+  [credential](domain-language.md#credential).** The app then no longer
+  [fetches](domain-language.md#fetching) that source: no
+  [run](domain-language.md#run) of it starts. The source and everything
+  indexed from it stay untouched, and signing in again brings the source back
+  into the runs.
+- **Store the app's registration with a
+  [provider](domain-language.md#provider), and replace it.** The same command
+  does both. Where the provider no longer accepts a
+  [source](domain-language.md#source)'s
+  [credential](domain-language.md#credential) after the registration was
+  replaced, the [user](domain-language.md#user) signs in again for that
+  source.
+
+The state of a [source](domain-language.md#source)'s
+[credential](domain-language.md#credential) is one of four, said in plain
+words. It is what the app learned when it last used the credential:
+
+| State | Meaning | What the [user](domain-language.md#user) does |
+|---|---|---|
+| valid | the [provider](domain-language.md#provider) accepts it, and the app renews it by itself | nothing |
+| expires on a date | it is accepted until that date, and the app cannot renew it by itself | signs in again before that date |
+| expired | the [provider](domain-language.md#provider) no longer accepts it: its time ran out, or the access was withdrawn at the provider | signs in again |
+| missing | the [source](domain-language.md#source) has none, because the [user](domain-language.md#user) removed it | signs in again, if the source is to be [fetched](domain-language.md#fetching) again |
+
+A `network_folder` that needs no user name and no password needs no
+[credential](domain-language.md#credential), and the list says so in place of
+a state.
+
+**What the app does by itself:**
+
+- It renews a [credential](domain-language.md#credential) that can be renewed
+  without the [user](domain-language.md#user).
+- When a [source](domain-language.md#source)'s
+  [credential](domain-language.md#credential) is missing, or is expired and
+  cannot be renewed, the [run](domain-language.md#run) of that source does not
+  start. When that shows during a run, the run stops. The
+  [server](domain-language.md#server) records why, with the run.
+- The [run summary](domain-language.md#run-summary) and the
+  [summary notification](domain-language.md#summary-notification) then say
+  that the [source](domain-language.md#source) needs the
+  [user](domain-language.md#user) to sign in again.
+- Nothing else is affected: the other [sources](domain-language.md#source)
+  run.
+
+The same is told from the [run](domain-language.md#run)'s side in
+[runs](how-it-works.md#runs). How long a sign-in lasts at each
+[provider](domain-language.md#provider) is not known yet:
+[open question: how long a sign-in stays valid](open-questions.md#question-how-long-a-sign-in-stays-valid).
+
+**Collectors.** A Mac [collector](domain-language.md#collector) holds no
+[credential](domain-language.md#credential) for a
+[provider](domain-language.md#provider). It authenticates to the
+[server](domain-language.md#server)'s [API](domain-language.md#api) with a
+credential of its own: [authentication](infrastructure.md#authentication). How
+the [user](domain-language.md#user) sees and withdraws that credential is
+open:
+[open question: credentials of the API's clients](open-questions.md#question-credentials-of-the-apis-clients).

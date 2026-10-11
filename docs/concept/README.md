@@ -18,11 +18,11 @@ is listed at the end of this page.
 | [mission.md](mission.md) | What we want to achieve and why: the mission, digital trash, the four steps, measuring before and after, what the app is not. |
 | [domain-language.md](domain-language.md) | The agreed words, one by one. |
 | [principles.md](principles.md) | The rules that hold everywhere: nothing deleted without a go and the quarantine, the user decides, privacy, deterministic code first, the guardian reading what is trusted in isolation and running nothing, local copies, open source. |
-| [sources.md](sources.md) | Where files come from: sources, accounts, the Mac collector, who is trusted, the three states of a sender, and how each e-mail is judged by what it is. |
+| [sources.md](sources.md) | Where files come from: sources, accounts, the Mac collector, who is trusted, the three states of a sender, how each e-mail is judged by what it is, adding a source, and the credentials of the sources. |
 | [how-it-works.md](how-it-works.md) | What happens to a file: runs, whitelisted and blacklisted assets, the pipeline steps, duplicates, how assets are organized and found, search, the duplicate report. |
 | [architecture.md](architecture.md) | How the code is organized: layers, ports and adapters, reading in isolation, the dependency rule, where models run, the language choice, the reading libraries. |
 | [testing.md](testing.md) | Specifications first and why, the test layers, fixtures, the draft scenario titles of the index, and the scenario titles of clean-up. |
-| [infrastructure.md](infrastructure.md) | The server, the expected volume, the database, the model server, backup, disk encryption, authentication, the isolation of reading. |
+| [infrastructure.md](infrastructure.md) | The server, the expected volume, the database, the model server, the token store, backup, disk encryption, authentication, the isolation of reading. |
 | [open-questions.md](open-questions.md) | Everything still waiting for the founder's ruling. The one place to rule on things. |
 
 The delivery plan of the first item, the index, is separate:
@@ -59,6 +59,8 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#config-this-item-will-fill](../doing/PLAN-FEATURE-001-media-index.md#config-this-item-will-fill)
 - [#context](domain-language.md#context)
 - [#continuous-integration](testing.md#continuous-integration)
+- [#credential](domain-language.md#credential)
+- [#credentials](sources.md#credentials)
 - [#cursor](domain-language.md#cursor)
 - [#database](infrastructure.md#database)
 - [#dependency-rule](architecture.md#dependency-rule)
@@ -143,6 +145,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-backup-transport](open-questions.md#question-backup-transport)
 - [#question-clean-copy-format](open-questions.md#question-clean-copy-format)
 - [#question-copyright-line](open-questions.md#question-copyright-line)
+- [#question-credentials-of-the-apis-clients](open-questions.md#question-credentials-of-the-apis-clients)
 - [#question-disk-encryption](open-questions.md#question-disk-encryption)
 - [#question-duplicate-report-and-frontend](open-questions.md#question-duplicate-report-and-frontend)
 - [#question-frontier-model-for-the-taxonomy](open-questions.md#question-frontier-model-for-the-taxonomy)
@@ -157,6 +160,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-office-documents-as-attachments](open-questions.md#question-office-documents-as-attachments)
 - [#question-photo-originals](open-questions.md#question-photo-originals)
 - [#question-server-setup](open-questions.md#question-server-setup)
+- [#question-the-key-of-the-token-store](open-questions.md#question-the-key-of-the-token-store)
 - [#question-what-tells-two-network-folders-apart](open-questions.md#question-what-tells-two-network-folders-apart)
 - [#question-where-the-quarantine-is](open-questions.md#question-where-the-quarantine-is)
 - [#question-which-models](open-questions.md#question-which-models)

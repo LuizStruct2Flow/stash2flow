@@ -253,6 +253,23 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [11] A Mac that was asleep when its [run](domain-language.md#run) was due runs when it wakes
 - [11] A [summary notification](domain-language.md#summary-notification) reports new [assets](domain-language.md#asset), new [duplicates](domain-language.md#duplicate) and errors
 
+**Credentials**
+
+- [2] The [user](domain-language.md#user) stores the app's registration with a [provider](domain-language.md#provider) with a command, and replaces it with the same command *(new)*
+- [2] The [user](domain-language.md#user) sees every [source](domain-language.md#source) with the state of its [credential](domain-language.md#credential) (valid, expires on a date, expired or missing) and when it was last used *(new)*
+- [2] No command and no log prints a [credential](domain-language.md#credential) in full *(new)*
+- [2] The app renews a [source](domain-language.md#source)'s [credential](domain-language.md#credential) by itself when it can be renewed without the [user](domain-language.md#user) *(new)*
+- [2] A [run](domain-language.md#run) of a [source](domain-language.md#source) whose [credential](domain-language.md#credential) is missing, or is expired and cannot be renewed, does not start and says that the source needs the [user](domain-language.md#user) to sign in again *(new)*
+- [2] The [user](domain-language.md#user) signs in again for a [source](domain-language.md#source), and the source and everything indexed from it stay *(new)*
+- [2] Signing in again for a [source](domain-language.md#source) asks the [provider](domain-language.md#provider) for its read-only permission only *(new)*
+- [2] Signing in again with another [account](domain-language.md#account) than the [source](domain-language.md#source)'s own is refused *(new)*
+- [2] The [user](domain-language.md#user) removes a [source](domain-language.md#source)'s [credential](domain-language.md#credential): the source is no longer [fetched](domain-language.md#fetching), and everything indexed from it stays *(new)*
+- [3] Signing in again leaves the [source](domain-language.md#source)'s [cursor](domain-language.md#cursor) and [checkpoint](domain-language.md#checkpoint) where they were *(new)*
+- [3] A [run](domain-language.md#run) that stops because its [source](domain-language.md#source)'s [credential](domain-language.md#credential) cannot be renewed records why, and the [run summary](domain-language.md#run-summary) says that the source needs the [user](domain-language.md#user) to sign in again *(new)*
+- [4] A [source](domain-language.md#source) whose [credential](domain-language.md#credential) cannot be renewed does not keep the other sources from running *(new)*
+- [4] The user name and the password of a folder on a network storage device are kept as that [source](domain-language.md#source)'s [credential](domain-language.md#credential) *(new)*
+- [11] The [summary notification](domain-language.md#summary-notification) says that a [source](domain-language.md#source) needs the [user](domain-language.md#user) to sign in again *(new)*
+
 **Pipeline**
 
 - [2] A PDF with a [text layer](domain-language.md#text-layer) is not sent to OCR
@@ -289,14 +306,14 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [8] A suggested [keeper](domain-language.md#keeper) stays a suggestion until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed)
 - [8] A new [asset](domain-language.md#asset) joining a [reviewed](domain-language.md#reviewed) group puts it back to not reviewed, and the [user](domain-language.md#user)'s earlier [keeper](domain-language.md#keeper) stays as the suggestion
 - [8] The [duplicate report](domain-language.md#duplicate-report) shows thumbnails and paths side by side
-- [8] The [duplicate report](domain-language.md#duplicate-report) refuses a change without valid credentials
+- [8] The [duplicate report](domain-language.md#duplicate-report) refuses a change without valid [credentials](domain-language.md#credential)
 - [8] [Assets](domain-language.md#asset) in a [shared account](domain-language.md#shared-account) are flagged as also belonging to someone else
 - [8] The index deletes nothing and moves nothing
 - [9] The same photo as JPG in OneDrive and HEIC in iCloud Photos lands in one [near](domain-language.md#near) group
 
 **Collectors**
 
-- [2] The [API](domain-language.md#api) refuses a call without valid credentials
+- [2] The [API](domain-language.md#api) refuses a call without valid [credentials](domain-language.md#credential)
 - [2] Each client of the [API](domain-language.md#api) authenticates with its own token: a [collector](domain-language.md#collector), the command line and the browser *(new)*
 - [2] The [API](domain-language.md#api) is served over HTTPS only *(new)*
 - [9] The same [asset](domain-language.md#asset) seen by both Macs is one row

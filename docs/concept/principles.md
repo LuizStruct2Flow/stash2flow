@@ -317,7 +317,10 @@ recognised as an [exact](domain-language.md#exact)
 The index never writes to a [source](domain-language.md#source). Every
 permission it asks a [provider](domain-language.md#provider) for is read-only,
 and a [run](domain-language.md#run) only
-[fetches](domain-language.md#fetching).
+[fetches](domain-language.md#fetching). So a
+[credential](domain-language.md#credential) is only ever asked for with the
+provider's read-only permission: at the sign-in that adds the source, and at
+every later sign-in for it.
 
 The first thing that will ever write to a [source](domain-language.md#source) is
 the clean-up step ([FEATURE-002](../backlog/BACKLOG.md)), under the rule
@@ -371,6 +374,11 @@ which of them are [trusted](domain-language.md#trusted) or
 the rules that make an [asset](domain-language.md#asset)
 [whitelisted](domain-language.md#whitelist) by default, model names and the model server's address are configuration or data.
 They live outside the repository. None of them is written into the code.
+
+A [credential](domain-language.md#credential) is neither in the code nor in
+the configuration: it is kept only in the
+[token store](infrastructure.md#token-store) on the
+[server](domain-language.md#server).
 
 ## Public repository
 

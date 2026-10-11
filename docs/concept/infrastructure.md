@@ -106,11 +106,30 @@ Its address is configuration and must be a local one. Details are in
 
 `#token-store`
 
-The access tokens for the [providers](domain-language.md#provider) are stored
-encrypted, in a file on the [server](domain-language.md#server). Every
-permission asked of a provider is read-only. A token is stored when the
-[user](domain-language.md#user) adds a [source](domain-language.md#source):
-[adding a source](sources.md#adding-a-source).
+The token store is where the app keeps the
+[credentials](domain-language.md#credential) for its
+[sources](domain-language.md#source): each source's credential, and the app's
+registration with each [provider](domain-language.md#provider). It is a file
+on the [server](domain-language.md#server), encrypted.
+
+- A [credential](domain-language.md#credential) is kept there and nowhere
+  else: not in the repository and not in the configuration file.
+- No command and no log prints a [credential](domain-language.md#credential)
+  in full.
+- Every permission asked of a [provider](domain-language.md#provider) is
+  read-only, at the first sign-in and at each later one.
+- A [source](domain-language.md#source)'s
+  [credential](domain-language.md#credential) is stored when the
+  [user](domain-language.md#user) adds the source or signs in again for it,
+  and is deleted when he removes it. The registration is stored when he
+  stores or replaces it. What he can do with them, and what the app does by
+  itself, is in [credentials](sources.md#credentials).
+- The [backup](#backup) covers the token store.
+- The [guardian](domain-language.md#guardian) cannot reach it:
+  [isolation of reading](#isolation-of-reading).
+
+Where the key that encrypts the token store comes from is open:
+[open question: the key of the token store](open-questions.md#question-the-key-of-the-token-store).
 
 ## Logs
 
@@ -153,13 +172,21 @@ question for the founder is
 
 `#authentication`
 
-The [API](domain-language.md#api) refuses a call without valid credentials.
+The [API](domain-language.md#api) refuses a call without valid
+[credentials](domain-language.md#credential).
 Everything that calls it authenticates: the
 [collectors](domain-language.md#collector), the command line, and the browser
 that opens the [duplicate report](domain-language.md#duplicate-report).
 
 - Each client has its own token.
 - The [API](domain-language.md#api) is served over HTTPS on the local network.
+- A [collector](domain-language.md#collector) holds that token and nothing
+  else: it holds no [credential](domain-language.md#credential) for a
+  [provider](domain-language.md#provider).
+
+How a client gets its token, and how the [user](domain-language.md#user) sees
+and withdraws it, is open:
+[open question: credentials of the API's clients](open-questions.md#question-credentials-of-the-apis-clients).
 
 ## Isolation of reading
 
@@ -176,8 +203,8 @@ That is a requirement on the installation, on the
 | gets | the [bytes](domain-language.md#bytes) of the [asset](domain-language.md#asset) it reads |
 | gives back | text, pictures and metadata |
 | cannot reach | the network: not the internet, not the local network, not the [model server](#model-server) |
-| cannot reach | the [token store](#token-store), which holds the [providers](domain-language.md#provider)' access tokens |
-| cannot reach | the [database](#database) or its credentials |
+| cannot reach | the [token store](#token-store), which holds the [credentials](domain-language.md#credential) for the [sources](domain-language.md#source) |
+| cannot reach | the [database](#database) or its [credentials](domain-language.md#credential) |
 | sees | only the files it is given |
 | can start | only the programs it is given |
 | never does | run a macro, a script or an executable found inside an [asset](domain-language.md#asset) |
@@ -250,10 +277,12 @@ What the [server](domain-language.md#server) holds and must protect:
 - [e-mail](domain-language.md#e-mail) text and
   [senders](domain-language.md#sender);
 - photos with coordinates and [persons](domain-language.md#person);
-- the [providers](domain-language.md#provider)' access tokens;
+- the [credentials](domain-language.md#credential) in the
+  [token store](#token-store);
 - the encrypted backups.
 
 Who it is protected against: another device on the local network, a stolen
-[server](domain-language.md#server) disk or backup, a leaked token, and a
+[server](domain-language.md#server) disk or backup, a leaked
+[credential](domain-language.md#credential), and a
 deliberately crafted file among the [assets](domain-language.md#asset)
 ([isolation of reading](#isolation-of-reading)).
