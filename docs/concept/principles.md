@@ -386,5 +386,7 @@ The founder's original specification is private and is not in the repository.
 These concept documents and the feature files are the public statement of what
 the app does, so they must be complete without it.
 
-How this is checked mechanically is open:
-[open question: public repository check](open-questions.md#question-public-repository-check).
+A check in the gate enforces it. Each installation keeps its private values in
+a list that is never tracked. A push is refused when one of them appears in a
+tracked file, in a line the push adds, or in a commit message. Where there is
+no list, the check says that nothing was checked.

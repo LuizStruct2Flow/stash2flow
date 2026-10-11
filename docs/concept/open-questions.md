@@ -281,18 +281,6 @@ timer) installed and kept running?
 containers, because the models need the machine's hardware. Settled in slice 1.
 The machine can be rebuilt from the repository.
 
-### Question: public repository check
-
-`#question-public-repository-check`
-
-**Question.** How is it checked that no [account](domain-language.md#account)
-data reaches the public repository?
-
-**Recommendation.** A check in the gate that refuses a push whose tracked files
-contain any value from the private configuration (account addresses, person
-names, [senders](domain-language.md#sender)). It lands in slice 1, before the
-first source is wired.
-
 ### Question: backup transport
 
 `#question-backup-transport`

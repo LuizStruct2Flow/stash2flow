@@ -156,7 +156,6 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-notification-channel](open-questions.md#question-notification-channel)
 - [#question-office-documents-as-attachments](open-questions.md#question-office-documents-as-attachments)
 - [#question-photo-originals](open-questions.md#question-photo-originals)
-- [#question-public-repository-check](open-questions.md#question-public-repository-check)
 - [#question-server-setup](open-questions.md#question-server-setup)
 - [#question-what-tells-two-network-folders-apart](open-questions.md#question-what-tells-two-network-folders-apart)
 - [#question-where-the-quarantine-is](open-questions.md#question-where-the-quarantine-is)
