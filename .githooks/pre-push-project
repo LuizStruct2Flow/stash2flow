@@ -527,3 +527,22 @@ fi
 #
 # Everything from here down is project-owned and survives every `blueprint
 # pull` untouched. Copy shapes from .githooks/pre-push-project.example.
+
+# FEATURE-001 — nothing about one installation reaches the public repository
+# (docs/concept/principles.md#public-repository). The values are in
+# .private-values, untracked; scripts/private-values-check.mts judges every
+# tracked file at the pushed tip, every added line and every commit message.
+# Runs on every push profile, text-only included: a name leaks through
+# markdown as easily as through code. Without a list the stage is a SKIP, so a
+# checkout that has none by design is not blocked and the machine that should
+# have one sees the gap on every push.
+_st_private_values(){
+  set --
+  for _pv_r in $(push_log_opts); do set -- "$@" --range "$_pv_r"; done
+  node "$BP_CODE_ROOT/scripts/private-values-check.mts" --repo "$BP_CODE_ROOT" "$@"
+}
+if [ -f "$BP_CODE_ROOT/.private-values" ]; then
+  pipe_stage "private values · FEATURE-001" _st_private_values
+else
+  pipe_skip "private values · FEATURE-001" "no .private-values in this checkout: NOT CHECKED (cp .private-values.example .private-values and fill it)"
+fi

@@ -130,6 +130,10 @@ scripts/new-project.sh
 # The founder's spec: names his accounts, family and documents. Private.
 docs/SPEC-*.md
 
+# The values the pre-push gate refuses in a push (scripts/private-values-check.mts).
+# The tracked template is .private-values.example.
+.private-values
+
 # Agent activity feed logs (scripts/agent-activity.sh)
 logs/
 
