@@ -11,10 +11,13 @@ Then('the macro is not run', () => notBuilt())
 Then('the text of the asset is still taken out', () => notBuilt())
 Given('an asset that makes the reading try to reach the network', () => notBuilt())
 Then('the guardian does not reach the network', () => notBuilt())
-Given('an asset that makes the reading try to reach the access tokens and the database', () =>
+Given(
+  'an asset that makes the reading try to reach the credentials for the sources and the database',
+  () => notBuilt(),
+)
+Then('the guardian reaches neither the credentials for the sources nor the database', () =>
   notBuilt(),
 )
-Then('the guardian reaches neither the access tokens nor the database', () => notBuilt())
 Given('a Mac with a collector', () => notBuilt())
 When('the guardian reads the asset on the Mac', () => notBuilt())
 Given('a sender the user has written to', () => notBuilt())

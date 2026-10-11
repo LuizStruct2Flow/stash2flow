@@ -1,14 +1,51 @@
 import { Given, Then, When } from '@cucumber/cucumber'
+import assert from 'node:assert/strict'
+import type { Match } from '../../src/application/search.ts'
+import { search } from '../../src/application/search.ts'
+import { FakeIndex } from '../../src/fakes/fake-index.ts'
 import { notBuilt } from '../support/not-built.ts'
 
-Given('a source holding a scan of a receipt as a PDF with no text layer', () => notBuilt())
-Given('a run of the source has finished', () => notBuilt())
-When('the user searches for words printed on the receipt', () => notBuilt())
-Then('the answer has a match for the scan', () => notBuilt())
-Given('an asset whose OCR text says {string}', (_0: string) => notBuilt())
-When('the user searches for {string}', (_0: string) => notBuilt())
-Then('the answer has a match for that asset', () => notBuilt())
-Then('every match in the answer carries the source_link of its asset', () => notBuilt())
+let index = new FakeIndex()
+let answer: Match[] = []
+
+Given('a source holding a scan of a receipt as a PDF with no text layer', async () => {
+  index = new FakeIndex()
+  await index.keepAsset({
+    sourceId: 'source-1',
+    sourceAssetId: 'scan-1',
+    name: 'receipt.pdf',
+    size: 1,
+    sha256: 'sha-1',
+    sourceLink: 'https://example.com/scan-1',
+    ocrText: ['tax receipt'],
+  })
+})
+Given('a run of the source has finished', () => {})
+When('the user searches for words printed on the receipt', async () => {
+  answer = await search(index, 'tax receipt')
+})
+Then('the answer has a match for the scan', () => assert.equal(answer[0]?.sourceAssetId, 'scan-1'))
+Given('an asset whose OCR text says {string}', async (ocrText: string) => {
+  index = new FakeIndex()
+  await index.keepAsset({
+    sourceId: 'source-1',
+    sourceAssetId: 'asset-1',
+    name: 'asset.pdf',
+    size: 1,
+    sha256: 'sha-1',
+    sourceLink: 'https://example.com/asset-1',
+    ocrText: [ocrText],
+  })
+})
+When('the user searches for {string}', async (words: string) => {
+  answer = await search(index, words)
+})
+Then('the answer has a match for that asset', () =>
+  assert.equal(answer[0]?.sourceAssetId, 'asset-1'),
+)
+Then('every match in the answer carries the source_link of its asset', () =>
+  assert.ok(answer.every((match) => match.sourceLink)),
+)
 Given('an asset whose OCR text says {string} that has vanished from its source', (_0: string) =>
   notBuilt(),
 )

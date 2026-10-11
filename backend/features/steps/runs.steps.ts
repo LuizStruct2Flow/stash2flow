@@ -1,29 +1,133 @@
 import { Given, Then, When } from '@cucumber/cucumber'
+import assert from 'node:assert/strict'
+import { addSource, bind } from '../../src/application/credentials.ts'
 import { notBuilt } from '../support/not-built.ts'
+import {
+  keepSourceWithCredential,
+  processCurrentAsset,
+  resetSlice2,
+  runCurrentSource,
+  slice2,
+} from './slice-2.ts'
 
-Given('the user has an account at the provider behind the location {string}', (_0: string) =>
-  notBuilt(),
+Given(
+  'the user has an account at the provider behind the location {string}',
+  async (location: string) => {
+    resetSlice2()
+    slice2.source = { id: 'source-1', location, account: 'user@example.com' }
+    slice2.signIn.nextCredential = {
+      value: 'credential',
+      state: 'valid',
+      account: 'user@example.com',
+    }
+    await bind(slice2.tokenStore, location, 'binding')
+  },
 )
-When('the user adds a source with the command', () => notBuilt())
-Then("the command takes the user through the provider's sign-in once", () => notBuilt())
-Then('the app stores access to the source that is read-only', () => notBuilt())
-Given('a source whose last run finished a day ago', () => notBuilt())
-Then('the run starts', () => notBuilt())
-Given('a source holding some assets', () => notBuilt())
-Then('nothing has been written to the source', () => notBuilt())
-Given('a source that has never had a run', () => notBuilt())
-When('the user starts the first run of the source', () => notBuilt())
-Then('the run reports the total size of the source', () => notBuilt())
-Then("the report comes before any asset's bytes are fetched", () => notBuilt())
-Given('an asset that the server indexes fully', () => notBuilt())
-When('the run finishes', () => notBuilt())
-Then("the server holds a local copy of the asset's bytes in the stash", () => notBuilt())
-Given('the same bytes in two assets from two sources', () => notBuilt())
-When('a run of each source finishes', () => notBuilt())
-Then('the stash holds one local copy of those bytes', () => notBuilt())
-Given('a file whose name a Mac wrote in another normal form', () => notBuilt())
-When('the run stores the asset', () => notBuilt())
-Then('the name of the asset is stored in NFC', () => notBuilt())
+When('the user adds a source with the command', async () => {
+  assert.ok(slice2.source)
+  await addSource(slice2.index, slice2.tokenStore, slice2.signIn, slice2.source)
+})
+Then("the command takes the user through the provider's sign-in once", () =>
+  assert.equal(slice2.signIn.calls, 1),
+)
+Then('the app stores access to the source that is read-only', async () => {
+  assert.equal(slice2.signIn.permissions, 'read-only')
+  assert.equal((await slice2.tokenStore.credentialFor('source-1')).state, 'valid')
+})
+Given('a source whose last run finished a day ago', async () => {
+  resetSlice2()
+  await keepSourceWithCredential()
+})
+Then('the run starts', () => assert.equal(slice2.runResult?.started, true))
+Given('a source holding some assets', async () => {
+  resetSlice2()
+  await keepSourceWithCredential()
+  slice2.assets = [
+    {
+      sourceId: 'source-1',
+      sourceAssetId: 'asset-1',
+      name: 'asset.unknown',
+      size: 1,
+      sha256: 'sha-1',
+      bytes: new Uint8Array([1]),
+    },
+  ]
+})
+Then('nothing has been written to the source', () => assert.equal(slice2.fetching.writes, 0))
+Given('a source that has never had a run', async () => {
+  resetSlice2()
+  await keepSourceWithCredential()
+  slice2.fetching.totalSize = 42
+})
+When('the user starts the first run of the source', runCurrentSource)
+Then('the run reports the total size of the source', () =>
+  assert.equal(slice2.runResult?.started && slice2.runResult.totalSize, 42),
+)
+Then("the report comes before any asset's bytes are fetched", () =>
+  assert.deepEqual(slice2.fetching.calls.slice(0, 2), ['totalSize', 'fetch']),
+)
+Given('an asset that the server indexes fully', async () => {
+  resetSlice2()
+  await keepSourceWithCredential()
+  slice2.assets = [
+    {
+      sourceId: 'source-1',
+      sourceAssetId: 'asset-1',
+      name: 'asset.unknown',
+      size: 1,
+      sha256: 'sha-1',
+      bytes: new Uint8Array([1]),
+    },
+  ]
+})
+When('the run finishes', runCurrentSource)
+Then("the server holds a local copy of the asset's bytes in the stash", () =>
+  assert.equal(slice2.stash.localCopies.size, 1),
+)
+Given('the same bytes in two assets from two sources', () => {
+  resetSlice2()
+  slice2.assets = [
+    {
+      sourceId: 'source-1',
+      sourceAssetId: 'asset-1',
+      name: 'one.unknown',
+      size: 1,
+      sha256: 'same',
+      bytes: new Uint8Array([1]),
+    },
+    {
+      sourceId: 'source-2',
+      sourceAssetId: 'asset-2',
+      name: 'two.unknown',
+      size: 1,
+      sha256: 'same',
+      bytes: new Uint8Array([1]),
+    },
+  ]
+})
+When('a run of each source finishes', async () => {
+  for (const asset of slice2.assets)
+    if (asset.bytes) await slice2.stash.keep(asset.sha256, asset.bytes)
+})
+Then('the stash holds one local copy of those bytes', () =>
+  assert.equal(slice2.stash.localCopies.size, 1),
+)
+Given('a file whose name a Mac wrote in another normal form', () => {
+  resetSlice2()
+  slice2.assets = [
+    {
+      sourceId: 'source-1',
+      sourceAssetId: 'asset-1',
+      name: 'Certida\u0303o.unknown',
+      size: 1,
+      sha256: 'sha-1',
+    },
+  ]
+})
+When('the run stores the asset', processCurrentAsset)
+Then('the name of the asset is stored in NFC', async () =>
+  assert.equal((await slice2.index.assets())[0]?.name, 'Certidão.unknown'),
+)
 Given('a first run of a source that was interrupted after some assets', () => notBuilt())
 When('the user starts the run again', () => notBuilt())
 Then('the run continues from its checkpoint', () => notBuilt())

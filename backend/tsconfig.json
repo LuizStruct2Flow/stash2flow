@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["features/**/*.ts", "spikes/**/*.ts", "*.ts", "*.mjs"]
+  "include": ["src/**/*.ts", "features/**/*.ts", "spikes/**/*.ts", "*.ts", "*.mjs"]
 }

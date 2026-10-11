@@ -10,7 +10,7 @@
     "lint": "eslint --max-warnings 0 .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:coverage": "node --test --test-reporter=spec \"features/support/*.spec.ts\" && node features/support/pending-check.ts"
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='src/application/**' --test-coverage-include='src/domain/**' --test-coverage-exclude='**/*.spec.ts' --test-coverage-lines=90 --test-coverage-branches=90 --test-coverage-functions=90 \"src/**/*.spec.ts\" && node --test --test-reporter=spec \"features/support/*.spec.ts\" && node features/support/pending-check.ts"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^13.0.0",
