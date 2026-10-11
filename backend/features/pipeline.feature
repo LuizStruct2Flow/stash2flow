@@ -1,35 +1,30 @@
 Feature: Pipeline
   The steps an asset goes through, in one order, for every asset that is read.
 
-  @slice-2
   Scenario: A PDF with a text layer is not sent to OCR
     Given an asset that is a PDF with a text layer
     When the asset goes through the pipeline
     Then the text layer is used
     And the asset is not sent to OCR
 
-  @slice-2
   Scenario: Every image and every PDF without a text layer gets OCR
     Given an asset that is an image
     And an asset that is a PDF without a text layer
     When the assets go through the pipeline
     Then both assets get OCR
 
-  @slice-2
   Scenario: OCR text is stored per page in its original language
     Given a PDF of two pages in Portuguese without a text layer
     When the asset goes through the pipeline
     Then the OCR text of each page is stored separately
     And the OCR text is stored in Portuguese
 
-  @slice-2
   Scenario: The text of an office document is read, and the asset is found by it
     Given an asset that is a word-processor file with some text in it
     When the asset goes through the pipeline
     Then the guardian takes its text out
     And a search for that text has a match for the asset
 
-  @slice-2
   Scenario: An archive is not opened and is listed as not covered
     Given an asset that is an archive
     When the asset goes through the pipeline
@@ -37,7 +32,6 @@ Feature: Pipeline
     And the archive is not opened
     And the archive is listed for the user as not covered
 
-  @slice-2
   Scenario: Of a program, or of a file whose file type the app does not know, only the name, size and hash are recorded
     Given an asset that is a program
     And an asset that is a file whose file type the app does not know
@@ -45,14 +39,12 @@ Feature: Pipeline
     Then only the name, size and hash of each asset are recorded
     And the guardian never reads either asset
 
-  @slice-2
   Scenario: A file beyond the user's limit on size or on the number of pages is not read
     Given the user has set a limit of 10 pages
     And an asset that is a PDF of 11 pages
     When the asset goes through the pipeline
     Then the guardian does not read the asset
 
-  @slice-2
   Scenario: asset_date uses the best available date and records its source
     Given an asset with a date taken in its own data and a different modification time
     When the asset goes through the pipeline

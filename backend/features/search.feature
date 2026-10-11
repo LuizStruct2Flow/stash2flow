@@ -2,26 +2,22 @@ Feature: Search
   The user finds assets by the words in them and by what they are,
   whichever source they came from.
 
-  @slice-2
   Scenario: A scan with no text layer is found by its OCR text
     Given a source holding a scan of a receipt as a PDF with no text layer
     And a run of the source has finished
     When the user searches for words printed on the receipt
     Then the answer has a match for the scan
 
-  @slice-2
   Scenario: Search ignores accents
     Given an asset whose OCR text says "Certidão"
     When the user searches for "certidao"
     Then the answer has a match for that asset
 
-  @slice-2
   Scenario: Search tolerates OCR misreadings
     Given an asset whose OCR text says "rec1bo"
     When the user searches for "recibo"
     Then the answer has a match for that asset
 
-  @slice-2
   Scenario: Every match carries a source_link
     Given an asset whose OCR text says "recibo"
     When the user searches for "recibo"

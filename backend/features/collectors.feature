@@ -9,11 +9,11 @@ Feature: Collectors
     Then the API refuses the call
 
   @slice-2
-  Scenario: Each client of the API authenticates with its own token
+  Scenario: Each client of the API authenticates with a credential of its own
     Given a collector, the command line and the browser
     When each of them authenticates with the API
-    Then each of them uses its own token
-    And no two of them share a token
+    Then each of them uses a credential of its own
+    And no two of them share a credential
 
   @slice-2
   Scenario: The API is served over HTTPS only

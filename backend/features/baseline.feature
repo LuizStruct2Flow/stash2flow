@@ -2,7 +2,6 @@ Feature: Baseline
   The baseline records what the user had before organizing and cleaning up,
   at the first full run of a source, and keeps it unchanged.
 
-  @slice-2
   Scenario: The first full run of a source records in the baseline how many assets and how many bytes the source holds
     Given a source holding 10 assets of 5000 bytes in all
     When the first full run of the source finishes

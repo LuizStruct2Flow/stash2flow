@@ -2,45 +2,38 @@ Feature: Runs
   A run is one pass over one source. It fetches, it never writes to the source,
   and a run with nothing new costs nothing.
 
-  @slice-2
   Scenario: The user adds a source with a command
     Given the user has an account at the provider behind the location "gdrive"
     When the user adds a source with the command
     Then the command takes the user through the provider's sign-in once
     And the app stores access to the source that is read-only
 
-  @slice-2
   Scenario: The user can start a run at any time
     Given a source whose last run finished a day ago
     When the user starts a run of the source
     Then the run starts
 
-  @slice-2
   Scenario: A run never writes to a source
     Given a source holding some assets
     When a run of the source finishes
     Then nothing has been written to the source
 
-  @slice-2
   Scenario: The first run of a source reports the source's total size before it fetches anything
     Given a source that has never had a run
     When the user starts the first run of the source
     Then the run reports the total size of the source
     And the report comes before any asset's bytes are fetched
 
-  @slice-2
   Scenario: The server keeps a local copy of every asset it indexes fully
     Given an asset that the server indexes fully
     When the run finishes
     Then the server holds a local copy of the asset's bytes in the stash
 
-  @slice-2
   Scenario: The same bytes arriving from two sources are kept once in the stash
     Given the same bytes in two assets from two sources
     When a run of each source finishes
     Then the stash holds one local copy of those bytes
 
-  @slice-2
   Scenario: File names are stored in NFC
     Given a file whose name a Mac wrote in another normal form
     When the run stores the asset

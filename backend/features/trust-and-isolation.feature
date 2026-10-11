@@ -28,10 +28,10 @@ Feature: Trust and isolation
     Then the guardian does not reach the network
 
   @slice-2
-  Scenario: The guardian cannot reach the providers' access tokens or the database while it reads an asset
-    Given an asset that makes the reading try to reach the access tokens and the database
+  Scenario: The guardian cannot reach the credentials for the sources or the database while it reads an asset
+    Given an asset that makes the reading try to reach the credentials for the sources and the database
     When the guardian reads the asset
-    Then the guardian reaches neither the access tokens nor the database
+    Then the guardian reaches neither the credentials for the sources nor the database
 
   @slice-9
   Scenario: On a Mac the guardian cannot reach the network while it reads an asset
