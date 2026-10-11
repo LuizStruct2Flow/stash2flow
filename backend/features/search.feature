@@ -28,16 +28,15 @@ Feature: Search
     Then every match in the answer carries the source_link of its asset
 
   @slice-3
-  Scenario: A vanished asset is left out of the answer, and the answer says how many were left out
+  Scenario: The default search has no match for a vanished asset
     Given an asset whose OCR text says "recibo" that has vanished from its source
     When the user searches for "recibo"
     Then the answer has no match for that asset
-    And the answer says that 1 asset was left out
 
   @slice-3
-  Scenario: With the flag, a vanished asset is shown in the answer
+  Scenario: In an advanced search the user can include vanished assets
     Given an asset whose OCR text says "recibo" that has vanished from its source
-    When the user searches for "recibo" with the flag that shows vanished assets
+    When the user makes an advanced search for "recibo" that includes vanished assets
     Then the answer has a match for that asset
 
   @slice-6

@@ -8,32 +8,32 @@ Feature: Trust and isolation
     When the asset goes through the pipeline
     Then the guardian reads the asset fully
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: A script inside a PDF is never run
     Given a PDF that carries a script
     When the guardian reads the asset
     Then the script is not run
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: A macro in an office document is never run
     Given an office document that carries a macro
     When the guardian reads the asset
     Then the macro is not run
     And the text of the asset is still taken out
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: The guardian cannot reach the network while it reads an asset
     Given an asset that makes the reading try to reach the network
     When the guardian reads the asset
     Then the guardian does not reach the network
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: The guardian cannot reach the providers' access tokens or the database while it reads an asset
     Given an asset that makes the reading try to reach the access tokens and the database
     When the guardian reads the asset
     Then the guardian reaches neither the access tokens nor the database
 
-  @slice-9 @tests-only
+  @slice-9
   Scenario: On a Mac the guardian cannot reach the network while it reads an asset
     Given a Mac with a collector
     And an asset that makes the reading try to reach the network
@@ -128,7 +128,7 @@ Feature: Trust and isolation
     When a run of the mailbox looks at the e-mail
     Then the e-mail is not blacklisted
 
-  @slice-5 @tests-only
+  @slice-5
   Scenario: Reading an e-mail loads nothing from the internet
     Given an e-mail whose text points at a remote image and at a link
     And the sender of the e-mail is trusted

@@ -171,7 +171,7 @@ The index is accepted when these six hold:
 4. The same [asset](domain-language.md#asset) seen by two Macs is one row, not
    two.
 5. A second [run](domain-language.md#run) with no changes finishes in minutes,
-   downloads nothing and processes nothing again.
+   [fetches](domain-language.md#fetching) nothing and processes nothing again.
 6. The [duplicate report](domain-language.md#duplicate-report) opens in a
    browser with thumbnails and paths.
 
@@ -183,7 +183,6 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 - `[n]` is the slice that makes the scenario green. This list is the one place
   that says so.
-- † means checked by tests only: the user cannot see it in the app.
 - *provisional* means the wording depends on an open question, linked next to
   it, and is fixed when that is ruled.
 - *new* means the founder has not reviewed the title yet.
@@ -194,8 +193,8 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] Search ignores accents: "certidao" finds "Certidão"
 - [2] Search tolerates OCR misreadings: "recibo" finds a page read as "rec1bo"
 - [2] Every [match](domain-language.md#match) carries a [source_link](domain-language.md#source_link)
-- [3] A [vanished](domain-language.md#vanished) [asset](domain-language.md#asset) is left out of the answer, and the answer says how many were left out
-- [3] With the flag, a [vanished](domain-language.md#vanished) [asset](domain-language.md#asset) is shown in the answer *(new)*
+- [3] The default search has no [match](domain-language.md#match) for a [vanished](domain-language.md#vanished) [asset](domain-language.md#asset)
+- [3] In an [advanced search](domain-language.md#advanced-search) the [user](domain-language.md#user) can include [vanished](domain-language.md#vanished) [assets](domain-language.md#asset) *(new)*
 - [6] Search filters by [doc_type](domain-language.md#doc_type)
 - [6] Search filters by [person](domain-language.md#person), and a document with two persons is found under each of them
 - [6] Search filters documents by date range on the [doc_date](domain-language.md#doc_date) *(new)*
@@ -206,19 +205,19 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 
 - [2] The [user](domain-language.md#user) adds a [source](domain-language.md#source) with a command, which takes him through the [provider](domain-language.md#provider)'s sign-in once and stores read-only access *(new)*
 - [2] The [user](domain-language.md#user) can start a [run](domain-language.md#run) at any time
-- [2] † A run never writes to a [source](domain-language.md#source)
-- [2] The first [run](domain-language.md#run) of a [source](domain-language.md#source) reports the source's total size before it downloads anything *(new)*
-- [2] † The [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of every [asset](domain-language.md#asset) it indexes fully *(new)*
-- [2] † The same [bytes](domain-language.md#bytes) arriving from two [sources](domain-language.md#source) are kept once in the [stash](domain-language.md#stash) *(new)*
-- [2] † File names are stored in NFC
+- [2] A run never writes to a [source](domain-language.md#source)
+- [2] The first [run](domain-language.md#run) of a [source](domain-language.md#source) reports the source's total size before it [fetches](domain-language.md#fetching) anything *(new)*
+- [2] The [server](domain-language.md#server) keeps a [local copy](domain-language.md#local-copy) of every [asset](domain-language.md#asset) it indexes fully *(new)*
+- [2] The same [bytes](domain-language.md#bytes) arriving from two [sources](domain-language.md#source) are kept once in the [stash](domain-language.md#stash) *(new)*
+- [2] File names are stored in NFC
 - [3] An interrupted [run](domain-language.md#run) resumes where it stopped
-- [3] A second [run](domain-language.md#run) with no changes downloads nothing and processes nothing
+- [3] A second [run](domain-language.md#run) with no changes [fetches](domain-language.md#fetching) nothing and processes nothing
 - [3] An [asset](domain-language.md#asset) that shows a newer date but has the same hash is recognised as already read and is not processed again
 - [3] A changed [asset](domain-language.md#asset) is processed again
 - [3] An [asset](domain-language.md#asset) that [vanished](domain-language.md#vanished) from its [source](domain-language.md#source) keeps its row and gets deleted_at
 - [3] An [asset](domain-language.md#asset) that fails is recorded in the [run](domain-language.md#run)'s errors and the run goes on
 - [3] The [user](domain-language.md#user) can see a [run](domain-language.md#run)'s state and its errors
-- [3] † A [source](domain-language.md#source)'s [cursor](domain-language.md#cursor) moves only when every [asset record](domain-language.md#asset-record) up to it is stored
+- [3] A [source](domain-language.md#source)'s [cursor](domain-language.md#cursor) moves only when every [asset record](domain-language.md#asset-record) up to it is stored
 - [4] A folder on a network storage device is [fetched](domain-language.md#fetching) by the [server](domain-language.md#server) like any other [source](domain-language.md#source) *(new)*
 - [4] A folder on a network storage device is added as a [source](domain-language.md#source) by its address, with no sign-in *(new)*
 - [9] A full [run](domain-language.md#run) over all [sources](domain-language.md#source) finishes
@@ -241,13 +240,13 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [2] [asset_date](domain-language.md#asset_date) uses the best available date and records its source
 - [4] For each [source](domain-language.md#source) the [user](domain-language.md#user) sets whether its videos are [fetched](domain-language.md#fetching) and kept as a [local copy](domain-language.md#local-copy) *(new)*
 - [4] Where a [source](domain-language.md#source)'s videos are [fetched](domain-language.md#fetching), a video is read like any other file and gets its hashes and its [local copy](domain-language.md#local-copy), and never gets OCR *(new)*
-- [4] Where a [source](domain-language.md#source)'s videos are not [fetched](domain-language.md#fetching), a video is not downloaded: only what the [provider](domain-language.md#provider)'s listing gives (name, size and dates) is stored, with its [provider hash](domain-language.md#provider-hash) *(new)*
+- [4] Where a [source](domain-language.md#source)'s videos are not [fetched](domain-language.md#fetching), a video is not fetched: only what the [provider](domain-language.md#provider)'s listing gives (name, size and dates) is stored, with its [provider hash](domain-language.md#provider-hash) *(new)*
 - [6] [kind](domain-language.md#kind) and [has_text](domain-language.md#has_text) follow the agreed examples: a screenshot and a photo, enough text and too little *(new)*
 - [6] Only an [asset](domain-language.md#asset) of [kind](domain-language.md#kind) document gets a [description](domain-language.md#description)
 - [6] A [description](domain-language.md#description) is one English line and keeps proper names verbatim
 - [6] [doc_type](domain-language.md#doc_type) always comes from the vocabulary
-- [6] An [asset](domain-language.md#asset) indexed before a [pipeline](domain-language.md#pipeline) step existed gets that step only when the [user](domain-language.md#user) asks for it
-- [6] † A step run over [assets](domain-language.md#asset) already indexed downloads nothing *(new)*
+- [6] An [asset](domain-language.md#asset) indexed before a [pipeline](domain-language.md#pipeline) step existed gets that step only when the [user](domain-language.md#user) asks for [re-indexing](domain-language.md#re-indexing)
+- [6] [Re-indexing](domain-language.md#re-indexing) [fetches](domain-language.md#fetching) nothing *(new)*
 
 **Duplicates**
 
@@ -258,27 +257,27 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [8] A resized or recompressed copy joins the [near](domain-language.md#near) group
 - [8] Different photos are not grouped
 - [8] An [asset](domain-language.md#asset) is in one [duplicate group](domain-language.md#duplicate-group) only: assets showing the same image are one group, [exact](domain-language.md#exact) when all [bytes](domain-language.md#bytes) match, otherwise [near](domain-language.md#near) *(new)*
-- [8] † Two [assets](domain-language.md#asset) are [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate) when their [sha256](domain-language.md#md5-and-sha256) is the same *(new)*
+- [8] Two [assets](domain-language.md#asset) are [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate) when their [sha256](domain-language.md#md5-and-sha256) is the same *(new)*
 - [8] The [keeper](domain-language.md#keeper) is suggested from the [user](domain-language.md#user)'s [order of sources](domain-language.md#order-of-sources)
-- [8] Inside the winning [source](domain-language.md#source), ties go to the highest resolution, then complete photo metadata as in the agreed examples, then the oldest *(new)*
+- [8] Inside the winning [source](domain-language.md#source), ties go to the highest resolution, then complete photo metadata, then the oldest *(new)*
 - [8] The [user](domain-language.md#user) can change the [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) in the [duplicate report](domain-language.md#duplicate-report)
 - [8] A suggested [keeper](domain-language.md#keeper) stays a suggestion until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed)
 - [8] A new [asset](domain-language.md#asset) joining a [reviewed](domain-language.md#reviewed) group puts it back to not reviewed, and the [user](domain-language.md#user)'s earlier [keeper](domain-language.md#keeper) stays as the suggestion
 - [8] The [duplicate report](domain-language.md#duplicate-report) shows thumbnails and paths side by side
 - [8] The [duplicate report](domain-language.md#duplicate-report) refuses a change without valid credentials
 - [8] [Assets](domain-language.md#asset) in a [shared account](domain-language.md#shared-account) are flagged as also belonging to someone else
-- [8] † The index deletes nothing and moves nothing
+- [8] The index deletes nothing and moves nothing
 - [9] The same photo as JPG in OneDrive and HEIC in iCloud Photos lands in one [near](domain-language.md#near) group
 
 **Collectors**
 
 - [2] The [API](domain-language.md#api) refuses a call without valid credentials
-- [2] † Each client of the [API](domain-language.md#api) authenticates with its own token: a [collector](domain-language.md#collector), the command line and the browser *(new)*
-- [2] † The [API](domain-language.md#api) is served over HTTPS only *(new)*
+- [2] Each client of the [API](domain-language.md#api) authenticates with its own token: a [collector](domain-language.md#collector), the command line and the browser *(new)*
+- [2] The [API](domain-language.md#api) is served over HTTPS only *(new)*
 - [9] The same [asset](domain-language.md#asset) seen by both Macs is one row
 - [9] [Asset records](domain-language.md#asset-record) from a second [collector](domain-language.md#collector) for the same [source](domain-language.md#source) update the same rows, and [collected_by](domain-language.md#collected_by) records which machine sent them *(new)*
 - [9] A [collector](domain-language.md#collector) uploads the [bytes](domain-language.md#bytes) of every [asset](domain-language.md#asset) it reports as new or changed *(new)*
-- [9] † A [collector](domain-language.md#collector) interrupted after sending [asset records](domain-language.md#asset-record) sends them again and nothing is doubled
+- [9] A [collector](domain-language.md#collector) interrupted after sending [asset records](domain-language.md#asset-record) sends them again and nothing is doubled
 
 **E-mail**
 
@@ -303,17 +302,17 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] An [attachment](domain-language.md#attachment)'s [asset_date](domain-language.md#asset_date) is the date received
 - [5] An [attachment](domain-language.md#attachment)'s [source_link](domain-language.md#source_link) opens its Gmail thread
 - [5] A personal [e-mail](domain-language.md#e-mail) from a [sender](domain-language.md#sender) who is a [person](domain-language.md#person) on the [user](domain-language.md#user)'s list is [whitelisted](domain-language.md#whitelist) by default
-- [5] † A [blacklisted](domain-language.md#blacklist) [e-mail](domain-language.md#e-mail) stays in its mailbox: the index only records the verdict *(new)*
-- [5] The [run](domain-language.md#run) summary counts the [advertisements](domain-language.md#advertisement), the [spam](domain-language.md#spam) and the [blacklisted](domain-language.md#blacklist) [assets](domain-language.md#asset) *(new)*
+- [5] A [blacklisted](domain-language.md#blacklist) [e-mail](domain-language.md#e-mail) stays in its mailbox: the index only records the verdict *(new)*
+- [5] The [run summary](domain-language.md#run-summary) counts the [advertisements](domain-language.md#advertisement), the [spam](domain-language.md#spam) and the [blacklisted](domain-language.md#blacklist) [assets](domain-language.md#asset) *(new)*
 
 **Trust and isolation**
 
 - [2] An [asset](domain-language.md#asset) from the [user](domain-language.md#user)'s own drives is read fully *(new)*
-- [2] † A script inside a PDF is never run *(new)*
-- [2] † A macro in an office document is never run *(new)*
-- [2] † The [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
-- [2] † The [guardian](domain-language.md#guardian) cannot reach the [providers](domain-language.md#provider)' access tokens or the database while it reads an [asset](domain-language.md#asset) *(new)*
-- [9] † On a Mac the [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
+- [2] A script inside a PDF is never run *(new)*
+- [2] A macro in an office document is never run *(new)*
+- [2] The [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
+- [2] The [guardian](domain-language.md#guardian) cannot reach the [providers](domain-language.md#provider)' access tokens or the database while it reads an [asset](domain-language.md#asset) *(new)*
+- [9] On a Mac the [guardian](domain-language.md#guardian) cannot reach the network while it reads an [asset](domain-language.md#asset) *(new)*
 - [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) has written to is [trusted](domain-language.md#trusted) *(new)*
 - [5] A [sender](domain-language.md#sender) the [user](domain-language.md#user) marked as [trusted](domain-language.md#trusted) is trusted *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) is not read: its sender, subject, date and [mail_label](domain-language.md#mail_label) are recorded, and the sender is listed for the [user](domain-language.md#user) *(new)*
@@ -327,8 +326,8 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says spam, from a [trusted](domain-language.md#trusted) [sender](domain-language.md#sender), is read like any other e-mail from that sender *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) with an attached PDF whose [mail_label](domain-language.md#mail_label) says promotions, from an [undecided sender](domain-language.md#undecided-sender), is only recorded *(new)*
 - [5] An [e-mail](domain-language.md#e-mail) from an [undecided sender](domain-language.md#undecided-sender) is not [blacklisted](domain-language.md#blacklist) for that reason *(new)*
-- [5] † Reading an [e-mail](domain-language.md#e-mail) loads nothing from the internet: no remote image and no link *(new)*
-- [5] The [run](domain-language.md#run) summary lists the [undecided senders](domain-language.md#undecided-sender) that wait for the [user](domain-language.md#user)'s decision *(new)*
+- [5] Reading an [e-mail](domain-language.md#e-mail) loads nothing from the internet: no remote image and no link *(new)*
+- [5] The [run summary](domain-language.md#run-summary) lists the [undecided senders](domain-language.md#undecided-sender) that wait for the [user](domain-language.md#user)'s decision *(new)*
 
 **Photos**
 
@@ -340,13 +339,13 @@ Wording for the founder's review. The full Gherkin is written in slice 0.
 **Privacy**
 
 - [2] Processing an [asset](domain-language.md#asset) uses local models only
-- [2] † OAuth tokens are stored encrypted and every scope is read-only
-- [9] † iCloud Photos is [fetched](domain-language.md#fetching) only through osxphotos
+- [2] OAuth tokens are stored encrypted and every scope is read-only
+- [9] iCloud Photos is [fetched](domain-language.md#fetching) only through osxphotos
 
 **Baseline**
 
 - [2] The first full [run](domain-language.md#run) of a [source](domain-language.md#source) records in the [baseline](domain-language.md#baseline) how many [assets](domain-language.md#asset) and how many [bytes](domain-language.md#bytes) the source holds *(new)*
-- [3] † A later [run](domain-language.md#run) leaves the [baseline](domain-language.md#baseline) unchanged *(new)*
+- [3] A later [run](domain-language.md#run) leaves the [baseline](domain-language.md#baseline) unchanged *(new)*
 - [5] The [baseline](domain-language.md#baseline) counts the [blacklisted](domain-language.md#blacklist) [assets](domain-language.md#asset) per [source](domain-language.md#source), [advertisements](domain-language.md#advertisement) included *(new)*
 - [8] The [baseline](domain-language.md#baseline) counts the [exact](domain-language.md#exact) [duplicates](domain-language.md#duplicate) and the [near](domain-language.md#near) duplicates per [source](domain-language.md#source) *(new)*
 - [8] The [baseline](domain-language.md#baseline) records, over all [sources](domain-language.md#source), the number of sources an [asset](domain-language.md#asset) is found in *(new)*

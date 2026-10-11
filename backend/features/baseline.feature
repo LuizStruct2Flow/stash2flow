@@ -9,7 +9,7 @@ Feature: Baseline
     Then the baseline of the source records 10 assets
     And the baseline of the source records 5000 bytes
 
-  @slice-3 @tests-only
+  @slice-3
   Scenario: A later run leaves the baseline unchanged
     Given a source whose first full run recorded its baseline
     And the source now holds more assets

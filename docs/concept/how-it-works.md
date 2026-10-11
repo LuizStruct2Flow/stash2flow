@@ -20,7 +20,7 @@ It never writes to a [source](domain-language.md#source).
 
 The first [run](domain-language.md#run) of a
 [source](domain-language.md#source) reports the source's total size before it
-downloads anything.
+[fetches](domain-language.md#fetching) anything.
 
 For every [run](domain-language.md#run) the [server](domain-language.md#server)
 records when it started and finished, how many [assets](domain-language.md#asset)
@@ -36,8 +36,8 @@ and errors. For a mailbox it also counts the
 [spam](domain-language.md#spam) it recorded, and the assets that are now
 [blacklisted](domain-language.md#blacklist), and it says how many
 [undecided senders](domain-language.md#undecided-sender) wait for the
-[user](domain-language.md#user)'s decision. The run's summary in the app lists
-those senders. Through which channel the notification is sent is open:
+[user](domain-language.md#user)'s decision. The
+[run summary](domain-language.md#run-summary) in the app lists those senders. Through which channel the notification is sent is open:
 [open question: notification channel](open-questions.md#question-notification-channel).
 
 ## Starting a run
@@ -98,8 +98,8 @@ The rules that make this safe:
 
 `#unchanged-assets`
 
-A second [run](domain-language.md#run) with no changes downloads nothing and
-processes nothing. Whether an [asset](domain-language.md#asset) is unchanged is
+A second [run](domain-language.md#run) with no changes
+[fetches](domain-language.md#fetching) nothing and processes nothing. Whether an [asset](domain-language.md#asset) is unchanged is
 decided by one rule, applied on the [server](domain-language.md#server) when the
 [asset record](domain-language.md#asset-record) arrives, against what the index
 already holds:
@@ -140,8 +140,9 @@ An [asset](domain-language.md#asset) that is no longer in its
 `deleted_at` is set. Nothing is removed.
 
 In search a [vanished](domain-language.md#vanished)
-[asset](domain-language.md#asset) is hidden by default and shown with a flag.
-The answer says how many were left out.
+[asset](domain-language.md#asset) is left out by default, and the answer says
+nothing about it. The [user](domain-language.md#user) can include vanished
+assets in an [advanced search](domain-language.md#advanced-search).
 
 ## Whitelisted, blacklisted or neither
 
@@ -332,10 +333,18 @@ Every [asset](domain-language.md#asset) that is read goes through the same
 7. **[Kind](domain-language.md#kind).** [has_text](domain-language.md#has_text)
    is set from the amount of [OCR text](domain-language.md#ocr-text), and the
    kind of the [asset](domain-language.md#asset) is decided.
-   Three rules are defined by examples in the feature files, written before
-   any code and reviewed with them: how a screenshot is told from a photo, how
-   much text makes has_text true, and what complete photo metadata means when
-   the [keeper](domain-language.md#keeper) is [chosen](#choosing-the-keeper).
+   The agreed examples:
+
+   | An asset described as | [kind](domain-language.md#kind) | [has_text](domain-language.md#has_text) |
+   |---|---|---|
+   | a picture taken by a camera, with a date taken and a camera | photo | false |
+   | a picture with no camera data, showing lines of text | screenshot | true |
+   | a scan of a letter with a paragraph of text | document | true |
+   | a scan of a page with only a few words | document | false |
+
+   What complete photo metadata means when the
+   [keeper](domain-language.md#keeper) is [chosen](#choosing-the-keeper) is
+   said there.
 8. **[Description](domain-language.md#description).** Only for an
    [asset](domain-language.md#asset) of [kind](domain-language.md#kind)
    `document`. A local model writes
@@ -389,7 +398,7 @@ frontend:
 as a [local copy](domain-language.md#local-copy). For example, the videos in a
 photo library are the user's own and are kept, and the videos in another
 source may be left unfetched. The first [run](domain-language.md#run) of a
-source reports the source's total size before it downloads anything, so he
+source reports the source's total size before it fetches anything, so he
 sets this for each source with real numbers.
 
 - Where a [source](domain-language.md#source)'s videos are
@@ -421,8 +430,9 @@ when [assets](domain-language.md#asset) are already indexed. So:
   [asset](domain-language.md#asset) only when it is new or changed.
 - When a step or a model is added, existing
   [assets](domain-language.md#asset) get it **only when the
-  [user](domain-language.md#user) asks**.
-- Nothing is downloaded a second time for this.
+  [user](domain-language.md#user) asks** for
+  [re-indexing](domain-language.md#re-indexing).
+- Nothing is fetched a second time for this.
   [Description](domain-language.md#description) and text
   [embedding](domain-language.md#embedding) need only the stored
   [OCR text](domain-language.md#ocr-text); everything else reads the
@@ -499,7 +509,9 @@ The [user](domain-language.md#user)'s
    [keeper](domain-language.md#keeper).
 3. If that [source](domain-language.md#source) has several
    [assets](domain-language.md#asset) in the group, the tie goes to the highest
-   resolution, then to complete photo metadata, then to the oldest.
+   resolution, then to complete photo metadata, then to the oldest. A photo
+   has complete photo metadata when it has the date taken, the coordinates and
+   the camera.
 4. The [user](domain-language.md#user) can change the
    [keeper](domain-language.md#keeper) of any group.
 5. Nothing counts as chosen until the [user](domain-language.md#user) marks the
@@ -625,8 +637,9 @@ How the date range filters:
   [asset](domain-language.md#asset) from a date filter.
 
 A [vanished](domain-language.md#vanished) [asset](domain-language.md#asset) is
-hidden by default and shown with a flag. The answer says how many were left
-out.
+left out by default, and the answer says nothing about it. In an
+[advanced search](domain-language.md#advanced-search) the
+[user](domain-language.md#user) can include vanished assets.
 
 ## Finding photos
 

@@ -494,7 +494,8 @@ the [cursor](#cursor).
 
 An [asset](#asset) that is no longer in its [source](#source). The row stays, and its `deleted_at` is
 set. The word is vanished, because the index never deletes. In search a
-vanished asset is hidden by default and shown with a flag.
+vanished asset is hidden by default and can be included in an
+[advanced search](#advanced-search).
 
 ### Ledger
 
@@ -510,7 +511,17 @@ the [API](#api).
 
 `#summary-notification`
 
-The message sent when a [run](#run) finishes.
+The message sent when a [run](#run) finishes. It is sent to the [user](#user), where the
+[run summary](#run-summary) is what the app reports.
+
+### Run summary
+
+`#run-summary`
+
+What a [run](#run) reports in the app when it finishes: the counts, the
+[undecided senders](#undecided-sender) that wait for the [user](#user), and the errors. The
+[summary notification](#summary-notification) is the message sent to the user; the run summary is
+the report kept in the app.
 
 ### Baseline
 
@@ -541,6 +552,14 @@ neither does an [e-mail](#e-mail) from an
 Which [pipeline](#pipeline) steps an [asset](#asset) has completed, and with which model.
 Example: a scanned receipt has completed every step up to its [OCR text](#ocr-text),
 read with one model, and has no [description](#description) yet.
+
+### Re-indexing
+
+`#re-indexing`
+
+Running [pipeline](#pipeline) steps again over [assets](#asset) that are already indexed, from
+their [local copies](#local-copy) in the [stash](#stash), fetching nothing. The [user](#user) asks
+for it, for example when a step or a model is added.
 
 ### Discovery
 
@@ -737,6 +756,14 @@ the [user](#user) changes a [keeper](#keeper) and marks a group [reviewed](#revi
 One entry in a search answer: an [asset](#asset) that matches the search. Example: a
 search for words printed on a receipt answers with one match for each asset
 whose text holds those words.
+
+### Advanced search
+
+`#advanced-search`
+
+A search in which the [user](#user) sets more than the words he looks for, such as including
+[vanished](#vanished) [assets](#asset). A search without it leaves vanished assets out and says
+nothing about them.
 
 ## Words we do not use
 

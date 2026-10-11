@@ -148,7 +148,7 @@ Feature: E-mail
     When a run of the mailbox looks at the e-mail
     Then the e-mail is whitelisted
 
-  @slice-5 @tests-only
+  @slice-5
   Scenario: A blacklisted e-mail stays in its mailbox
     Given an e-mail that is blacklisted
     When a run of the mailbox looks at the e-mail

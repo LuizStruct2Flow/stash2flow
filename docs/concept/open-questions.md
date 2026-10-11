@@ -224,7 +224,7 @@ originals are not on the Mac. How does the
 [bytes](domain-language.md#bytes)?
 
 **Recommendation.** The [collector](domain-language.md#collector) asks
-`osxphotos` to download the original. Confirm the Mac's setting before the
+`osxphotos` to fetch the original. Confirm the Mac's setting before the
 collector is built.
 
 ## Server and security

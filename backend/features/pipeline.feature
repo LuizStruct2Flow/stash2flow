@@ -75,10 +75,10 @@ Feature: Pipeline
     And the video does not get OCR
 
   @slice-4
-  Scenario: Where a source's videos are not fetched, a video is not downloaded
+  Scenario: Where a source's videos are not fetched, a video is not fetched
     Given a source whose videos are not fetched, holding a video
     When the video goes through the pipeline
-    Then no bytes of the video are downloaded
+    Then no bytes of the video are fetched
     And only the name, size and dates that the provider's listing gives are stored
     And the provider hash of the video is stored
 
@@ -89,7 +89,7 @@ Feature: Pipeline
     When the user starts a run of the source
     Then the videos of the source are not fetched
 
-  @slice-6 @provisional
+  @slice-6
   Scenario Outline: kind and has_text follow the agreed examples
     Given an asset described as "<example>"
     When the asset goes through the pipeline
@@ -126,15 +126,15 @@ Feature: Pipeline
     Then the doc_type of the asset is one of the doc_types of the vocabulary
 
   @slice-6
-  Scenario: An asset indexed before a pipeline step existed gets that step only when the user asks for it
+  Scenario: An asset indexed before a pipeline step existed gets that step only when the user asks for re-indexing
     Given an asset that was indexed before a pipeline step existed
     When the user starts an ordinary run of its source
     Then the asset does not get the step
-    When the user asks for the step to run over assets already indexed
+    When the user asks for re-indexing with the step
     Then the asset gets the step
 
-  @slice-6 @tests-only
-  Scenario: A step run over assets already indexed downloads nothing
+  @slice-6
+  Scenario: Re-indexing fetches nothing
     Given an asset already indexed with its local copy in the stash
-    When the user asks for a step to run over assets already indexed
-    Then the run downloads no bytes
+    When the user asks for re-indexing with a step
+    Then the run fetches no bytes

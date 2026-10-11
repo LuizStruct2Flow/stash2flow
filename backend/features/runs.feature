@@ -15,32 +15,32 @@ Feature: Runs
     When the user starts a run of the source
     Then the run starts
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: A run never writes to a source
     Given a source holding some assets
     When a run of the source finishes
     Then nothing has been written to the source
 
   @slice-2
-  Scenario: The first run of a source reports the source's total size before it downloads anything
+  Scenario: The first run of a source reports the source's total size before it fetches anything
     Given a source that has never had a run
     When the user starts the first run of the source
     Then the run reports the total size of the source
-    And the report comes before any asset's bytes are downloaded
+    And the report comes before any asset's bytes are fetched
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: The server keeps a local copy of every asset it indexes fully
     Given an asset that the server indexes fully
     When the run finishes
     Then the server holds a local copy of the asset's bytes in the stash
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: The same bytes arriving from two sources are kept once in the stash
     Given the same bytes in two assets from two sources
     When a run of each source finishes
     Then the stash holds one local copy of those bytes
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: File names are stored in NFC
     Given a file whose name a Mac wrote in another normal form
     When the run stores the asset
@@ -54,11 +54,11 @@ Feature: Runs
     And the assets before the checkpoint are not fetched again
 
   @slice-3
-  Scenario: A second run with no changes downloads nothing and processes nothing
+  Scenario: A second run with no changes fetches nothing and processes nothing
     Given a source whose first run has finished
     And nothing in the source has changed
     When the user starts a second run of the source
-    Then the run downloads no bytes
+    Then the run fetches no bytes
     And no pipeline step runs for any asset
 
   @slice-3
@@ -99,7 +99,7 @@ Feature: Runs
     Then the user sees the state of the run
     And the user sees its error
 
-  @slice-3 @tests-only
+  @slice-3
   Scenario: A source's cursor moves only when every asset record up to it is stored
     Given a batch of asset records sent to the ledger
     When the ledger has not stored every asset record of the batch
@@ -114,7 +114,7 @@ Feature: Runs
     Then the server fetches the assets of the folder
     And the server is the reader of the source
 
-  @slice-4 @provisional
+  @slice-4
   Scenario: A folder on a network storage device is added as a source by its address, with no sign-in
     Given a folder on a network storage device
     When the user adds a source with the command and the address of the folder

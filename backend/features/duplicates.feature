@@ -53,7 +53,7 @@ Feature: Duplicates
     When the resized copy is left out
     Then the other two assets are in one exact group
 
-  @slice-8 @tests-only
+  @slice-8
   Scenario: Two assets are exact duplicates when their sha256 is the same
     Given two assets with the same sha256 and different file names
     When the assets are grouped
@@ -66,7 +66,7 @@ Feature: Duplicates
     When the assets are grouped
     Then the keeper is the asset of the first source
 
-  @slice-8 @provisional
+  @slice-8
   Scenario: Inside the winning source, ties go to the highest resolution, then complete photo metadata, then the oldest
     Given three photos of one near group in the same source, all with the same resolution
     And the first has the date taken, the coordinates and the camera, and the other two have none of them
@@ -121,7 +121,7 @@ Feature: Duplicates
     When a run of the source finishes
     Then its assets are flagged as also belonging to someone else
 
-  @slice-8 @tests-only
+  @slice-8
   Scenario: The index deletes nothing and moves nothing
     Given duplicate groups with suggested keepers
     When the assets are grouped and the duplicate report is opened

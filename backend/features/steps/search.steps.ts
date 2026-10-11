@@ -13,8 +13,7 @@ Given('an asset whose OCR text says {string} that has vanished from its source',
   notBuilt(),
 )
 Then('the answer has no match for that asset', () => notBuilt())
-Then('the answer says that 1 asset was left out', () => notBuilt())
-When('the user searches for {string} with the flag that shows vanished assets', (_0: string) =>
+When('the user makes an advanced search for {string} that includes vanished assets', (_0: string) =>
   notBuilt(),
 )
 Given('an asset of kind document with doc_type {string}', (_0: string) => notBuilt())

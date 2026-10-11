@@ -67,11 +67,11 @@ The choices that are the [user](domain-language.md#user)'s:
 | The [keeper](domain-language.md#keeper) of a [duplicate group](domain-language.md#duplicate-group) | Suggests one. Nothing counts as chosen until the [user](domain-language.md#user) marks the group [reviewed](domain-language.md#reviewed). |
 | Which [senders](domain-language.md#sender) are [trusted](domain-language.md#trusted) | Trusts a sender the [user](domain-language.md#user) has written to himself. Lists every [undecided sender](domain-language.md#undecided-sender); he says once per sender whether he trusts it. Until then the app only records that sender's [e-mails](domain-language.md#e-mail). A sender he says no to is a [rejected sender](domain-language.md#rejected-sender), and its e-mails are [blacklisted](domain-language.md#blacklist) by a rule. |
 | Which [assets](domain-language.md#asset) are [whitelisted](domain-language.md#whitelist) by default | Applies the rules the [user](domain-language.md#user) keeps in configuration: by [sender](domain-language.md#sender), when the sender is a [person](domain-language.md#person) on his list, and by [source](domain-language.md#source), for example the photo library of his phone. |
-| For each [source](domain-language.md#source), whether its videos are [fetched](domain-language.md#fetching) and kept as a [local copy](domain-language.md#local-copy) | Reports each source's total size at its first [run](domain-language.md#run), before it downloads anything, so the [user](domain-language.md#user) sets this with real numbers. Where a source's videos are fetched, it reads a video like any other file, and the video gets its hashes and its local copy. Where they are not, it stores only what the [provider](domain-language.md#provider)'s listing gives (name, size and dates) and the video's [provider hash](domain-language.md#provider-hash). |
+| For each [source](domain-language.md#source), whether its videos are [fetched](domain-language.md#fetching) and kept as a [local copy](domain-language.md#local-copy) | Reports each source's total size at its first [run](domain-language.md#run), before it fetches anything, so the [user](domain-language.md#user) sets this with real numbers. Where a source's videos are fetched, it reads a video like any other file, and the video gets its hashes and its local copy. Where they are not, it stores only what the [provider](domain-language.md#provider)'s listing gives (name, size and dates) and the video's [provider hash](domain-language.md#provider-hash). |
 | The limits on a file's size and number of pages | Refuses a file beyond them: the [guardian](domain-language.md#guardian) does not read it. |
 | What is restored from the [quarantine](domain-language.md#quarantine) and what is deleted | Moves there whatever could be deleted, such as a [blacklisted](domain-language.md#blacklist) [asset](domain-language.md#asset). After 30 days it deletes what the [user](domain-language.md#user) left there. |
 | Starting a [run](domain-language.md#run) | Starts one by itself only 30 days after the [source](domain-language.md#source)'s last finished run. |
-| Running a new [pipeline](domain-language.md#pipeline) step over [assets](domain-language.md#asset) already indexed | Does it only when asked. |
+| [Re-indexing](domain-language.md#re-indexing) | Does it only when asked. |
 
 ## Private by construction
 
@@ -268,7 +268,7 @@ What follows from it:
   [sources](domain-language.md#source) are stored once.
 - Later [pipeline](domain-language.md#pipeline) steps read from the
   [local copy](domain-language.md#local-copy). No
-  [asset](domain-language.md#asset) is downloaded twice.
+  [asset](domain-language.md#asset) is fetched twice.
 - A Mac [collector](domain-language.md#collector) uploads the
   [bytes](domain-language.md#bytes) of every [asset](domain-language.md#asset) it
   reports. It does not wait to be asked.
@@ -283,7 +283,7 @@ Videos may be large, so whether they are
 as a [local copy](domain-language.md#local-copy). For example, the videos in a
 photo library are the user's own and are kept, and the videos in another
 source may be left unfetched. The first [run](domain-language.md#run) of a
-source reports the source's total size before it downloads anything, so he
+source reports the source's total size before it fetches anything, so he
 sets this for each source with real numbers.
 
 Where a [source](domain-language.md#source)'s videos are

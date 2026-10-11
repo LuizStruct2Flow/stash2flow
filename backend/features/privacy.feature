@@ -7,14 +7,14 @@ Feature: Privacy
     When every step that uses a model runs
     Then each model runs inside the app's process or at a model server on the user's network
 
-  @slice-2 @tests-only
+  @slice-2
   Scenario: OAuth tokens are stored encrypted and every scope is read-only
     Given a source that the user has added
     When the app stores the access it needs
     Then the access is stored encrypted
     And every scope of the access is read-only
 
-  @slice-9 @tests-only
+  @slice-9
   Scenario: iCloud Photos is fetched only through osxphotos
     Given a source of the location "icloud_photos"
     When the collector fetches the source

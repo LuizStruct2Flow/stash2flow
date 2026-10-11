@@ -105,9 +105,7 @@ describe('pending check', () => {
       assert.equal(v.ok, false)
     })
     it('ignores other tags', () => {
-      const v = judge(
-        output({ tags: ['@slice-2', '@tests-only'], steps: [step('failed', NOT_BUILT)] }),
-      )
+      const v = judge(output({ tags: ['@slice-2', '@other'], steps: [step('failed', NOT_BUILT)] }))
       assert.equal(v.ok, true)
     })
   })
