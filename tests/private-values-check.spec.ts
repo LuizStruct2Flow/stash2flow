@@ -120,14 +120,39 @@ describe('FEATURE-001 — a push carrying a private value is refused', () => {
     })
   })
 
-  it('#8 a value under four characters is refused when the list is read, by line, without printing it', async () => {
+  it('#8 a value under four characters with a digit or a sign is refused when the list is read, by line, without printing it', async () => {
     await scenario('pv-short', async (s) => {
-      const { check } = await fixture(s, `${ACCOUNT}\nabc\n`)
+      const { check } = await fixture(s, `${ACCOUNT}\nab1\n`)
       const r = await check('HEAD')
       expect(r.code).toBe(1)
       expect(r.output).toContain('.private-values:2')
       expect(r.output).toContain('4 is the minimum')
-      expect(r.output).not.toContain('abc')
+      expect(r.output).not.toContain('ab1')
+      await s.fs.write('project/.private-values', `${ACCOUNT}\na-b\n`)
+      const signed = await check('HEAD')
+      expect(signed.code).toBe(1)
+      expect(signed.output).toContain('4 is the minimum')
+      expect(signed.output).not.toContain('a-b')
+    })
+  })
+
+  it('#8b a three-letter word is accepted and found as a whole word only; two letters are refused', async () => {
+    await scenario('pv-short-word', async (s) => {
+      const { repo, check } = await fixture(s, `${ACCOUNT}\nabc\n`)
+      await s.fs.write('project/notes.md', 'abcd and xabc and dabcd\n')
+      await repo.commitAll('inside longer words')
+      expect((await check('HEAD~1..HEAD')).code).toBe(0)
+      await s.fs.write('project/notes.md', 'with ABC here\n')
+      await repo.commitAll('the word itself')
+      const r = await check('HEAD~1..HEAD')
+      expect(r.code).toBe(1)
+      expect(r.output).toContain('notes.md:1')
+      expect(r.output).toContain('.private-values:2 (a***c)')
+      await s.fs.write('project/.private-values', `${ACCOUNT}\nab\n`)
+      const two = await check('HEAD')
+      expect(two.code).toBe(1)
+      expect(two.output).toContain('.private-values:2')
+      expect(two.output).toContain('3 is the minimum')
     })
   })
 

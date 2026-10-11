@@ -29,8 +29,10 @@
 // checkout that has no list by design (a contributor's clone, CI) is not
 // blocked; the gate renders it as a skip, which on the founder's machine is the
 // fault to notice. A list that exists but holds no value is refused: the
-// machine meant to check and checked nothing. A value under four characters is
-// refused when the list is read, because it would match everywhere.
+// machine meant to check and checked nothing. A value too short is refused when
+// the list is read, because it would match everywhere: under four characters,
+// or under three for a value made of letters only, which is matched as a whole
+// word and so fires only on that word (a short first name, an abbreviation).
 //
 // Usage:
 //   node scripts/private-values-check.mts [--repo DIR] --range SELECTOR [--range SELECTOR …]
@@ -44,6 +46,7 @@ import { join } from 'node:path'
 
 const LIST = '.private-values'
 const MIN_LENGTH = 4
+const MIN_LENGTH_WORD = 3 // letters only: matched as a whole word, so it does not fire everywhere
 
 interface Value {
   readonly line: number
@@ -91,15 +94,17 @@ function readList(repo: string): Value[] | null {
     .forEach((raw, i) => {
       const text = raw.trim()
       if (text === '' || text.startsWith('#')) return
-      if (text.length < MIN_LENGTH) {
+      const lettersOnly = /^\p{L}+$/u.test(text)
+      const min = lettersOnly ? MIN_LENGTH_WORD : MIN_LENGTH
+      if (text.length < min) {
         console.error(
           `private-values-check: ${LIST}:${i + 1} is ${text.length} character(s) long; ` +
-            `${MIN_LENGTH} is the minimum, a shorter value would match everywhere. Refused.`,
+            `${min} is the minimum for a value ${lettersOnly ? 'of letters only' : 'with digits or signs'}, ` +
+            `a shorter value would match everywhere. Refused.`,
         )
         process.exit(1)
       }
       const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const lettersOnly = /^\p{L}+$/u.test(text)
       const regex = lettersOnly
         ? new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'iu')
         : new RegExp(escaped, 'iu')

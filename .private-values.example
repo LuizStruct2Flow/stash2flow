@@ -4,8 +4,10 @@
 # when any of them appears in a tracked file, an added line or a commit message
 # (scripts/private-values-check.mts).
 #
-# One value per line, at least four characters. Letter case is ignored. A value
-# made of letters only matches whole words; anything else matches anywhere.
+# One value per line. Letter case is ignored. A value made of letters only
+# matches whole words and may be as short as three letters (a short first name,
+# an abbreviation); anything else matches anywhere and needs at least four
+# characters. A shorter value is refused: it would match everywhere.
 #
 # This file is the tracked template, with invented values. Copy it to
 # .private-values (untracked, gitignored) and replace them with the real ones.
