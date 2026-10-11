@@ -12,11 +12,15 @@
 // template with invented values.
 //
 // WHAT IS JUDGED, for every range the push publishes:
-//   (a) every tracked file as of the commit being pushed (the range's tip);
+//   (a) every tracked file as of the commit being pushed (the range's tip) —
+//       its CONTENT, and its PATH (every folder and file name on it);
 //   (b) the message of every commit in the range;
 //   (c) every line a commit in the range ADDED — a value written in one commit
 //       and removed in the next is absent from the tip and still lands in the
-//       public history, so (a) alone would let it through.
+//       public history, so (a) alone would let it through;
+//   (d) every path a commit in the range ADDS or RENAMES — both names of a
+//       rename, for the same reason as (c): a private name renamed away before
+//       the tip is absent from (a) and still lands in the public history.
 // Letter case is ignored. A value made of letters only matches whole words
 // (so a name does not fire inside a longer word); anything else (an address,
 // a path, a title with spaces) matches as a substring.
@@ -37,7 +41,9 @@
 //
 // WHAT IS PRINTED NEVER INCLUDES A VALUE IN FULL: gate output ends up in logs
 // and feeds. A hit names the file and line, or the commit, plus the value's
-// line in the list and a mask (first and last character).
+// line in the list and a mask (first and last character). A hit in a PATH
+// prints the path with the value masked out of it — there the path is itself
+// the carrier, so printing it whole would print the value.
 //
 // A MISSING LIST IS NOT A PASS. It is reported as NOT CHECKED and exits 0, so a
 // checkout that has no list by design (a contributor's clone, CI) is not
@@ -197,10 +203,27 @@ function main(): void {
       else hits.add(`${where}  ${LIST}:${v.line} (${mask(v.text)})`)
     }
   }
+  /**
+   * Judge a path the way content is judged. The label takes the path with the
+   * matched value masked out, because here the path IS the carrier: printing
+   * it whole would print the value.
+   */
+  const judgePath = (label: (shown: string) => string, path: string, isExempt = false) => {
+    for (const v of values) {
+      if (!v.regex.test(path)) continue
+      if (isExempt) {
+        suppressed++
+        continue
+      }
+      const shown = path.replace(new RegExp(v.regex.source, `${v.regex.flags}g`), mask(v.text))
+      hits.add(`${label(shown)}  ${LIST}:${v.line} (${mask(v.text)})`)
+    }
+  }
   let files = 0
   const exemptFiles = new Set<string>()
   let commits = 0
   let added = 0
+  let historyPaths = 0
 
   for (const range of ranges) {
     const tip = tipOf(range)
@@ -212,6 +235,7 @@ function main(): void {
     const blobs = git(repo, ['cat-file', '--batch'], paths.map((p) => `${tip}:${p}\n`).join(''))
     let offset = 0
     for (const path of paths) {
+      judgePath((shown) => `${shown} (path, at ${short})`, path, exempt(path))
       const headerEnd = blobs.indexOf(0x0a, offset)
       const header = blobs.subarray(offset, headerEnd).toString('utf8').split(' ')
       if (header[1] === 'missing') {
@@ -255,9 +279,39 @@ function main(): void {
         }
       }
     }
+
+    // (d) every path a commit in the range adds or renames. --format=%x00%H%x00
+    // gives the sha its own NUL-terminated token, so the -z name-status stream
+    // parses positionally: a status token is followed by its path token(s),
+    // which are therefore never mistaken for a status or a sha. Git glues one
+    // '\n' onto each commit's first status token; it is stripped there and only
+    // there, so a path may itself start with a newline and stay intact.
+    let sha = ''
+    const tokens = git(repo, ['log', '-z', '--format=%x00%H%x00', '-M', '--name-status', '--diff-filter=AR', range])
+      .toString('utf8')
+      .split('\0')
+    for (let i = 0; i < tokens.length; i++) {
+      const raw = tokens[i]
+      const token = raw.startsWith('\n') ? raw.slice(1) : raw
+      if (token.trim() === '') continue
+      if (/^[0-9a-f]{40}$/.test(token)) {
+        sha = token
+        continue
+      }
+      if (token === 'A' || /^R\d+$/.test(token)) {
+        const names = token === 'A' ? [tokens[++i] ?? ''] : [tokens[++i] ?? '', tokens[++i] ?? '']
+        for (const name of names) {
+          historyPaths++
+          judgePath((shown) => `commit ${sha.slice(0, 7)} path ${shown}`, name, exempt(name))
+        }
+        continue
+      }
+      console.error(`private-values-check: cannot parse the name-status stream near ${JSON.stringify(raw)}. Refusing to read nothing as clean.`)
+      process.exit(1)
+    }
   }
 
-  const tally = `checked ${files} tracked file(s) at the tip, ${commits} commit message(s) and ${added} added line(s) in ${ranges.join(' ')}`
+  const tally = `checked ${files} tracked file(s) (contents and paths) at the tip, ${commits} commit message(s), ${added} added line(s) and ${historyPaths} added-or-renamed path(s) in ${ranges.join(' ')}`
   const exemption =
     typeof managed === 'string'
       ? `0 file(s) exempt as blueprint-managed: the managed set could not be determined (${managed})`

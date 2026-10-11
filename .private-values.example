@@ -1,7 +1,8 @@
 # The values that must never reach the public repository: account addresses,
 # personal names, names of family members and companies, folder names from the
 # sources, machine names, real document titles. The pre-push gate refuses a push
-# when any of them appears in a tracked file, an added line or a commit message
+# when any of them appears in a tracked file's content or path, in a path a
+# commit adds or renames, in an added line or in a commit message
 # (scripts/private-values-check.mts).
 #
 # One value per line. Letter case is ignored. A value made of letters only

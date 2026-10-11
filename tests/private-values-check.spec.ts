@@ -20,6 +20,10 @@ import { REPO_ROOT, scenario, type Scenario } from './harness/index.js'
 import type { FixtureRepo } from './harness/fixture-repo.js'
 
 const SCRIPT = join(REPO_ROOT, 'scripts/private-values-check.mts')
+// The default target is always the real hook. The override exists so the
+// commented-out-stage mutation from the code review can be demonstrated
+// against a temporary copy without ever touching the real file.
+const HOOK = process.env.PV_CHECK_HOOK ?? join(REPO_ROOT, '.githooks/pre-push-project')
 
 const ACCOUNT = 'quibblewick@example.test'
 const NAME = 'Mablewood'
@@ -157,7 +161,7 @@ describe('FEATURE-001 — a push carrying a private value is refused', () => {
       const r = await check('HEAD~1..HEAD')
       expect(r.code).toBe(0)
       expect(r.output).toContain('PASS')
-      expect(r.output).toContain('checked 2 tracked file(s) at the tip, 1 commit message(s) and 1 added line(s)')
+      expect(r.output).toContain('checked 2 tracked file(s) (contents and paths) at the tip, 1 commit message(s), 1 added line(s) and 0 added-or-renamed path(s)')
     })
   })
 
@@ -241,11 +245,124 @@ describe('FEATURE-001 — a push carrying a private value is refused', () => {
     })
   })
 
-  it('#10 the gate wires the stage after the blueprint marker, and skips with a reason without a list', async () => {
-    const hook = await readFile(join(REPO_ROOT, '.githooks/pre-push-project'), 'utf8')
-    const own = hook.split('# BLUEPRINT:END')[1] ?? ''
-    expect(own).toContain('pipe_stage "private values · FEATURE-001" _st_private_values')
-    expect(own).toContain('scripts/private-values-check.mts')
-    expect(own).toMatch(/pipe_skip "private values · FEATURE-001" "[^"]*NOT CHECKED/)
+  it('#10 the gate stage really runs: the hook is exercised, and commenting the stage out is caught', async () => {
+    await scenario('pv-gate-wiring', async (s) => {
+      const hook = await readFile(HOOK, 'utf8')
+      // The stage must live in the project-owned region, after the blueprint marker.
+      const own = hook.split('# BLUEPRINT:END')[1] ?? ''
+      expect(own).toContain('private values · FEATURE-001')
+
+      // Shims stand in for the gate machinery (the renderer, push_log_opts,
+      // node). What is proven here is not their behaviour but the stage's:
+      // sourcing the hook must schedule the stage, and running the stage must
+      // invoke the check — which a raw-text search cannot see, because a
+      // commented-out pipe_stage line still contains the string.
+      const driver = await s.fs.write(
+        'gate/driver.sh',
+        [
+          'pipe_stage() { echo "STAGE:$1"; "$2"; }',
+          'pipe_skip() { echo "SKIP:$1 :: $2"; }',
+          'push_log_opts() { echo "HEAD"; }',
+          'node() { echo "NODE:$*"; }',
+          'BP_CODE_ROOT="$1"',
+          '. "$BP_CODE_ROOT/pre-push-project"',
+          '',
+        ].join('\n'),
+      )
+      const runHook = (dir: string) => s.run('sh', [driver, dir], { cwd: dir })
+
+      const live = await s.fs.mkdirp('gate/live')
+      await s.fs.write('gate/live/pre-push-project', hook)
+      await s.fs.write('gate/live/.private-values', 'present so the stage is armed\n')
+      const armed = await runHook(live)
+      expect(armed.code).toBe(0)
+      expect(armed.output).toContain('STAGE:private values · FEATURE-001')
+      expect(armed.output).toMatch(/NODE:.*scripts\/private-values-check\.mts --repo .* --range HEAD/)
+
+      await s.fs.rm('gate/live/.private-values')
+      const noList = await runHook(live)
+      expect(noList.code).toBe(0)
+      expect(noList.output).not.toContain('STAGE:private values · FEATURE-001')
+      expect(noList.output).toContain('SKIP:private values · FEATURE-001')
+      expect(noList.output).toContain('NOT CHECKED')
+
+      // The mutation the review predicted: the stage commented out. The
+      // exercise must lose it — the raw-text assertions above would still pass.
+      const muted = hook.replace(
+        'pipe_stage "private values · FEATURE-001" _st_private_values',
+        '# pipe_stage "private values · FEATURE-001" _st_private_values',
+      )
+      expect(muted).not.toBe(hook)
+      const mutedDir = await s.fs.mkdirp('gate/muted')
+      await s.fs.write('gate/muted/pre-push-project', muted)
+      await s.fs.write('gate/muted/.private-values', 'present so the stage is armed\n')
+      const dead = await runHook(mutedDir)
+      expect(dead.output).not.toContain('STAGE:private values · FEATURE-001')
+      expect(dead.output).not.toMatch(/NODE:.*private-values-check/)
+    })
+  })
+
+  it('#14 a private value as a folder name is refused, and the printed path masks the value', async () => {
+    await scenario('pv-path-folder', async (s) => {
+      const { repo, check } = await fixture(s)
+      await s.fs.write(`project/${NAME}/notes.md`, 'nothing personal here\n')
+      await repo.commitAll('add a folder')
+      const r = await check('HEAD~1..HEAD')
+      expect(r.code).toBe(1)
+      expect(r.output).toContain('M***d/notes.md')
+      expect(r.output).not.toContain(NAME)
+    })
+  })
+
+  it('#15 a private value as a file name is refused', async () => {
+    await scenario('pv-path-file', async (s) => {
+      const { repo, check } = await fixture(s)
+      await s.fs.write(`project/docs/${NAME}.md`, 'nothing personal here\n')
+      await repo.commitAll('add a document')
+      const r = await check('HEAD~1..HEAD')
+      expect(r.code).toBe(1)
+      expect(r.output).toContain('docs/M***d.md')
+      expect(r.output).not.toContain(NAME)
+    })
+  })
+
+  it('#16 a value inside a longer word of a path is not a hit', async () => {
+    await scenario('pv-path-longer-word', async (s) => {
+      const { repo, check } = await fixture(s)
+      await s.fs.write(`project/${NAME}ian/notes.md`, 'nothing personal here\n')
+      await s.fs.write(`project/docs/un${NAME}.md`, 'nothing personal here\n')
+      await repo.commitAll('longer words in paths')
+      const r = await check('HEAD~1..HEAD')
+      expect(r.code).toBe(0)
+      expect(r.output).toContain('2 added-or-renamed path(s)')
+    })
+  })
+
+  it('#17 a rename to a private name is refused: the new name is in the history', async () => {
+    await scenario('pv-path-rename', async (s) => {
+      const { repo, check } = await fixture(s)
+      await s.fs.write('project/plain.md', 'nothing personal here\n')
+      await repo.commitAll('a plain file')
+      const mv = await repo.git(['mv', 'plain.md', `${NAME}.md`])
+      expect(mv.code).toBe(0)
+      await repo.commitAll('rename it')
+      const r = await check('HEAD~1..HEAD')
+      expect(r.code).toBe(1)
+      expect(r.output).toContain('M***d.md')
+      expect(r.output).not.toContain(NAME)
+    })
+  })
+
+  it('#18 a path in the blueprint-managed set is exempt exactly as its content is', async () => {
+    await scenario('pv-path-managed', async (s) => {
+      const { repo } = await fixture(s)
+      const check = await withBlueprint(s, repo, [`${NAME}/shipped.txt`])
+      await s.fs.write('project/notes.md', 'nothing personal here\nstill nothing\n')
+      await repo.commitAll('a clean line')
+      const r = await check('HEAD~1..HEAD')
+      expect(r.code).toBe(0)
+      expect(r.output).toContain('1 file(s) exempt as blueprint-managed, 1 hit(s) in them suppressed')
+      expect(r.output).not.toContain(NAME)
+    })
   })
 })
