@@ -7,7 +7,7 @@ import {
   signInAgain,
 } from '../../src/application/credentials.ts'
 import { notBuilt } from '../support/not-built.ts'
-import { keepSourceWithCredential, resetSlice2, slice2 } from './slice-2.ts'
+import { keepSourceWithCredential, resetSlice2, runCurrentSource, slice2 } from './slice-2.ts'
 
 let listed: Awaited<ReturnType<typeof listSources>> = []
 let refused = false
@@ -36,8 +36,10 @@ Given(
         value: state === 'missing' ? '' : `credential-${index}`,
         state,
         account: `user${index}@example.com`,
-        lastUsed: '2026-01-01',
       })
+      // A run uses the credential of each source whose credential it can use.
+      slice2.source = { id, location: 'gdrive', account: `user${index}@example.com` }
+      await runCurrentSource()
     }
   },
 )
@@ -49,7 +51,11 @@ Then('every source is listed with the state of its credential and when it was la
     listed.map((source) => source.credentialState),
     ['valid', 'expires on a date', 'expired', 'missing'],
   )
-  assert.ok(listed.every((source) => source.lastUsed === '2026-01-01'))
+  // Only a run that started used its credential.
+  assert.deepEqual(
+    listed.map((source) => source.lastUsed),
+    [slice2.clock.now(), slice2.clock.now(), undefined, undefined],
+  )
 })
 
 // Printing is owned by the command-line and log adapters, not the core.

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import type { Asset } from '../domain/asset.ts'
 import { FakeClock } from '../fakes/fake-clock.ts'
 import { FakeFetching } from '../fakes/fake-fetching.ts'
 import { FakeFileReading } from '../fakes/fake-file-reading.ts'
@@ -11,19 +12,9 @@ import { FakeStash } from '../fakes/fake-stash.ts'
 import { FakeTokenStore } from '../fakes/fake-token-store.ts'
 import { runSource } from './run.ts'
 
-test('a first run reports total size before fetching, keeps local copies and records the baseline', async () => {
-  const fetching = new FakeFetching()
-  fetching.totalSize = 5
-  fetching.assetsToFetch = [
-    {
-      sourceId: 'source-1',
-      sourceAssetId: 'asset-1',
-      name: 'one.pdf',
-      size: 5,
-      sha256: 'sha-1',
-      bytes: new Uint8Array([1]),
-    },
-  ]
+const limits = { pageLimit: 10, sizeLimit: 100 }
+
+async function world(assets: Asset[] = []) {
   const index = new FakeIndex()
   await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'one@example.com' })
   const tokenStore = new FakeTokenStore()
@@ -32,70 +23,91 @@ test('a first run reports total size before fetching, keeps local copies and rec
     state: 'valid',
     account: 'one@example.com',
   })
-  const stash = new FakeStash()
-  const ledger = new FakeLedger()
-  const result = await runSource({
-    sourceId: 'source-1',
-    fetching,
-    ledger,
+  const fetching = new FakeFetching()
+  fetching.assetsToFetch = assets
+  return {
     index,
-    stash,
     tokenStore,
+    fetching,
+    ledger: new FakeLedger(index),
+    stash: new FakeStash(),
     signIn: new FakeSignIn(),
     fileReading: new FakeFileReading(),
     ocr: new FakeOcr(),
     clock: new FakeClock(),
-  })
-  assert.deepEqual(fetching.calls.slice(0, 2), ['totalSize', 'fetch'])
+    limits,
+  }
+}
+
+const pdf = (extra: Partial<Asset> = {}): Asset => ({
+  sourceId: 'source-1',
+  sourceAssetId: 'asset-1',
+  name: 'one.pdf',
+  size: 1,
+  sha256: 'sha-1',
+  ext: 'pdf',
+  bytes: new Uint8Array([1]),
+  ...extra,
+})
+
+test('a first run reports total size before fetching, keeps local copies and records the baseline', async () => {
+  const w = await world([pdf({ size: 5, ext: 'unknown' })])
+  w.fetching.totalSize = 5
+  const result = await runSource({ sourceId: 'source-1', ...w })
+  assert.deepEqual(w.fetching.calls, ['totalSize', 'fetch'])
   assert.equal(result.started, true)
   if (!result.started) return
   assert.deepEqual(result.baseline, { assets: 1, bytes: 5 })
-  assert.equal(stash.localCopies.size, 1)
-  assert.equal(fetching.writes, 0)
+  assert.equal(w.stash.localCopies.size, 1)
+})
+
+test('a run hands asset records without bytes to the ledger, which puts them on the index', async () => {
+  const w = await world([pdf({ ext: 'unknown' })])
+  await runSource({ sourceId: 'source-1', ...w })
+  const [kept] = await w.index.assets()
+  assert.equal(kept?.sourceAssetId, 'asset-1')
+  assert.equal('bytes' in (kept ?? {}), false)
+})
+
+test('a run refuses an asset beyond the page limit the user set', async () => {
+  const w = await world([pdf({ pages: 11 })])
+  const result = await runSource({ sourceId: 'source-1', ...w })
+  assert.equal(result.started, true)
+  assert.equal(w.fileReading.assets.length, 0)
+  assert.equal((await w.index.assets()).length, 0)
+})
+
+test('a run refuses an asset beyond the size limit the user set', async () => {
+  const w = await world([pdf({ size: 101 })])
+  await runSource({ sourceId: 'source-1', ...w })
+  assert.equal(w.fileReading.assets.length, 0)
+})
+
+test('a run records when the credential was last used', async () => {
+  const w = await world()
+  w.clock.value = '2026-03-04T05:06:07.000Z'
+  await runSource({ sourceId: 'source-1', ...w })
+  assert.equal((await w.tokenStore.credentialFor('source-1')).lastUsed, '2026-03-04T05:06:07.000Z')
 })
 
 test('a run does not start for a missing credential', async () => {
-  const index = new FakeIndex()
-  await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'one@example.com' })
-  const result = await runSource({
-    sourceId: 'source-1',
-    fetching: new FakeFetching(),
-    ledger: new FakeLedger(),
-    index,
-    stash: new FakeStash(),
-    tokenStore: new FakeTokenStore(),
-    signIn: new FakeSignIn(),
-    fileReading: new FakeFileReading(),
-    ocr: new FakeOcr(),
-    clock: new FakeClock(),
-  })
+  const w = await world()
+  w.tokenStore = new FakeTokenStore()
+  const result = await runSource({ sourceId: 'source-1', ...w })
   assert.deepEqual(result, { started: false, needsUserToSignInAgain: true })
+  assert.equal((await w.tokenStore.credentialFor('source-1')).lastUsed, undefined)
 })
 
 test('a run renews an expired credential without the user', async () => {
-  const index = new FakeIndex()
-  await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'one@example.com' })
-  const tokenStore = new FakeTokenStore()
-  await tokenStore.keepCredential('source-1', {
+  const w = await world()
+  await w.tokenStore.keepCredential('source-1', {
     value: 'expired',
     state: 'expired',
     account: 'one@example.com',
     canRenewWithoutUser: true,
   })
-  const signIn = new FakeSignIn()
-  signIn.nextRenewedCredential = { value: 'renewed', state: 'valid', account: 'one@example.com' }
-  const result = await runSource({
-    sourceId: 'source-1',
-    fetching: new FakeFetching(),
-    ledger: new FakeLedger(),
-    index,
-    stash: new FakeStash(),
-    tokenStore,
-    signIn,
-    fileReading: new FakeFileReading(),
-    ocr: new FakeOcr(),
-    clock: new FakeClock(),
-  })
+  w.signIn.nextRenewedCredential = { value: 'renewed', state: 'valid', account: 'one@example.com' }
+  const result = await runSource({ sourceId: 'source-1', ...w })
   assert.equal(result.started, true)
-  assert.equal((await tokenStore.credentialFor('source-1')).value, 'renewed')
+  assert.equal((await w.tokenStore.credentialFor('source-1')).value, 'renewed')
 })

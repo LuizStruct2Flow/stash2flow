@@ -5,8 +5,8 @@ import type { Fetching } from '../ports/fetching.ts'
 export class FakeFetching implements Fetching {
   totalSize = 0
   assetsToFetch: Asset[] = []
+  /** Every call the run makes; the port has reading operations only. */
   calls: string[] = []
-  writes = 0
 
   async sourceTotalSize(_source: Source): Promise<number> {
     this.calls.push('totalSize')

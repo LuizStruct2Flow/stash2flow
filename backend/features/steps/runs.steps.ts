@@ -53,7 +53,11 @@ Given('a source holding some assets', async () => {
     },
   ]
 })
-Then('nothing has been written to the source', () => assert.equal(slice2.fetching.writes, 0))
+// The Fetching port has reading operations only, and a run holds nothing but that port.
+// Were an operation that writes ever added, the fake would record it in `calls` and this fails.
+Then('nothing has been written to the source', () =>
+  assert.deepEqual(slice2.fetching.calls, ['totalSize', 'fetch']),
+)
 Given('a source that has never had a run', async () => {
   resetSlice2()
   await keepSourceWithCredential()
@@ -106,8 +110,12 @@ Given('the same bytes in two assets from two sources', () => {
   ]
 })
 When('a run of each source finishes', async () => {
-  for (const asset of slice2.assets)
-    if (asset.bytes) await slice2.stash.keep(asset.sha256, asset.bytes)
+  const all = slice2.assets
+  for (const asset of all) {
+    await keepSourceWithCredential('valid', asset.sourceId)
+    slice2.assets = all.filter((other) => other.sourceId === asset.sourceId)
+    await runCurrentSource()
+  }
 })
 Then('the stash holds one local copy of those bytes', () =>
   assert.equal(slice2.stash.localCopies.size, 1),

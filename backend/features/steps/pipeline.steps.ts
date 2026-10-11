@@ -1,19 +1,8 @@
 import { Given, Then, When } from '@cucumber/cucumber'
 import assert from 'node:assert/strict'
-import { processAsset } from '../../src/application/process-asset.ts'
 import { search } from '../../src/application/search.ts'
 import { notBuilt } from '../support/not-built.ts'
-import { resetSlice2, slice2 } from './slice-2.ts'
-
-const keep = async (asset = slice2.assets[0]!) =>
-  processAsset({
-    asset,
-    fileReading: slice2.fileReading,
-    ocr: slice2.ocr,
-    index: slice2.index,
-    pageLimit: 10,
-    sizeLimit: 100,
-  })
+import { processCurrentAsset, resetSlice2, slice2 } from './slice-2.ts'
 
 Given('an asset that is a PDF with a text layer', () => {
   resetSlice2()
@@ -56,9 +45,7 @@ Given('an asset that is a PDF without a text layer', () => {
     sha256: 'sha-2',
   })
 })
-When('the assets go through the pipeline', async () => {
-  for (const asset of slice2.assets) await keep(asset)
-})
+When('the assets go through the pipeline', processCurrentAsset)
 Then('both assets get OCR', () => assert.equal(slice2.ocr.pages.length, 2))
 Given('a PDF of two pages in Portuguese without a text layer', () => {
   resetSlice2()
@@ -153,7 +140,10 @@ Then('only the name, size and hash of each asset are recorded', async () =>
 Then('the guardian never reads either asset', () =>
   assert.equal(slice2.fileReading.assets.length, 0),
 )
-Given('the user has set a limit of 10 pages', () => resetSlice2())
+Given('the user has set a limit of 10 pages', () => {
+  resetSlice2()
+  slice2.limits = { ...slice2.limits, pageLimit: 10 }
+})
 Given('an asset that is a PDF of 11 pages', () => {
   slice2.assets = [
     {

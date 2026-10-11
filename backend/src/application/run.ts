@@ -1,3 +1,4 @@
+import type { AssetRecord } from '../domain/asset.ts'
 import type { Baseline } from '../domain/source.ts'
 import type { Clock } from '../ports/clock.ts'
 import type { Fetching } from '../ports/fetching.ts'
@@ -21,6 +22,8 @@ interface RunSourceInput {
   fileReading: FileReading
   ocr: Ocr
   clock: Clock
+  /** What the user has set: an asset beyond either is not read. */
+  limits: { pageLimit: number; sizeLimit: number }
 }
 
 export async function runSource(
@@ -42,20 +45,25 @@ export async function runSource(
   if (credential.state === 'missing' || credential.state === 'expired') {
     return { started: false, needsUserToSignInAgain: true }
   }
+  await input.tokenStore.keepCredential(source.id, {
+    ...credential,
+    lastUsed: input.clock.now(),
+  })
   await input.ledger.startRun(source.id, input.clock.now())
   const totalSize = await input.fetching.sourceTotalSize(source)
   const assets = await input.fetching.fetch(source)
+  const records: AssetRecord[] = []
   for (const asset of assets) {
     if (asset.bytes) await input.stash.keep(asset.sha256, asset.bytes)
-    await processAsset({
+    const record = await processAsset({
       asset,
       fileReading: input.fileReading,
       ocr: input.ocr,
-      index: input.index,
-      pageLimit: Number.MAX_SAFE_INTEGER,
-      sizeLimit: Number.MAX_SAFE_INTEGER,
+      ...input.limits,
     })
+    if (record) records.push(record)
   }
+  await input.ledger.takeAssetRecords(records)
   const baseline = {
     assets: assets.length,
     bytes: assets.reduce((total, asset) => total + asset.size, 0),

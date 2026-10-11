@@ -16,6 +16,9 @@ export interface Asset {
   assetDateSource?: string
 }
 
+/** An asset without its bytes: what a run hands to the ledger. */
+export type AssetRecord = Omit<Asset, 'bytes'>
+
 export interface AssetDates {
   dateTaken?: string
   modificationTime?: string

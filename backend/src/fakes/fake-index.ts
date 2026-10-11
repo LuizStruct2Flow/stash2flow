@@ -1,4 +1,4 @@
-import type { Asset } from '../domain/asset.ts'
+import type { Asset, AssetRecord } from '../domain/asset.ts'
 import type { Baseline, Source } from '../domain/source.ts'
 import type { Index } from '../ports/index.ts'
 
@@ -16,7 +16,7 @@ export class FakeIndex implements Index {
   async sources(): Promise<Source[]> {
     return structuredClone([...this.keptSources.values()])
   }
-  async keepAsset(asset: Asset): Promise<void> {
+  async keepAsset(asset: AssetRecord): Promise<void> {
     this.keptAssets.set(`${asset.sourceId}:${asset.sourceAssetId}`, structuredClone(asset))
   }
   async assets(): Promise<Asset[]> {

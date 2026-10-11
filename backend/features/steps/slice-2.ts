@@ -1,6 +1,5 @@
 import type { Asset } from '../../src/domain/asset.ts'
 import type { Source } from '../../src/domain/source.ts'
-import { processAsset } from '../../src/application/process-asset.ts'
 import { runSource } from '../../src/application/run.ts'
 import { FakeClock } from '../../src/fakes/fake-clock.ts'
 import { FakeFetching } from '../../src/fakes/fake-fetching.ts'
@@ -13,10 +12,11 @@ import { FakeStash } from '../../src/fakes/fake-stash.ts'
 import { FakeTokenStore } from '../../src/fakes/fake-token-store.ts'
 
 export function newSlice2World() {
+  const index = new FakeIndex()
   return {
-    index: new FakeIndex(),
+    index,
     fetching: new FakeFetching(),
-    ledger: new FakeLedger(),
+    ledger: new FakeLedger(index),
     stash: new FakeStash(),
     tokenStore: new FakeTokenStore(),
     signIn: new FakeSignIn(),
@@ -25,6 +25,8 @@ export function newSlice2World() {
     clock: new FakeClock(),
     source: undefined as Source | undefined,
     assets: [] as Asset[],
+    /** Wide, so that only a scenario that sets a limit meets one. */
+    limits: { pageLimit: 1000, sizeLimit: 1_000_000 },
     runResult: undefined as Awaited<ReturnType<typeof runSource>> | undefined,
   }
 }
@@ -36,8 +38,9 @@ export function resetSlice2(): void {
 
 export async function keepSourceWithCredential(
   state: 'valid' | 'expires on a date' | 'expired' | 'missing' = 'valid',
+  id = 'source-1',
 ): Promise<void> {
-  slice2.source = { id: 'source-1', location: 'gdrive', account: 'user@example.com' }
+  slice2.source = { id, location: 'gdrive', account: 'user@example.com' }
   await slice2.index.keepSource(slice2.source)
   if (state !== 'missing')
     await slice2.tokenStore.keepCredential(slice2.source.id, {
@@ -61,18 +64,12 @@ export async function runCurrentSource(): Promise<void> {
     fileReading: slice2.fileReading,
     ocr: slice2.ocr,
     clock: slice2.clock,
+    limits: slice2.limits,
   })
 }
 
+/** The assets of the world go through the pipeline as a run of a source does it. */
 export async function processCurrentAsset(): Promise<void> {
-  const asset = slice2.assets[0]
-  if (!asset) throw new Error('The asset does not exist.')
-  await processAsset({
-    asset,
-    fileReading: slice2.fileReading,
-    ocr: slice2.ocr,
-    index: slice2.index,
-    pageLimit: 10,
-    sizeLimit: 100,
-  })
+  await keepSourceWithCredential()
+  await runCurrentSource()
 }
