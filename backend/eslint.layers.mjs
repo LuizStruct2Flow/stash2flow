@@ -30,7 +30,7 @@ const imports = (layers, { programs = false } = {}) => [
       : {
           paths: PROGRAMS.map((name) => ({
             name,
-            message: 'Only the iCloud Photos adapter starts a program.',
+            message: 'Only the iCloud Photos adapter and the guardian start a program.',
           })),
         }),
     patterns: layers.map((layer) => ({
@@ -73,10 +73,11 @@ export const layers = [
   ...layer('ports', ['application', 'adapters', 'entry', 'steps']),
   ...layer('application', ['adapters', 'entry', 'steps']),
   ...layer('fakes', ['application', 'adapters', 'entry', 'steps']),
-  // Adapters may import adapters; only the iCloud Photos adapter starts a program.
+  // Adapters may import adapters; only the iCloud Photos adapter and the guardian
+  // start a program (Tesseract, as the OCR engine, runs inside the guardian).
   ...layer('adapters', ['entry', 'steps']),
   block(
-    ['src/adapters/sources/icloud-photos/**/*.ts'],
+    ['src/adapters/sources/icloud-photos/**/*.ts', 'src/adapters/guardian/**/*.ts'],
     imports(['entry', 'steps', 'fakes'], { programs: true }),
   ),
   // The entry points wire the adapters.
