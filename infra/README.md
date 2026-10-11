@@ -12,5 +12,9 @@ It listens on loopback only (`127.0.0.1:5432`), not on the LAN.
 
 Init scripts run only on an empty data volume.
 
+CI uses the same image (`pgvector/pgvector:pg17`) as a service container and
+creates the same three extensions from `initdb/`; see
+`.github/workflows/backend-ci.yml`.
+
 **Before indexing real documents:** the data volume must sit on an encrypted
 disk (see [disk encryption](../docs/concept/infrastructure.md)).
