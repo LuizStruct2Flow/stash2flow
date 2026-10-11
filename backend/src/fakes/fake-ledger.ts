@@ -6,11 +6,13 @@ import type { Ledger } from '../ports/ledger.ts'
 export class FakeLedger implements Ledger {
   starts: string[] = []
   finishes: string[] = []
+  batches: AssetRecord[][] = []
   private readonly index: Index
   constructor(index: Index) {
     this.index = index
   }
   async takeAssetRecords(records: AssetRecord[]): Promise<void> {
+    this.batches.push(structuredClone(records))
     for (const record of records) await this.index.keepAsset(record)
   }
   async startRun(sourceId: string, _startedAt: string): Promise<void> {

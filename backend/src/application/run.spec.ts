@@ -61,12 +61,15 @@ test('a first run reports total size before fetching, keeps local copies and rec
   assert.equal(w.stash.localCopies.size, 1)
 })
 
-test('a run hands asset records without bytes to the ledger, which puts them on the index', async () => {
+test('a run hands asset records without bytes to the ledger and does not keep assets on the index itself', async () => {
   const w = await world([pdf({ ext: 'unknown' })])
+  w.ledger = new FakeLedger(new FakeIndex())
   await runSource({ sourceId: 'source-1', ...w })
-  const [kept] = await w.index.assets()
-  assert.equal(kept?.sourceAssetId, 'asset-1')
-  assert.equal('bytes' in (kept ?? {}), false)
+  assert.equal(w.ledger.batches.length, 1)
+  const [record] = w.ledger.batches[0] ?? []
+  assert.equal(record?.sourceAssetId, 'asset-1')
+  assert.equal('bytes' in (record ?? {}), false)
+  assert.deepEqual(await w.index.assets(), [])
 })
 
 test('a run refuses an asset beyond the page limit the user set', async () => {
