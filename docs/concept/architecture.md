@@ -50,7 +50,7 @@ No port is added before a slice of the
 | [Fetching](domain-language.md#fetching) | lists a [source](domain-language.md#source), reports changes since a [cursor](domain-language.md#cursor), brings the [bytes](domain-language.md#bytes) | Google Drive, OneDrive, a folder on a network storage device, Gmail, iCloud Drive (a folder), iCloud Photos (`osxphotos`); a fake | 2 |
 | [Ledger](domain-language.md#ledger) | narrow: all that a [run](domain-language.md#run) needs, see [one use-case, two programs](#one-use-case-two-programs) | onto the index ([server](domain-language.md#server)); an [API](domain-language.md#api) client ([collector](domain-language.md#collector)); a fake | 2; [cursor](domain-language.md#cursor) and [checkpoint](domain-language.md#checkpoint) in 3 |
 | Index | wide, [server](domain-language.md#server) only: [assets](domain-language.md#asset), [OCR text](domain-language.md#ocr-text), [embeddings](domain-language.md#embedding), [duplicate groups](domain-language.md#duplicate-group), [runs](domain-language.md#run), [completed steps](domain-language.md#completed-steps), whether an asset is [whitelisted](domain-language.md#whitelist) or [blacklisted](domain-language.md#blacklist) | PostgreSQL; an in-memory fake | 2 |
-| OCR | page image to text | the engine chosen in slice 1; a fake that replays fixtures | 2 |
+| OCR | page image to text | Tesseract, started by the [guardian](domain-language.md#guardian) inside its isolation, or a vision model at the local model server; which of the two is open: [open question: which models](open-questions.md#question-which-models); a fake that replays fixtures | 2 |
 | File reading | metadata, [phash](domain-language.md#phash), PDF [text layer](domain-language.md#text-layer) and page rendering, thumbnail; the text of an office document; for an [e-mail](domain-language.md#e-mail), its text and its [attachments](domain-language.md#attachment). Its adapters are the [guardian](domain-language.md#guardian)'s and run in isolation: [reading in isolation](#reading-in-isolation) | image, PDF and office document libraries; an e-mail parsing library in slice 5 | 2 |
 | [Stash](domain-language.md#stash) | keeps each [asset](domain-language.md#asset)'s [local copy](domain-language.md#local-copy), addressed by [sha256](domain-language.md#md5-and-sha256) | a directory on the [server](domain-language.md#server) | 2 |
 | Token store | keeps the [providers](domain-language.md#provider)' access tokens | an encrypted file on the [server](domain-language.md#server) | 2 |
@@ -122,10 +122,10 @@ deliberately crafted file that breaks a reading library then reaches nothing.
 
 | The [guardian](domain-language.md#guardian)'s reading | |
 |---|---|
-| What runs there | every adapter that opens an [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes) with a library: the file-reading adapters (images, PDFs, office documents, [e-mails](domain-language.md#e-mail)) and an OCR engine that runs inside the app's process |
+| What runs there | every adapter that opens an [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes) with a library: the file-reading adapters (images, PDFs, office documents, [e-mails](domain-language.md#e-mail)); and Tesseract, when it is the OCR engine, as a program the [guardian](domain-language.md#guardian) starts |
 | What goes in | the [bytes](domain-language.md#bytes) of one [asset](domain-language.md#asset) |
 | What comes out | text, pictures and metadata, as data |
-| What it cannot reach | the network; the token store; the index and the database behind it |
+| What it cannot reach | the network; the token store; the index and the database behind it; any file and any program it was not given |
 | What it never does | run a macro, a script or an executable found inside an [asset](domain-language.md#asset) |
 
 - **It holds for every [asset](domain-language.md#asset)**, also one from a
@@ -139,7 +139,14 @@ deliberately crafted file that breaks a reading library then reaches nothing.
   they stay outside.
 - **A model at the model server gets only what came out**: text, or a picture
   of a page. It never gets the [asset](domain-language.md#asset)'s
-  [bytes](domain-language.md#bytes).
+  [bytes](domain-language.md#bytes). The
+  [guardian](domain-language.md#guardian) has no network, so it cannot reach
+  the model server: when a vision model is the OCR engine, the guardian turns
+  a page into a picture, and a [worker](domain-language.md#worker), outside
+  the guardian, sends the picture to the model server.
+- **Tesseract, when it is the OCR engine, is started inside the isolation.**
+  It is a program the [guardian](domain-language.md#guardian) is given, and it
+  reaches no more than the guardian does.
 - **No remote image and no link of an [e-mail](domain-language.md#e-mail) is
   loaded.** The [guardian](domain-language.md#guardian) has no network to load
   it with.
@@ -149,10 +156,27 @@ deliberately crafted file that breaks a reading library then reaches nothing.
   [phash](domain-language.md#phash), the
   [guardian](domain-language.md#guardian) reads it, in the same isolation.
 
-With what the isolation is made, on the [server](domain-language.md#server)
-and on a Mac, is open:
-[open question: how reading is isolated](open-questions.md#question-how-reading-is-isolated).
-What it requires of the installation is in
+**On the [server](domain-language.md#server) the isolation is made with
+Bubblewrap (`bwrap`).** Each [asset](domain-language.md#asset) is read in a
+process of its own:
+
+| The process that reads an [asset](domain-language.md#asset) | |
+|---|---|
+| has no network | not the internet, not the local network, and not the [server](domain-language.md#server)'s own services, such as the database |
+| sees only the files it is given, and cannot change them | the `node` program, the system libraries, the app's package, the [bytes](domain-language.md#bytes) of the one [asset](domain-language.md#asset) from the [stash](domain-language.md#stash) and, when Tesseract is the OCR engine, Tesseract with its language data |
+| can start only the programs it is given | a program it was not given does not exist in there |
+| gets an empty environment | no address, no token and no password is in it |
+| hands back data | text, pictures and metadata, written to its output |
+
+The reading libraries run in there unchanged. Starting the process adds about
+2 milliseconds per [asset](domain-language.md#asset), measured with a made-up
+file, and it needs no administrator rights.
+
+**On a Mac the mechanism is not measured.** The tool the
+[server](domain-language.md#server) uses does not exist there:
+[open question: how reading is isolated on a Mac](open-questions.md#question-how-reading-is-isolated-on-a-mac).
+
+What the isolation requires of the installation is in
 [isolation of reading](infrastructure.md#isolation-of-reading). The rule it
 serves is
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
@@ -162,23 +186,32 @@ serves is
 `#dependency-rule`
 
 The inward-only rule is enforced by a lint that runs in the gate (the checks
-that run before every push), built on `eslint-plugin-boundaries` and restricted
-imports:
+that run before every push) and in
+[continuous integration](testing.md#continuous-integration). It is built on
+ESLint's own rules for restricted imports and restricted syntax, with no
+plugin, and its rules are in `backend/eslint.layers.mjs`:
 
 | Rule | Why |
 |---|---|
-| Domain imports only domain: no Node built-ins, no packages | Otherwise "no input or output" is unenforced. |
+| Domain imports only domain: no Node built-ins, no packages. Only its unit tests may import the test runner | Otherwise "no input or output" is unenforced. |
 | Application imports domain and ports; ports import domain | Inward only. |
-| Adapters are imported only by the two entry points | |
-| Step definitions of the specifications import application, ports and fakes; real adapters only in the marked integration subset | Test code is under the same rule. |
-| Code that starts an external program is allowed in one place only: the iCloud Photos adapter | `osxphotos` is a command-line program, so an import rule cannot hold it. |
-| The name of the photo library's package appears in no string of the app's code | The photo library is never read directly. |
+| Adapters are imported only by the two entry points and by other adapters | |
+| A fake is imported only by a unit test and by a step definition | A fake never reaches the running app. |
+| Step definitions of the specifications import application, ports and fakes; real adapters only in an integration step file, named `*.integration.steps.ts` | Test code is under the same rule. |
+| Code that starts an external program is allowed in two places only: the iCloud Photos adapter and the [guardian](domain-language.md#guardian) | `osxphotos` is a command-line program. Tesseract, when it is the OCR engine, is one too, and the guardian starts it inside its isolation: [reading in isolation](#reading-in-isolation). |
+| The name of the photo library's package appears in no string of the app's code | The photo library is never opened directly. |
 
-**Proven to bite:** the lint lands together with one rejected example per row.
+**Proven to bite:** `backend/lint-fixtures/` holds one rejected example per
+row, with accepted examples beside them. A test in the gate fails when a
+rejected example is accepted or an accepted one is rejected.
 
-**What the lint cannot see:** a path built while the program runs. The iCloud
-Photos adapter's contract test, on recorded `osxphotos` output, is the second
-check.
+**What the lint cannot see:**
+
+- A path built while the program runs. The iCloud Photos adapter's contract
+  test, on recorded `osxphotos` output, is the second check.
+- Which program the [guardian](domain-language.md#guardian) starts. The
+  isolation holds that: a program the guardian was not given does not exist
+  where it runs.
 
 ## Where models run
 
@@ -186,8 +219,8 @@ check.
 
 | Model for | Runs | Configured by |
 |---|---|---|
-| OCR | Inside the app's process (Tesseract, or a model through ONNX Runtime for Node). If the benchmark picks a local vision model instead: at the local model server. | model name |
-| Text embedding | Inside the app's process (`@huggingface/transformers`) | model name |
+| OCR | Tesseract: a program the [guardian](domain-language.md#guardian) starts inside its isolation. A vision model: at the local model server, which gets the picture of a page from a [worker](domain-language.md#worker). Which of the two is open: [open question: which models](open-questions.md#question-which-models). | which engine; for a vision model, the model name |
+| Text embedding | Inside the app's process. It is measured only at the local model server: [open question: which models](open-questions.md#question-which-models). | model name |
 | Image embedding, for photos and query text | Inside the app's process (`@huggingface/transformers`) | model name |
 | Description | At a local model server, over the OpenAI-compatible chat-completions HTTP API, which Ollama and the llama.cpp server speak. It needs text in and text out, and image in only if OCR goes this way. | address and model name |
 
@@ -206,19 +239,26 @@ Models are never called in the gate. See
 ```
 backend/
   package.json     ← the four scripts the gate calls: build, lint, format:check, test:coverage
+  eslint.layers.mjs ← the rules of the dependency rule
   src/
     domain/
     application/
     ports/
-    adapters/{sources,index,ocr,description,embeddings,api,cli,...}/
+    fakes/         ← the fakes of the ports, for tests only
+    adapters/{sources,guardian,index,ocr,description,embeddings,api,cli,...}/
+    adapters/sources/icloud-photos/  ← the iCloud Photos adapter; may start a program
+    adapters/guardian/               ← the guardian's adapters; may start a program
     server.ts      ← entry point: wires the server's adapters
     collector.ts   ← entry point: wires the Mac's adapters
-  features/        ← *.feature, steps/ (step definitions), support/ (runner, pending check)
-  spikes/          ← slice 1 benchmarks; not shipped, not counted for coverage
+  features/        ← *.feature, steps/ (step definitions), support/ (runner, pending check, the proofs of the dependency rule and of the isolation)
+  lint-fixtures/   ← accepted and rejected examples for the dependency rule
+  spikes/          ← slice 1 measurements; not shipped, not counted for coverage
 infra/             ← server setup as code, backup script
 ```
 
 - Unit tests sit next to their source as `*.spec.ts`.
+- A step file that needs a real adapter is named `*.integration.steps.ts`.
+  Every other step file, `*.steps.ts`, gets fakes only.
 - `features/` is inside `backend/` because the gate runs only `npm run …`
   there: `test:coverage` runs the unit tests and then the specifications.
 - The gate's check that every bug has a regression test looks in `backend/src`.
@@ -250,25 +290,42 @@ Everything is TypeScript. The [server](domain-language.md#server) and the
 gate works as shipped and the [phash](domain-language.md#phash) has one
 implementation.
 
-Two programs stay outside the package, installed separately and called by
-adapters: `osxphotos` (command-line, on the Mac) and the local model server.
+These programs stay outside the package, installed separately and called by
+adapters: `osxphotos` (command-line, on the Mac); the local model server; the
+tool that makes the isolation on the [server](domain-language.md#server); and
+Tesseract with its language data, when it is the OCR engine.
 
-## Libraries to prove
+## Reading libraries
 
-`#libraries-to-prove`
+`#reading-libraries`
 
-Candidates, to be proven in slice 1 before anything is built on them:
+What carries the reading work. The measurements were made on the
+[server](domain-language.md#server), on made-up files only; nothing is
+measured on a Mac.
+
+**Measured, and working:**
+
+| Need | What carries it | What the measurement showed | Not measured |
+|---|---|---|---|
+| Decoding a HEIC image | `heic-decode`, which brings its own decoder | It decodes a made-up HEIC image, also inside the isolation. `sharp`'s prebuilt binaries cannot decode HEIC. | speed on a full-size camera image; a Mac |
+| [phash](domain-language.md#phash) | one hash function in TypeScript, 64 bits, on pixels decoded by `sharp`, or by `heic-decode` for HEIC | A picture, its resized copy, its recompressed JPG copy and its HEIC copy gave the same value: distance 0. A different picture was 38 bits away. | where the [near](domain-language.md#near) threshold belongs: [open question: near threshold](open-questions.md#question-near-threshold) |
+| OCR | Tesseract 5 as a program, or a vision model at the local model server | Both gave the text of made-up pages in Portuguese, German and English with at least 99.7 % of the characters right. Tesseract did about 13,000 pages an hour, the vision model about 550. | which is better on real [scans](domain-language.md#scan): [open question: which models](open-questions.md#question-which-models) |
+| Text [embedding](domain-language.md#embedding) | `bge-m3`, at the local model server | About 84,000 texts an hour. English query words ranked a Portuguese document first, ahead of an English one about something else. | the same model inside the app's process |
+| Photo [embedding](domain-language.md#embedding) | CLIP ViT-B/32 through `@huggingface/transformers`, inside the app's process | About 295,000 small images an hour. | a full-size camera image, which costs more to decode |
+
+What these numbers mean for the first full [run](domain-language.md#run) is in
+[expected volume](infrastructure.md#expected-volume).
+
+The model files of the photo [embedding](domain-language.md#embedding) have to
+be on the [server](domain-language.md#server) before the model is used. They
+are downloaded once; after that the model works with no network.
+
+**Candidates, not measured.** Each has to be proven before anything is built
+on it:
 
 | Need | Candidate | Known risk |
 |---|---|---|
 | PDF [text layer](domain-language.md#text-layer), page rendering | `mupdf` or `pdfjs-dist` | none known |
 | Text of an office document | none named yet | the library must take the text out without running a macro |
 | Photo metadata | `exifr` | none known |
-| [phash](domain-language.md#phash) | `sharp` plus one small hash function | HEIC is not in `sharp`'s prebuilt binaries; it needs a separate decoder, on Linux and on the Mac |
-| OCR | as in [where models run](#where-models-run); chosen by the benchmark | quality on poor Portuguese and German [scans](domain-language.md#scan) |
-| [Embeddings](domain-language.md#embedding) | as in [where models run](#where-models-run) | files per hour on the first full run, not measured |
 | iCloud Photos | `osxphotos` as a command-line program | must be installed on the Mac |
-
-Slice 1 has to prove the two doubts about TypeScript wrong: an OCR engine good
-enough on real [scans](domain-language.md#scan), and HEIC decoding on both
-machines.

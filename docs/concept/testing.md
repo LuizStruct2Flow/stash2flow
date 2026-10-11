@@ -96,6 +96,7 @@ twice, and an interruption between storing a batch and acknowledging it.
 | Unit tests (domain, application) | gate, CI | coverage of at least 90% on these two layers |
 | Adapter contract: PostgreSQL | gate if a local database is present, otherwise skipped out loud; always in CI | with the real extensions |
 | Adapter contract: provider APIs, `osxphotos` | before a release, on the machine | recorded responses in the gate |
+| Proof of the [guardian](domain-language.md#guardian)'s isolation | gate if the isolation tool is present, otherwise skipped out loud; always in CI | [continuous integration](#continuous-integration) |
 | Models (OCR, description, embeddings) | on the server only | never called in the gate |
 
 ## Continuous integration
@@ -103,8 +104,32 @@ twice, and an interruption between storing a batch and acknowledging it.
 `#continuous-integration`
 
 The workflow that ships with the project's framework runs no backend stage and
-has no database. Slice 1 adds a project-owned workflow that runs the four
-`backend/` scripts with a PostgreSQL service carrying the three extensions.
+has no database. The project has its own workflow for `backend/`. It runs on
+every push to the main branch and on every pull request, in this order:
+
+1. It starts a PostgreSQL service from the same image the
+   [server](domain-language.md#server)'s database uses, creates the three
+   extensions and checks that all three are present.
+2. It installs the tool that isolates reading, and stops with an error if the
+   tool cannot isolate there.
+3. It installs the packages and runs the four `backend/` scripts the gate
+   calls: build, lint, format check, and the tests with coverage.
+
+The lint includes the [dependency rule](architecture.md#dependency-rule). The
+tests include the proof of that rule, the specifications with the
+[pending check](#pending-check), and the proof of the
+[guardian](domain-language.md#guardian)'s isolation.
+
+**The proof of the [guardian](domain-language.md#guardian)'s isolation** needs
+the tool that makes the isolation
+([isolation of reading](infrastructure.md#isolation-of-reading)), so where it
+runs matters:
+
+| Where | What the proof does |
+|---|---|
+| The gate on the [server](domain-language.md#server) | It runs: the tool is installed there. |
+| The workflow | It runs: step 2 provides the tool. If the tool cannot isolate there, the workflow fails at step 2, so the proof cannot be skipped unnoticed. |
+| A machine without the tool | It does not fail. It states that it is skipped and that the isolation is not proven there. |
 
 ## Pinned stages
 

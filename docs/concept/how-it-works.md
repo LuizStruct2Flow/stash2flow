@@ -370,7 +370,8 @@ that takes text, pictures or metadata out of an
 [asset](domain-language.md#asset)'s [bytes](domain-language.md#bytes) (the
 [phash](domain-language.md#phash), the metadata, the text) is done by the
 guardian, with no network access and no access to the
-[providers](domain-language.md#provider)' access tokens or to the database.
+[providers](domain-language.md#provider)' access tokens or to the database. It
+sees only the files it is given and can start only the programs it is given.
 Nothing else in the app touches the inside of an asset. Nothing inside an asset
 is ever run: no macro, no script, no executable. This holds for every asset,
 also one from a [trusted](domain-language.md#trusted)
@@ -414,7 +415,8 @@ sets this for each source with real numbers.
 - No video gets OCR.
 
 Every step that uses a model uses a local one:
-[local models only](principles.md#local-models-only). Which models is open:
+[local models only](principles.md#local-models-only). Which OCR engine and
+which [description](domain-language.md#description) model is open:
 [open question: which models](open-questions.md#question-which-models).
 
 ## Steps added later
@@ -471,7 +473,8 @@ when [assets](domain-language.md#asset) are already indexed. So:
 
 - [Near](domain-language.md#near) is decided by the distance between two
   [phash](domain-language.md#phash) values, against a threshold that is
-  configurable.
+  configurable. Where the threshold belongs is open:
+  [open question: near threshold](open-questions.md#question-near-threshold).
 - Different photos are not grouped.
 - An [asset](domain-language.md#asset) is in one group only. Assets showing
   the same image are one group; it is [exact](domain-language.md#exact) when

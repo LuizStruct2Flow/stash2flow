@@ -33,21 +33,28 @@ body: the message's id plus "body".
 Background:
 [the app reads what it trusts, in isolation, and runs nothing](principles.md#the-app-reads-what-it-trusts-in-isolation-and-runs-nothing).
 
-### Question: how reading is isolated
+### Question: how reading is isolated on a Mac
 
-`#question-how-reading-is-isolated`
+`#question-how-reading-is-isolated-on-a-mac`
 
 **Question.** The [guardian](domain-language.md#guardian) reads an
-[asset](domain-language.md#asset) in isolation: it may reach neither the
-network, nor the [providers](domain-language.md#provider)' access tokens, nor
-the database. With what is that made, on the
-[server](domain-language.md#server) and on a Mac, where a
-[collector](domain-language.md#collector) works with files?
+[asset](domain-language.md#asset) in isolation: it has no network and gets
+only the files and the programs it is given, so it reaches neither the
+[providers](domain-language.md#provider)' access tokens nor the database. On
+the [server](domain-language.md#server) that is made and proven:
+[isolation of reading](infrastructure.md#isolation-of-reading). A
+[collector](domain-language.md#collector) works with files on a Mac, and the
+tool the server uses does not exist there. With what is the isolation made on
+a Mac? Nothing is measured there.
 
-**Recommendation.** Choose it in slice 1, together with the reading libraries,
-and prove it there with a test in which the guardian tries to reach the
-network and fails. No real [asset](domain-language.md#asset) is read before
-that test is green.
+**Recommendation.** Measure it on a Mac before the
+[collector](domain-language.md#collector) is built. The candidate is
+`sandbox-exec`, which macOS ships but marks as deprecated, with a profile that
+denies the network and every file outside those given. To measure: whether it
+works on the current macOS, whether it also cuts off the Mac's own services,
+and what it adds per [asset](domain-language.md#asset). No asset is read on a
+Mac before a test in which the [guardian](domain-language.md#guardian) tries
+to reach the network there, and fails, is green.
 
 ## Kept and trash
 
@@ -101,6 +108,22 @@ acceptable?
 happens, [near](domain-language.md#near) groups are limited to images and PDFs
 match only exactly.
 
+### Question: near threshold
+
+`#question-near-threshold`
+
+**Question.** [Near](domain-language.md#near) is decided by the distance
+between two [phash](domain-language.md#phash) values, against a threshold.
+Where does the threshold belong? On made-up pictures, a picture and its
+resized, recompressed and HEIC copies were at distance 0, and a different
+picture was 38 of 64 bits away. That shows the same picture gets the same
+phash whichever library decodes it. It does not show where real photos
+separate.
+
+**Recommendation.** Start at 10, which lies well inside that gap, and set it
+on real photos on the [server](domain-language.md#server) when
+[duplicates](domain-language.md#duplicate) are built. It stays configurable.
+
 ### Question: moving non-keepers
 
 `#question-moving-non-keepers`
@@ -121,16 +144,31 @@ Background: [pipeline steps](how-it-works.md#pipeline-steps).
 
 `#question-which-models`
 
-**Question.** Which OCR engine, which
-[description](domain-language.md#description) model and which
-[embedding](domain-language.md#embedding) models?
+**Question.** Which OCR engine: Tesseract, or a vision model at the model
+server? Which [description](domain-language.md#description) model? And does
+the text [embedding](domain-language.md#embedding) model run at the model
+server or inside the app's process?
 
-**Recommendation.** Benchmark first. Slice 1 picks the OCR engine on a sample
-of real [scans](domain-language.md#scan) and measures
-files per hour for OCR and both
-[embeddings](domain-language.md#embedding). The description model is picked the
-same way when descriptions are built. Candidates must run on the
-[server](domain-language.md#server)'s hardware.
+What is known, measured on made-up files only
+([reading libraries](architecture.md#reading-libraries)):
+
+- Both OCR engines gave the right text of made-up pages. Tesseract did about
+  13,000 pages an hour, the vision model about 550. Made-up pages are clean,
+  so they cannot show which engine is better on a real
+  [scan](domain-language.md#scan).
+- The [embedding](domain-language.md#embedding) models work and are fast
+  enough. The one for text was measured at the model server only.
+
+**Recommendation.** Compare the two OCR engines on a sample of real
+[scans](domain-language.md#scan) on the [server](domain-language.md#server),
+once its disk is encrypted
+([open question: disk encryption](#question-disk-encryption)). Take Tesseract
+unless the vision model is clearly better there: Tesseract is more than 20
+times faster and runs inside the [guardian](domain-language.md#guardian)'s
+isolation. Run the text [embedding](domain-language.md#embedding) model at the
+model server, where it is measured. Pick the
+[description](domain-language.md#description) model by a measurement too, when
+descriptions are built.
 
 ## Local copies
 

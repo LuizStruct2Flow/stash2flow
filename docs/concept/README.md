@@ -20,9 +20,9 @@ is listed at the end of this page.
 | [principles.md](principles.md) | The rules that hold everywhere: nothing deleted without a go and the quarantine, the user decides, privacy, deterministic code first, the guardian reading what is trusted in isolation and running nothing, local copies, open source. |
 | [sources.md](sources.md) | Where files come from: sources, accounts, the Mac collector, who is trusted, the three states of a sender, and how each e-mail is judged by what it is. |
 | [how-it-works.md](how-it-works.md) | What happens to a file: runs, whitelisted and blacklisted assets, the pipeline steps, duplicates, how assets are organized and found, search, the duplicate report. |
-| [architecture.md](architecture.md) | How the code is organized: layers, ports and adapters, where models run, the language choice. |
+| [architecture.md](architecture.md) | How the code is organized: layers, ports and adapters, reading in isolation, the dependency rule, where models run, the language choice, the reading libraries. |
 | [testing.md](testing.md) | Specifications first and why, the test layers, fixtures, the draft scenario titles of the index, and the scenario titles of clean-up. |
-| [infrastructure.md](infrastructure.md) | The server, the database, the model server, backup, disk encryption, authentication. |
+| [infrastructure.md](infrastructure.md) | The server, the expected volume, the database, the model server, backup, disk encryption, authentication, the isolation of reading. |
 | [open-questions.md](open-questions.md) | Everything still waiting for the founder's ruling. The one place to rule on things. |
 
 The delivery plan of the first item, the index, is separate:
@@ -101,7 +101,6 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#language-choice](architecture.md#language-choice)
 - [#language-of-the-app](domain-language.md#language-of-the-app)
 - [#ledger](domain-language.md#ledger)
-- [#libraries-to-prove](architecture.md#libraries-to-prove)
 - [#local-copy](domain-language.md#local-copy)
 - [#local-models-only](principles.md#local-models-only)
 - [#location](domain-language.md#location)
@@ -149,10 +148,11 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#question-frontier-model-for-the-taxonomy](open-questions.md#question-frontier-model-for-the-taxonomy)
 - [#question-how-an-asset-gets-its-context](open-questions.md#question-how-an-asset-gets-its-context)
 - [#question-how-long-a-sign-in-stays-valid](open-questions.md#question-how-long-a-sign-in-stays-valid)
-- [#question-how-reading-is-isolated](open-questions.md#question-how-reading-is-isolated)
+- [#question-how-reading-is-isolated-on-a-mac](open-questions.md#question-how-reading-is-isolated-on-a-mac)
 - [#question-local-copy-of-a-file-that-is-not-read](open-questions.md#question-local-copy-of-a-file-that-is-not-read)
 - [#question-moving-non-keepers](open-questions.md#question-moving-non-keepers)
 - [#question-near-matching-pdfs](open-questions.md#question-near-matching-pdfs)
+- [#question-near-threshold](open-questions.md#question-near-threshold)
 - [#question-notification-channel](open-questions.md#question-notification-channel)
 - [#question-office-documents-as-attachments](open-questions.md#question-office-documents-as-attachments)
 - [#question-photo-originals](open-questions.md#question-photo-originals)
@@ -166,6 +166,7 @@ Every hashtag, in alphabetical order, with the place it is defined.
 - [#read-only-on-sources](principles.md#read-only-on-sources)
 - [#reader](domain-language.md#reader)
 - [#reading-in-isolation](architecture.md#reading-in-isolation)
+- [#reading-libraries](architecture.md#reading-libraries)
 - [#rejected-sender](domain-language.md#rejected-sender)
 - [#resuming](how-it-works.md#resuming)
 - [#reviewed](domain-language.md#reviewed)

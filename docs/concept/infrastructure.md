@@ -17,9 +17,10 @@ except the Mac [collector](domain-language.md#collector): the database, the
 cloud resources.
 
 - The server is reachable only on the local network, or through a VPN.
-- It installs from the repository on any Linux machine with PostgreSQL. The
-  setup lives in `infra/` as code, so the machine can be rebuilt from the
-  repository.
+- It installs from the repository on any Linux machine with PostgreSQL and
+  the tool that isolates reading
+  ([isolation of reading](#isolation-of-reading)). The setup lives in `infra/`
+  as code, so the machine can be rebuilt from the repository.
 - The Mac collector is optional. Where it is used, the Mac's own scheduler
   (`launchd`) starts its [runs](domain-language.md#run).
 
@@ -34,9 +35,24 @@ running is open:
 `#expected-volume`
 
 The app is designed for tens of thousands of [assets](domain-language.md#asset),
-possibly more than 100,000. Slice 1 of the plan measures files per hour for OCR
-and for both embeddings and extends the figure to 100,000 files, so the length
-of the first full [run](domain-language.md#run) is known before it starts.
+possibly more than 100,000.
+
+What that costs in time was measured on the
+[server](domain-language.md#server), on made-up files only:
+
+| Step | Per hour | 100,000 take |
+|---|---|---|
+| OCR with Tesseract | about 13,000 pages | about 7.5 hours |
+| OCR with a vision model at the [model server](#model-server) | about 550 pages | about 180 hours, which is more than a week |
+| Text [embedding](domain-language.md#embedding) | about 84,000 texts | about 1.2 hours |
+| Photo [embedding](domain-language.md#embedding) | about 295,000 small images | about 0.3 hours |
+
+So OCR sets the length of the first full [run](domain-language.md#run), and
+the choice of the OCR engine changes it from hours to days. Real files are
+slower than these: a full-size camera image costs more to decode than the
+small images measured, and a long text costs more than a short one. Which OCR
+engine is open:
+[open question: which models](open-questions.md#question-which-models).
 
 ## Database
 
@@ -77,8 +93,10 @@ the [backup](#backup) covers too.
 
 A program on the [user](domain-language.md#user)'s network that serves a local
 language model, such as Ollama or the llama.cpp server. The app calls it for
-[descriptions](domain-language.md#description), and for OCR only if the
-benchmark picks a vision model. The other models run inside the app's own
+[descriptions](domain-language.md#description), and for OCR only if a vision
+model is the OCR engine. The [guardian](domain-language.md#guardian) cannot
+reach it, so a [worker](domain-language.md#worker) sends it the picture of a
+page that the guardian made. The other models run inside the app's own
 process.
 
 Its address is configuration and must be a local one. Details are in
@@ -160,22 +178,63 @@ That is a requirement on the installation, on the
 | cannot reach | the network: not the internet, not the local network, not the [model server](#model-server) |
 | cannot reach | the [token store](#token-store), which holds the [providers](domain-language.md#provider)' access tokens |
 | cannot reach | the [database](#database) or its credentials |
+| sees | only the files it is given |
+| can start | only the programs it is given |
 | never does | run a macro, a script or an executable found inside an [asset](domain-language.md#asset) |
 
 - It holds for every [asset](domain-language.md#asset), also one from a
   [trusted](domain-language.md#trusted) [source](domain-language.md#source) or
   [sender](domain-language.md#sender).
-- The setup that enforces it lives in `infra/` as code, like the rest of the
-  [server](domain-language.md#server) setup, and a test proves that the
-  [guardian](domain-language.md#guardian) cannot reach the network.
 - The same holds on a Mac, because a
   [collector](domain-language.md#collector) works with files there: where the
   inside of an [asset](domain-language.md#asset) is needed, the
   [guardian](domain-language.md#guardian) reads it in the same isolation.
 
-With what it is made, on the [server](domain-language.md#server) and on a Mac,
-is open:
-[open question: how reading is isolated](open-questions.md#question-how-reading-is-isolated).
+**On the [server](domain-language.md#server) it is made with Bubblewrap
+(`bwrap`).** The app starts the process that reads an
+[asset](domain-language.md#asset) through it, once per asset:
+
+- **No network.** The process has no way to the internet, to the local
+  network or to the [server](domain-language.md#server)'s own services, so it
+  reaches neither the [database](#database) nor the
+  [model server](#model-server).
+- **Only the files it is given**, none of which it can change: the `node`
+  program, the system libraries, the app's package and the
+  [bytes](domain-language.md#bytes) of the one
+  [asset](domain-language.md#asset), taken from the
+  [stash](domain-language.md#stash). The [token store](#token-store) and
+  every other asset are not among them, so for that process they do not
+  exist.
+- **Only the programs it is given.** None, unless Tesseract is the OCR engine:
+  then Tesseract and its language data are given too, and the
+  [guardian](domain-language.md#guardian) starts Tesseract in there.
+- **An empty environment.** No address, no token and no password is passed
+  in.
+- **A vision model stays outside.** When a vision model is the OCR engine,
+  the [guardian](domain-language.md#guardian) turns a page into a picture and
+  a [worker](domain-language.md#worker), outside the guardian, sends the
+  picture to the [model server](#model-server).
+
+What that asks of the [server](domain-language.md#server):
+
+- The tool is installed, and so is Tesseract with its language data when
+  Tesseract is the OCR engine. Installing them belongs to the
+  [server setup](#server-setup).
+- No administrator rights are needed to run it, and nothing is configured on
+  the machine: the app passes the whole isolation each time it starts the
+  process.
+- It adds about 2 milliseconds per [asset](domain-language.md#asset),
+  measured with a made-up file.
+- A test proves it. The same probe is run twice: plainly, where it reaches
+  the network, the database's port, a file standing in for the token store and
+  a system program; and in isolation, where it reaches none of the four. Where
+  the tool is missing, the test says that the isolation is not proven there:
+  [continuous integration](testing.md#continuous-integration).
+
+**On a Mac the mechanism is not measured.** The tool the
+[server](domain-language.md#server) uses does not exist there:
+[open question: how reading is isolated on a Mac](open-questions.md#question-how-reading-is-isolated-on-a-mac).
+
 The code's side of it is
 [reading in isolation](architecture.md#reading-in-isolation).
 

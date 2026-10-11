@@ -197,9 +197,19 @@ execute. The app does the first and never the second.
 - **It reads in isolation.** The [guardian](domain-language.md#guardian) reads
   an [asset](domain-language.md#asset) with no network access and no access to
   the [providers](domain-language.md#provider)' access tokens or to the
-  database. A deliberately crafted file that breaks the reading library
+  database. It sees only the files it is given and can start only the programs
+  it is given. A deliberately crafted file that breaks the reading library
   reaches nothing. See
   [reading in isolation](architecture.md#reading-in-isolation).
+- **A program the [guardian](domain-language.md#guardian) starts is one the
+  app gives it**, never one found inside an
+  [asset](domain-language.md#asset). The one such program is Tesseract, when
+  it is the OCR engine, and it runs inside the same isolation.
+- **A model outside the isolation gets only what came out.** The
+  [guardian](domain-language.md#guardian) cannot reach the model server. When
+  a vision model is the OCR engine, the guardian turns a page into a picture,
+  and a [worker](domain-language.md#worker), outside the guardian, sends the
+  picture to the model server.
 - **It refuses a file built to exhaust the
   [server](domain-language.md#server).** The
   [guardian](domain-language.md#guardian) does not read a file beyond a limit
@@ -214,7 +224,11 @@ execute. The app does the first and never the second.
 - **The isolation applies on a Mac too.** A
   [collector](domain-language.md#collector) works with files there, and where
   the inside of an [asset](domain-language.md#asset) is needed on the Mac, the
-  [guardian](domain-language.md#guardian) reads it in the same isolation.
+  [guardian](domain-language.md#guardian) reads it in the same isolation. With
+  what the isolation is made on the [server](domain-language.md#server) is in
+  [isolation of reading](infrastructure.md#isolation-of-reading). On a Mac the
+  mechanism is not measured:
+  [open question: how reading is isolated on a Mac](open-questions.md#question-how-reading-is-isolated-on-a-mac).
 - **While reading an [e-mail](domain-language.md#e-mail) it loads nothing from
   the internet**: no remote images and no following of links. Only the text and
   the [attachments](domain-language.md#attachment).
