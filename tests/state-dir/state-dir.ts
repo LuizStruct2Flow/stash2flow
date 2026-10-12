@@ -8,7 +8,7 @@
  * every other project's Codex output interleaved. Not hypothetical: a peer-stream
  * acceptance verdict surfaced live in this project's feed.
  *
- * The fix is ONE mechanism — `scripts/lib/state-dir.sh` — sourced by the feed AND
+ * The fix is ONE mechanism — `scripts/lib/state-dir.mts` — sourced by the feed AND
  * every dispatcher, never two implementations that agree when a substitution
  * happens to line up.
  *
@@ -54,7 +54,7 @@ export const CONSUMERS = ['scripts/agent-activity.sh', ...DISPATCHERS] as const
  */
 const ARTEFACT = /runs\.log|signal\.log|last-message\.md/
 /** A variable whose value came from the shared helper. */
-const DERIVED = /STATE_DIR|state_dir|LOG_FILE|agent_state_dir/
+const DERIVED = /STATE_DIR|state_dir|LOG_FILE|agent[_-]state[_-]dir/
 /** An assignment to the state-dir variable. */
 const STATE_ASSIGN = /^[ \t]*(?:STATE_DIR|state_dir|LOG_FILE)=/
 /**
@@ -182,7 +182,7 @@ export function tsPhysicalRootBlock(source: string): string | null {
  * So it asserts the REQUIREMENT instead of enumerating violations. Two rules:
  *
  *   A. a line naming a state artefact must root it in a helper-derived variable;
- *   B. an assignment to the state-dir variable must call `agent_state_dir`.
+ *   B. an assignment to the state-dir variable must call `agent_state_dir` (the shell function, or `state-dir.mts agent-state-dir`).
  *
  * Any reconstruction — `$HOME`, `${HOME}`, `printf`, a hardcoded absolute path, a
  * spelling nobody has thought of — fails one of these, because it has to name an
@@ -204,7 +204,7 @@ export function structuralViolations(rel: string, source: string): string[] {
   if (lines.some((l) => ARTEFACT.test(l) && !DERIVED.test(l))) found.push(`${rel}(A)`)
   if (
     lines.some(
-      (l) => STATE_ASSIGN.test(l) && !POSITIONAL_OVERRIDE.test(l) && !l.includes('agent_state_dir'),
+      (l) => STATE_ASSIGN.test(l) && !POSITIONAL_OVERRIDE.test(l) && !/agent[_-]state[_-]dir/.test(l),
     )
   ) {
     found.push(`${rel}(B)`)
@@ -221,7 +221,7 @@ const BUILDS_STATE_PATH = /runs\.log|signal\.log|last-message|mkdir/
  * #3 — no dispatcher builds a state/log path from the literal placeholder.
  *
  * Both conditions must hold ON THE SAME LINE: the placeholder appears in prose
- * elsewhere legitimately (`scripts/lib/state-dir.sh`'s own header quotes the
+ * elsewhere legitimately (`scripts/lib/state-dir.mts`'s own header quotes the
  * defective path as the incident record), so a file-level match would fire on
  * every file that documents the bug.
  */
@@ -311,6 +311,16 @@ export function resolveConsumerFile(root: string, rel: string): ResolvedConsumer
   }
 }
 
+/**
+ * The name a consumer must name to be wired to the ONE mechanism (#4).
+ *
+ * TASK-092: the helper is `scripts/lib/state-dir.mts`, reached across a process
+ * boundary (`node .../state-dir.mts <sub>`) by every consumer, shell or not.
+ */
+export function sourcesHelperPattern(): RegExp {
+  return /lib\/state-dir\.mts/
+}
+
 export async function scanStateDir(root: string): Promise<StateDirScan> {
   const sources = new Map<string, string>()
   const kinds = new Map<string, ConsumerKind>()
@@ -339,11 +349,12 @@ export async function scanStateDir(root: string): Promise<StateDirScan> {
   for (const [rel, source] of sources) {
     const kind = kinds.get(rel) ?? 'shell'
     // Sourcing the shared helper is still a plain substring check either way:
-    // a 'ts' consumer reaches scripts/lib/state-dir.sh across a process
+    // a 'ts' consumer reaches scripts/lib/state-dir.mts across a process
     // boundary rather than duplicating its derivation (TASK-067's stated
     // consequence for sourced libraries), and doing that means naming the
-    // path in its own source too.
-    if (!source.includes('lib/state-dir.sh')) notSourcingHelper.push(rel)
+    // path in its own source too. The accepted name is migration-aware
+    // (TASK-092): the .mts name counts only once the port exists in `root`.
+    if (!sourcesHelperPattern().test(source)) notSourcingHelper.push(rel)
     // #5b, #10, #10e are shell-syntax / shell-portability heuristics with no
     // TypeScript analogue to mis-fire on: a 'ts' consumer cannot spell a
     // reconstruction the way STATE_ASSIGN matches, cannot depend on GNU

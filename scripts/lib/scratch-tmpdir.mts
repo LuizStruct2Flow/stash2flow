@@ -10,7 +10,7 @@
 // first — so setting it in the child's environment redirects them without
 // touching every tool's own flags. One function, used by every launcher and
 // by junior-dispatch.mts, so the path is derived once and cannot drift
-// between them (the same reasoning CLAUDE.md gives for state-dir.sh).
+// between them (the same reasoning CLAUDE.md gives for state-dir.mts).
 
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'

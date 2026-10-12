@@ -550,11 +550,10 @@ describe('BUG-022 — a dispatch into silence is visible', () => {
 
         // The watcher's own derivation must land on the dir this case watches, or
         // every assertion below is about a path it never touches (TASK-021).
-        const root = await s.run(
-          'sh',
-          ['-c', `BP_CODE_ROOT="${live.root}" . "${join(live.root, 'scripts/lib/state-dir.sh')}"; bp_state_root`],
-          { cwd: live.root },
-        )
+        const root = await s.run('node', [join(live.root, 'scripts/lib/state-dir.mts'), 'bp-state-root'], {
+          cwd: live.root,
+          env: { BP_CODE_ROOT: live.root },
+        })
         expect(join(root.stdout.trim(), 'logs', 'state'), 'the live repo resolves elsewhere').toBe(live.stateDir)
 
         if (before !== 'none') await s.fs.write('live/logs/state/.watch-over_to_codex.lock', '')

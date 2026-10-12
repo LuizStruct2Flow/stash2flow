@@ -61,10 +61,9 @@ if [ -r "$_PIPE_LIB/feed.sh" ]; then
   # Resolved here because the gate is the one feed producer that is not a
   # top-level script with its own physical-location block: `pwd` is git's hook
   # contract, which is the same claim scripts/lib/dod-gate.mts makes.
-  if [ -z "${BP_STATE_ROOT:-}" ] && [ -r "$_PIPE_LIB/state-dir.sh" ]; then
-    . "$_PIPE_LIB/state-dir.sh"
+  if [ -z "${BP_STATE_ROOT:-}" ] && [ -r "$_PIPE_LIB/state-dir.mts" ]; then
     : "${BP_CODE_ROOT:=$(pwd)}"
-    BP_STATE_ROOT="$(bp_state_root)" || BP_STATE_ROOT=""
+    BP_STATE_ROOT="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$_PIPE_LIB/state-dir.mts" bp-state-root)" || BP_STATE_ROOT=""
   fi
   . "$_PIPE_LIB/feed.sh"
 fi

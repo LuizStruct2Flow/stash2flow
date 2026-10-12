@@ -82,7 +82,7 @@ async function buildFixture(
     'scripts/signal-watch.mts',
     launcherRel,
     'scripts/codex-feed-filter.sh',
-    'scripts/lib/state-dir.sh',
+    'scripts/lib/state-dir.mts',
     'scripts/lib/roster.sh',
     'scripts/lib/feed.sh',
   ]

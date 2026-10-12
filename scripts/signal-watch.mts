@@ -16,7 +16,7 @@
 //
 // The command receives AGENT_SIGNAL_HOLDER, AGENT_SIGNAL_STATE, and
 // AGENT_SIGNAL_TASK in its environment. Every trigger is also appended to
-// the project's state dir (<repo>/logs/state/signal.log; see scripts/lib/state-dir.sh).
+// the project's state dir (<repo>/logs/state/signal.log; see scripts/lib/state-dir.mts).
 
 import { spawn, spawnSync } from 'node:child_process'
 import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeSync } from 'node:fs'
@@ -52,7 +52,7 @@ If neither is provided, the watcher only writes the trigger log line.
 //   * `pwd` answers about wherever the operator happened to be standing.
 //
 // Either can resolve a DIFFERENT CHECKOUT, and the launcher then sources that
-// tree's lib/state-dir.sh — so an old copy of the derivation silently wins and
+// tree's lib/state-dir.mts — so an old copy of the derivation silently wins and
 // the feed and dispatcher stop rendezvousing.
 //
 // The shell version needed a hand-rolled 40-hop symlink walk here (see
@@ -110,15 +110,15 @@ interface ShFnResult {
   readonly stdout: string
 }
 
-// Reach scripts/lib/state-dir.sh ACROSS A PROCESS BOUNDARY rather than
+// Reach scripts/lib/state-dir.mts ACROSS A PROCESS BOUNDARY rather than
 // hand-copying its derivation into TypeScript (BUG-144 brief's own hard
 // stop — two copies of the state-dir rule is how A-09 broke the feed). One
 // mechanism, sourced by every consumer including this one; a `.mts` consumer
-// just reaches it through `sh -c` instead of `.`. stderr is INHERITED, not
+// just reaches it as `node state-dir.mts <sub>` instead of calling a function. stderr is INHERITED, not
 // captured — the shell functions print their own diagnostics on failure, and
 // a shell caller's `$(...)` never captured stderr either, so this keeps that
 // visible the same way.
-const STATE_DIR_LIB = join(BP_CODE_ROOT, 'scripts/lib/state-dir.sh')
+const STATE_DIR_LIB = join(BP_CODE_ROOT, 'scripts/lib/state-dir.mts')
 // scripts/lib/roster.sh and scripts/signal-set.sh, reached the same way, for
 // the BUG-144 mic-recovery fix below.
 const ROSTER_LIB = join(BP_CODE_ROOT, 'scripts/lib/roster.sh')
@@ -174,10 +174,9 @@ async function stateDirFn(
     if (value === undefined) delete env[key]
     else env[key] = value
   }
-  const placeholders = args.map((_, i) => `"$${i + 2}"`).join(' ')
   const r = await spawnBounded(
-    'sh',
-    ['-c', `. "$1"; ${fn} ${placeholders}`, 'sh', STATE_DIR_LIB, ...args],
+    'node',
+    [STATE_DIR_LIB, fn, ...args],
     { env, stdio: ['ignore', 'pipe', 'inherit'] },
     SHELL_LIB_TIMEOUT_MS,
   )
@@ -185,18 +184,18 @@ async function stateDirFn(
 }
 
 // BP_STATE_ROOT is resolved ONCE, at startup — same contract as the shell
-// consumers (state-dir.sh's own docblock: "resolve once per script, at
+// consumers (state-dir.mts's own docblock: "resolve once per script, at
 // initialisation").
-const bpStateRootResult = await stateDirFn('bp_state_root', [], { BP_CODE_ROOT })
+const bpStateRootResult = await stateDirFn('bp-state-root', [], { BP_CODE_ROOT })
 if (bpStateRootResult.code !== 0) process.exit(9)
 const BP_STATE_ROOT = bpStateRootResult.stdout
 
 async function agentStateDir(): Promise<string> {
-  return (await stateDirFn('agent_state_dir', [], { BP_STATE_ROOT })).stdout
+  return (await stateDirFn('agent-state-dir', [], { BP_STATE_ROOT })).stdout
 }
 
 async function agentSignalFile(clearOverride: boolean): Promise<string> {
-  return (await stateDirFn('agent_signal_file', [], {
+  return (await stateDirFn('agent-signal-file', [], {
     BP_STATE_ROOT,
     ...(clearOverride ? { AGENT_SIGNAL_FILE: undefined } : {}),
   })).stdout
@@ -378,7 +377,7 @@ function nowSeconds(): number {
 // ROUND 3 (observed live 2026-09-22, `findings.md` F-002 shape): this used to
 // read `dirname(signalFile)` on the theory that the roster sits "beside the
 // baton" — true only of the FIXTURE, never of production. The real baton is
-// `<repo>/logs/state/AGENT_SIGNAL.md` (scripts/lib/state-dir.sh's
+// `<repo>/logs/state/AGENT_SIGNAL.md` (scripts/lib/state-dir.mts's
 // agent_state_dir) and the real roster is `<repo>/AGENT_ROSTER.md` — two
 // directories apart, not siblings. Live, this printed "no AGENT_ROSTER.md ...
 // under '.../logs/state'" and left the mic stranded. `tests/mic-recovery`
@@ -387,7 +386,7 @@ function nowSeconds(): number {
 //
 // BP_STATE_ROOT is the fix: it is the one root every other roster consumer
 // (agent-activity.sh, signal-set.sh, dod-gate.mts) already resolves from, and
-// this watcher already computes it once at startup (state-dir.sh's own
+// this watcher already computes it once at startup (state-dir.mts's own
 // contract, same as agentStateDir()/agentSignalFile() above) rather than
 // inventing a second derivation that only agrees with the first by
 // coincidence (A-09).
@@ -439,7 +438,7 @@ function nowSeconds(): number {
 //
 // THE FIX: identify a dispatch by whether a NEW ONE has started, not by the
 // Task text of this one. logs/state/signal-history.log (agent_signal_journal,
-// scripts/lib/state-dir.sh) is an append-only record of every flip written
+// scripts/lib/state-dir.mts) is an append-only record of every flip written
 // through scripts/signal-set.sh — never hand-edited, never rotated — so "has
 // anything been DISPATCHED (an OVER_TO_* flip) to this Holder since mine" is
 // answerable without reading Task text at all. An agent's own ACTIVE claim
@@ -546,7 +545,7 @@ async function recoverStrandedMic(
 
   // BP_STATE_ROOT, not dirname(signalFile): the roster lives at the project
   // root (AGENT_ROSTER.md), the baton several levels under it
-  // (logs/state/AGENT_SIGNAL.md — see scripts/lib/state-dir.sh's
+  // (logs/state/AGENT_SIGNAL.md — see scripts/lib/state-dir.mts's
   // agent_state_dir). dirname(signalFile) resolves to the STATE dir, which
   // never holds the roster in production — that mismatch is what round 3 of
   // BUG-144 caught live. BP_STATE_ROOT is the one mechanism every consumer
@@ -555,7 +554,7 @@ async function recoverStrandedMic(
   const orchestrator = await spawnBounded(
     // roster.sh is `#!/usr/bin/env bash` and uses `${var// /_}` (BUG-144
     // round 3: dash's `sh` on this box throws "Bad substitution" on that
-    // parameter expansion). state-dir.sh and watcher-lock.sh, sourced the
+    // parameter expansion). watcher-lock.sh, sourced the
     // same way elsewhere in this file, are POSIX `#!/bin/sh` and stay on
     // `sh` — this is the one lib here that actually needs bash.
     'bash',

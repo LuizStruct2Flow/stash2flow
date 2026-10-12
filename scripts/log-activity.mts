@@ -7,7 +7,7 @@
 // hook payload JSON on stdin. Emits ONE line:
 //   HH:MM:SS [<Persona> - <model> - <effort>] <event>: <summary>
 //
-// The libs this hook depends on (scripts/lib/state-dir.sh, feed.sh,
+// The libs this hook depends on (scripts/lib/state-dir.mts, a node CLI; feed.sh,
 // watcher-lock.sh, staleness.sh, roster.sh) stay shell — they are shared with
 // still-shell consumers (scripts/agent-activity.sh among them) — so this file
 // reaches them ACROSS A PROCESS BOUNDARY (`sh -c '. "$1"; fn "$2" …'`) rather
@@ -37,7 +37,7 @@ import { fileURLToPath } from 'node:url'
 const SELF_PATH = fileURLToPath(import.meta.url)
 const BP_CODE_ROOT = dirname(dirname(realpathSync(SELF_PATH)))
 
-const STATE_DIR_LIB = join(BP_CODE_ROOT, 'scripts/lib/state-dir.sh')
+const STATE_DIR_LIB = join(BP_CODE_ROOT, 'scripts/lib/state-dir.mts')
 const FEED_LIB = join(BP_CODE_ROOT, 'scripts/lib/feed.sh')
 const WATCHER_LOCK_LIB = join(BP_CODE_ROOT, 'scripts/lib/watcher-lock.sh')
 const STALENESS_LIB = join(BP_CODE_ROOT, 'scripts/lib/staleness.sh')
@@ -147,7 +147,7 @@ if (process.env.BP_SUBAGENT_DEFER_CHILD === '1') {
 }
 
 // --- BP_STATE_ROOT, resolved once (bp_state_root's own contract) -----------
-const stateRootResult = spawnSync('sh', ['-c', '. "$1"; bp_state_root', 'sh', STATE_DIR_LIB], {
+const stateRootResult = spawnSync('node', [STATE_DIR_LIB, 'bp-state-root'], {
   env: { ...process.env, BP_CODE_ROOT },
   encoding: 'utf8',
   stdio: ['ignore', 'pipe', 'inherit'],

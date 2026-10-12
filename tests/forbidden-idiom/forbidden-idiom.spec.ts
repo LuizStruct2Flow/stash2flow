@@ -27,7 +27,7 @@
  *
  * `tests/state-dir` #6c banned the idiom for *state-dir consumers* and swept
  * `scripts/agent-activity.sh` plus three dispatchers. BUG-076 found that it
- * never looked in `scripts/lib/`, where `state-dir.sh` was the one file that
+ * never looked in `scripts/lib/`, where `state-dir.mts` was the one file that
  * actually contained the expression; the port widened the sweep to
  * `scripts/lib/` but kept the subsystem filter.
  *

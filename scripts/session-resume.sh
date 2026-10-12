@@ -88,8 +88,7 @@ fi
 _bp_root="$(cd -P "$(dirname "$_bp_self")/.." && pwd)"
 BP_CODE_ROOT="$_bp_root"
 
-. "$_bp_root/scripts/lib/state-dir.sh"
-BP_STATE_ROOT="$(bp_state_root)" || exit 9
+BP_STATE_ROOT="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$_bp_root/scripts/lib/state-dir.mts" bp-state-root)" || exit 9
 
 MODE="report"
 # The DATA root defaults to the RESOLVED PROJECT root and is overridable. Code
@@ -134,7 +133,7 @@ done
 [ -d "$DATA_ROOT" ] || { echo "session-resume: no such --root: $DATA_ROOT" >&2; exit 2; }
 DATA_ROOT="$(cd -P "$DATA_ROOT" && pwd)"
 
-SIGNAL="$(agent_signal_file_for "$DATA_ROOT")"
+SIGNAL="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$_bp_root/scripts/lib/state-dir.mts" agent-signal-file-for "$DATA_ROOT")"
 JOURNAL="$(dirname "$SIGNAL")/signal-history.log"
 HANDOVER="$DATA_ROOT/docs/doing/HANDOVER.md"
 

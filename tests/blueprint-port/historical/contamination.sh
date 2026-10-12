@@ -109,7 +109,7 @@
 # --- Well-known dot-directories -------------------------------------------
 # Tool and shell dirs that are generic to every machine. Anything ELSE under
 # ~/. or $HOME/. is a per-project state dir, which is precisely the BUG-002 /
-# A-09 shape: it must be derived at runtime via scripts/lib/state-dir.sh, not
+# A-09 shape: it must be derived at runtime via scripts/lib/state-dir.mts, not
 # written literally into a generic file.
 #
 # Note `{{PROJECT_NAME}}` is deliberately NOT allowlisted. After reverse-
@@ -445,7 +445,7 @@ contamination_scan() {
     if [ "$is_prose" -eq 1 ]; then
       case "$name" in \{\{PROJECT_NAME*) continue ;; esac
     fi
-    printf '%s|BLOCK|literal per-project state dir (derive it via scripts/lib/state-dir.sh)|%s\n' \
+    printf '%s|BLOCK|literal per-project state dir (derive it via scripts/lib/state-dir.mts)|%s\n' \
       "$ln" "$text"
     blocked=1
   done < <(grep -noE '(\$HOME|~)/\.[A-Za-z0-9_{][A-Za-z0-9_.{}-]*' "$f" 2>/dev/null || true)

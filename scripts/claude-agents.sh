@@ -17,9 +17,7 @@
 set -u
 root="$(cd "$(dirname "$0")/.." && pwd)"
 BP_CODE_ROOT="$root"
-# shellcheck source=scripts/lib/state-dir.sh
-. "$root/scripts/lib/state-dir.sh"
-BP_STATE_ROOT="$(bp_state_root)" || exit 1
+BP_STATE_ROOT="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$root/scripts/lib/state-dir.mts" bp-state-root)" || exit 1
 # shellcheck source=scripts/lib/roster.sh
 . "$root/scripts/lib/roster.sh"
 

@@ -110,7 +110,7 @@ import { REPO_ROOT, scenario, type RunResult, type Scenario } from '../harness/i
 const LIB = join(REPO_ROOT, 'scripts/lib/pipeline.sh')
 const FEED_LIB = join(REPO_ROOT, 'scripts/lib/feed.sh')
 
-const STATE_LIB = join(REPO_ROOT, 'scripts/lib/state-dir.sh')
+const STATE_MTS = join(REPO_ROOT, 'scripts/lib/state-dir.mts')
 
 /** The suffix `scripts/lib/feed.sh` appends to the project root it derives. */
 const FEED_SUFFIX = 'logs/agent-activity.log'
@@ -128,11 +128,15 @@ const FEED_SUFFIX = 'logs/agent-activity.log'
  * `scripts/log-activity.sh` do. The case's claim is unchanged — the enclosing
  * project root plus FEED_SUFFIX — but it is now asked of the shared derivation
  * rather than of git.
+ *
+ * The resolution runs through the helper's CLI. BP_CODE_ROOT must be exported
+ * for the CLI child; BP_STATE_ROOT stays a plain shell variable, the way
+ * feed.sh reads it when sourced into the same snippet.
  */
 const RESOLVE_STATE_ROOT =
-  `. ${JSON.stringify(STATE_LIB)}\n` +
   `BP_CODE_ROOT="$(pwd)"\n` +
-  `BP_STATE_ROOT="$(bp_state_root)" || exit 9\n`
+  `export BP_CODE_ROOT\n` +
+  `BP_STATE_ROOT="$(node ${JSON.stringify(STATE_MTS)} bp-state-root)" || exit 9\n`
 
 /**
  * ESC, as the thing to search for. A CI log full of these is soup.
@@ -882,7 +886,7 @@ pipe_finish`),
       // than guessing one — so a bare temp directory now resolves to nothing and
       // this case would pass vacuously for a NEW reason. `.blueprint-source` is
       // one of the three terminators `bp_state_root` walks for, and planting it
-      // is what scripts/lib/state-dir.sh says a fixture that never `git init`s
+      // is what scripts/lib/state-dir.mts says a fixture that never `git init`s
       // owes: "the two markers are complete for real CHECKOUTS and NOT for
       // FIXTURES".
       await s.fs.write('.blueprint-source', 'config_version = 2\n')

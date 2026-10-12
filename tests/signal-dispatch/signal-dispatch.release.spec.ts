@@ -472,7 +472,7 @@ describe('the settle window dispatches a wrong-order edit ONCE, on the Task that
       // (scripts/signal-set.sh:121), and BP_STATE_ROOT comes from
       // `bp_state_root()`, which walks up from BP_CODE_ROOT — the SCRIPT'S OWN
       // physical location (BASH_SOURCE, BUG-019), never this fixture's cwd or
-      // BP_STATE_ROOT_CEILING (scripts/lib/state-dir.sh). SETTER here is
+      // BP_STATE_ROOT_CEILING (scripts/lib/state-dir.mts). SETTER here is
       // `join(REPO_ROOT, 'scripts/signal-set.sh')`, run in place rather than
       // copied into the fixture (contrast tests/baton-durability's `fixture()`,
       // which copies its own signal-set.sh and so is self-contained), so

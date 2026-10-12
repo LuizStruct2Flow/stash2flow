@@ -1060,6 +1060,34 @@ describe('BUG-001 / BUG-141 — one instance, a bounded process set, byte-correc
     expect(await code(FEED)).toMatch(/flock/)
   })
 
+  it('BUG-164: ownedProcesses counts a supervisor once however many forks it holds, and two real supervisors as two', async () => {
+    await scenario('aab-164', async (s) => {
+      const b = await bound(s)
+      // A stand-in "supervisor": a bash script named agent-activity.sh that forks a
+      // same-argv subshell and holds it — what supervise() does at every `$(...)`.
+      await s.fs.write(
+        'fake/agent-activity.sh',
+        // Both the script and its subshell exit by themselves once `release` exists.
+        'hold() { while [ ! -e release ]; do sleep 0.1; done; }\n' +
+          '( : ; hold ; : ) &\n: > "$1"\nhold\nwait\n',
+      )
+      const start = async (marker: string) => {
+        s.background('bash', ['fake/agent-activity.sh', marker], { cwd: s.workspace.root })
+        await vi.waitFor(async () => expect(await s.fs.exists(marker)).toBe(true))
+      }
+      try {
+        await start('one')
+        // Old counting: 2 (the script and its subshell). New: 1.
+        expect((await b.f.ownedProcesses()).supervisors).toBe(1)
+        // A second, unrelated process tree is a second supervisor and must still count.
+        await start('two')
+        expect((await b.f.ownedProcesses()).supervisors).toBe(2)
+      } finally {
+        await s.fs.write('release', '')
+      }
+    })
+  })
+
   it('static: the broken stat fallback is not reintroduced (RC-6)', async () => {
     // `stat -f %m || stat -c %Y` returns the whole BSD stat blob on GNU, which is
     // never equal to itself twice — read as an mtime it makes every file look

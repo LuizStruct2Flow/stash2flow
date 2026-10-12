@@ -103,7 +103,7 @@ async function liveRepo(s: Scenario, name: string): Promise<{ root: string; watc
   await s.fs.copyIn(join(SUBJECT, 'scripts', 'rotation.mts'), `${name}/scripts/rotation.mts`)
   // recoverStrandedMic hands back through scripts/signal-set.sh, resolved
   // from the SAME copied code root — the fixture copy must carry it, and its
-  // mandatory lib/state-dir.sh source with it.
+  // mandatory lib/state-dir.mts source with it.
   await s.fs.copyIn(join(SUBJECT, 'scripts', 'signal-set.sh'), `${name}/scripts/signal-set.sh`)
   // The WHOLE lib dir, never named files — feed-fixture.ts records why.
   // TASK-065 (round 3): signal-watch.mts itself now imports a sibling .mts

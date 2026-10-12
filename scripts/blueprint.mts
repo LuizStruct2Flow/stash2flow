@@ -20,7 +20,7 @@
 // BUG-120 gate), history, the staleness report (staleness.sh bridge), the
 // managed set (slice 1's, reused), marker structure and the marker-aware
 // merge (BUG-034/BUG-112), the P3 one-prospective-result and the P4 settings
-// layer, `_bp_is_blueprint_itself` / `_bp_project_root` (state-dir.sh
+// layer, `_bp_is_blueprint_itself` / `_bp_project_root` (state-dir.mts
 // bridge) and gate arming (gate.mts, stdout inherited so the
 // lib's own echo lines are the bytes this process emits — no re-formatting
 // seam to drift from them).
@@ -1651,12 +1651,13 @@ async function reportStaleness(root: string, branchOverride?: string): Promise<v
   }
 }
 
-// --- _bp_project_root / _bp_is_blueprint_itself (state-dir.sh bridge) ------
+// --- _bp_project_root / _bp_is_blueprint_itself (state-dir.mts bridge) ------
 async function bpProjectRoot(): Promise<string> {
-  const lib = join(libDir(), 'state-dir.sh')
+  const lib = join(libDir(), 'state-dir.mts')
   if (existsSync(lib)) {
     const r = await unchecked(() =>
-      run('bash', ['-c', '. "$1"; BP_CODE_ROOT="$2"; bp_state_root 2>/dev/null', cliName(), lib, logicalPwd()], {
+      run('node', [lib, 'bp-state-root'], {
+        env: { ...process.env, BP_CODE_ROOT: logicalPwd() },
         stdout: 'capture',
         stderr: 'ignore',
       }),

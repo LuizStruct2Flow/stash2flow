@@ -160,7 +160,7 @@ async function git(s: Scenario, cwd: string, args: string[]) {
 async function build(s: Scenario, tag: string, kind: 'blueprint' | 'derived' = 'blueprint'): Promise<Fixture> {
   const dir = await s.workspace.dir(tag)
   await s.fs.copyIn(join(REPO_ROOT, MTS), join(dir, MTS))
-  await s.fs.copyIn(join(REPO_ROOT, 'scripts/lib/state-dir.sh'), join(dir, 'scripts/lib/state-dir.sh'))
+  await s.fs.copyIn(join(REPO_ROOT, 'scripts/lib/state-dir.mts'), join(dir, 'scripts/lib/state-dir.mts'))
   // BUG-140: dod_stage_signal's roster check. No AGENT_ROSTER.md is written here,
   // so bp_roster_file finds nothing and the check degrades to a no-op — the same
   // way it does on a fresh clone before `cp AGENT_ROSTER.example.md

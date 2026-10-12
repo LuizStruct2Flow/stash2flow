@@ -6,14 +6,13 @@
 # Lightweight watcher for the live baton that notifies when the mic flips to GitHub Copilot
 set -euo pipefail
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
-# shellcheck source=scripts/lib/state-dir.sh
+# shellcheck source=scripts/lib/state-dir.mts
 BP_CODE_ROOT="$repo_root"
-. "$repo_root/scripts/lib/state-dir.sh"
-BP_STATE_ROOT="$(bp_state_root)" || exit 9
+BP_STATE_ROOT="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$repo_root/scripts/lib/state-dir.mts" bp-state-root)" || exit 9
 # BUG-019: the LIVE baton is untracked state, resolved through the one shared
 # helper. Reading the tracked AGENT_SIGNAL.md here would read protocol prose,
 # and — worse, before the split — a file git rewrites under a live dispatch.
-signal_file="$(agent_signal_file)"
+signal_file="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$repo_root/scripts/lib/state-dir.mts" agent-signal-file)"
 last=""
 echo "Starting Copilot signal watcher (watching $signal_file)"
 if [ ! -f "$signal_file" ]; then

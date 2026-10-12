@@ -11,7 +11,7 @@
 // unattended (kimi 2.0.2 refuses to combine `-p` with `--auto`/`--yolo`, and
 // doesn't need either: there is nobody to ask in prompt mode). Kimi's file
 // edits + signal flip land directly in the repo; its final message + run log are
-// captured to the project's state dir (see scripts/lib/state-dir.sh —
+// captured to the project's state dir (see scripts/lib/state-dir.mts —
 // `<repo>/logs/state/kimi-last-message.md` and `<repo>/logs/state/kimi-runs.log`
 // by default).
 //
@@ -90,9 +90,8 @@ set -u
 # A watcher lives for days; the derivation can change under it, and a frozen
 # path fails silently (BUG-020, Codex review round 2 finding 3).
 BP_CODE_ROOT="$ROOT"
-. "$ROOT/scripts/lib/state-dir.sh"
-BP_STATE_ROOT="$(bp_state_root)" || exit 9
-STATE_DIR="$(agent_state_dir)"
+BP_STATE_ROOT="$(BP_CODE_ROOT="\${BP_CODE_ROOT:-}" BP_STATE_ROOT="\${BP_STATE_ROOT:-}" AGENT_STATE_HOME="\${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="\${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="\${BP_STATE_ROOT_CEILING:-}" node "$ROOT/scripts/lib/state-dir.mts" bp-state-root)" || exit 9
+STATE_DIR="$(BP_CODE_ROOT="\${BP_CODE_ROOT:-}" BP_STATE_ROOT="\${BP_STATE_ROOT:-}" AGENT_STATE_HOME="\${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="\${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="\${BP_STATE_ROOT_CEILING:-}" node "$ROOT/scripts/lib/state-dir.mts" agent-state-dir)"
 mkdir -p "$STATE_DIR"
 RUN_LOG="$STATE_DIR/kimi-runs.log"
 OUTPUT_LAST="$STATE_DIR/kimi-last-message.md"

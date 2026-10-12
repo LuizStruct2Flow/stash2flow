@@ -102,7 +102,7 @@ async function upstream(s: Scenario): Promise<{ dir: string; base: string }> {
   const up = await s.gitRepo('upstream')
   await s.fs.write('upstream/docs/DoD.md', 'the DoD\n')
   await s.fs.write('upstream/docs/SECURITY.md', 'security recipe\n')
-  await s.fs.write('upstream/scripts/lib/state-dir.sh', 'unrelated helper\n')
+  await s.fs.write('upstream/scripts/lib/sample-lib.sh', 'unrelated helper\n')
   await s.fs.write('upstream/README.md', '# readme\n')
   await up.commitAll('base')
   const full = await up.git(['rev-parse', 'HEAD'])
@@ -168,7 +168,7 @@ describe('a2bp request commits are deterministic, minimal, and assert their own 
       expect(c1, 'NOT EXERCISED — no commit was built').not.toBe('')
 
       const absent: string[] = []
-      for (const f of ['docs/SECURITY.md', 'scripts/lib/state-dir.sh', 'README.md']) {
+      for (const f of ['docs/SECURITY.md', 'scripts/lib/sample-lib.sh', 'README.md']) {
         const r = await sh(s, 'bp_request_hermetic git -C "$1" cat-file -e "$2"', [
           bare,
           `${c1}:${f}`,
@@ -304,7 +304,7 @@ describe('a2bp request commits are deterministic, minimal, and assert their own 
         'a2bp/acme/test2',
         'acme',
         await spec(s, 'docs/DoD.md', '100644', 'one'),
-        await spec(s, 'scripts/lib/state-dir.sh', '100755', 'two'),
+        await spec(s, 'scripts/lib/sample-lib.sh', '100755', 'two'),
       ])
       expect(c2, 'multi-file build failed').not.toBe('')
 
@@ -317,7 +317,7 @@ describe('a2bp request commits are deterministic, minimal, and assert their own 
 
       const entry = await out(
         s,
-        'bp_request_hermetic git -C "$1" ls-tree "$2" -- scripts/lib/state-dir.sh | awk \'{print $1}\'',
+        'bp_request_hermetic git -C "$1" ls-tree "$2" -- scripts/lib/sample-lib.sh | awk \'{print $1}\'',
         [bare, c2],
       )
       expect(entry, 'the 100755 mode was not carried into the tree').toBe('100755')

@@ -98,20 +98,85 @@ const IDLE_BATON =
   '| Field | Value |\n|---|---|\n| Holder | Nobody |\n| State | IDLE |\n| Task | nothing yet |\n'
 
 /**
- * The fixture shim for `state-dir.sh`: resolve the baton through a POINTER FILE,
- * so the path can move WHILE the watcher runs.
+ * The fixture shim for `scripts/lib/state-dir.mts`: resolve the baton through a
+ * POINTER FILE, so the path can move WHILE the watcher runs. Same four functions
+ * as the real lib, plus the CLI `main()` the repointed callers invoke.
  *
  * This shims the DERIVATION, not the watcher. What is under test is whether the
  * watcher asks again — it either does or it does not — and there is no other way
  * to move a baton under a live process without also changing the thing being
- * measured.
+ * measured. The `_for` subcommands resolve through the pointer: the pointer
+ * target IS the state dir, so the dir argument is arity-checked and ignored.
  */
-const POINTER_SHIM =
-  '#!/bin/sh\n' +
-  "bp_state_root()     { printf '%s\\n' \"$(cat \"$BD_POINTER\")\"; }\n" +
-  "agent_state_dir()   { printf '%s\\n' \"$(cat \"$BD_POINTER\")\"; }\n" +
-  "agent_signal_file() { printf '%s\\n' \"${AGENT_SIGNAL_FILE:-$(cat \"$BD_POINTER\")/signal.md}\"; }\n" +
-  'agent_signal_journal() { printf \'%s\\n\' "$(dirname "$(agent_signal_file "${1:-}")")/signal-history.log"; }\n'
+const POINTER_SHIM = [
+  '// Fixture shim for scripts/lib/state-dir.mts (resolves through BD_POINTER).',
+  'import { readFileSync } from "node:fs"',
+  'import { dirname } from "node:path"',
+  'import { pathToFileURL } from "node:url"',
+  '',
+  'const pointer = (): string => readFileSync(process.env.BD_POINTER ?? "", "utf8").trim()',
+  '',
+  'export function bp_state_root(): string {',
+  '  return pointer()',
+  '}',
+  'export function agent_state_dir(): string {',
+  '  return pointer()',
+  '}',
+  'export function agent_signal_file(): string {',
+  '  return process.env.AGENT_SIGNAL_FILE ?? `${pointer()}/signal.md`',
+  '}',
+  'export function agent_signal_journal(): string {',
+  '  return `${dirname(agent_signal_file())}/signal-history.log`',
+  '}',
+  '',
+  'function main(argv: string[]): number {',
+  '  const [sub, ...rest] = argv',
+  '  const exactArity = (n: number): boolean => {',
+  '    if (rest.length === n) return true',
+  '    console.error(`${sub}: expected ${n} argument(s), got ${rest.length}`)',
+  '    return false',
+  '  }',
+  '  // The dir argument is checked and then ignored: the pointer target IS the',
+  '  // state dir in this fixture, as in the .sh shim.',
+  '  switch (sub) {',
+  '    case "bp-state-root":',
+  '      if (!exactArity(0)) return 2',
+  '      console.log(bp_state_root())',
+  '      return 0',
+  '    case "agent-state-dir":',
+  '      if (!exactArity(0)) return 2',
+  '      console.log(agent_state_dir())',
+  '      return 0',
+  '    case "agent-state-dir-for":',
+  '      if (!exactArity(1)) return 2',
+  '      console.log(agent_state_dir())',
+  '      return 0',
+  '    case "agent-signal-file":',
+  '      if (!exactArity(0)) return 2',
+  '      console.log(agent_signal_file())',
+  '      return 0',
+  '    case "agent-signal-file-for":',
+  '      if (!exactArity(1)) return 2',
+  '      console.log(agent_signal_file())',
+  '      return 0',
+  '    case "agent-signal-journal":',
+  '      if (!exactArity(0)) return 2',
+  '      console.log(agent_signal_journal())',
+  '      return 0',
+  '    case "agent-signal-journal-for":',
+  '      if (!exactArity(1)) return 2',
+  '      console.log(agent_signal_journal())',
+  '      return 0',
+  '    default:',
+  '      console.error(`state-dir: unknown subcommand: ${sub}`)',
+  '      return 2',
+  '  }',
+  '}',
+  '',
+  'const invoked = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href',
+  'if (invoked) process.exit(main(process.argv.slice(2)))',
+  '',
+].join('\n')
 
 interface Fixture {
   readonly root: string
@@ -124,7 +189,7 @@ interface Fixture {
   afterIterations(n: number, fact: string): Promise<void>
   /** Publish through the FIXTURE's own copy of signal-set.sh, from inside the fixture. */
   publish(args: string[]): Promise<void>
-  /** Replace the fixture's state-dir.sh with the pointer shim. */
+  /** Replace the fixture's state-dir.mts with the pointer shim. */
   usePointer(target: string): Promise<void>
   /** Point the shim at a different state directory. */
   movePointer(target: string): Promise<void>
@@ -141,13 +206,14 @@ async function fixture(s: Scenario, name: string): Promise<Fixture> {
   const root = repo.dir
   const rel = (p: string) => join(name, p)
 
-  for (const script of [
+  const copiedScripts = [
     'scripts/signal-watch.mts',
     'scripts/start-codex-signal-watch.mts',
     'scripts/codex-feed-filter.sh',
     'scripts/signal-set.sh',
-    'scripts/lib/state-dir.sh',
-  ]) {
+    'scripts/lib/state-dir.mts',
+  ]
+  for (const script of copiedScripts) {
     await s.fs.copyIn(join(REPO_ROOT, script), rel(script))
     // The launcher EXECS signal-watch.mts rather than running `bash` on it,
     // so the bit is load-bearing rather than cosmetic.
@@ -155,7 +221,7 @@ async function fixture(s: Scenario, name: string): Promise<Fixture> {
   }
   // TASK-065 (round 3) — signal-watch.mts also imports a sibling .mts lib
   // directly (scripts/lib/spawn-bounded.mts), not sourced through a shell
-  // function like scripts/lib/state-dir.sh above, so it has to travel with
+  // function like scripts/lib/state-dir.mts above, so it has to travel with
   // the copied watcher too or it fails ERR_MODULE_NOT_FOUND on startup.
   await s.fs.copyIn(join(REPO_ROOT, 'scripts/lib/spawn-bounded.mts'), rel('scripts/lib/spawn-bounded.mts'))
   // TASK-083 — the ported start-codex-signal-watch.mts imports
@@ -216,7 +282,7 @@ async function fixture(s: Scenario, name: string): Promise<Fixture> {
     },
 
     async usePointer(target) {
-      await s.fs.write(rel('scripts/lib/state-dir.sh'), POINTER_SHIM)
+      await s.fs.write(rel('scripts/lib/state-dir.mts'), POINTER_SHIM)
       await s.fs.write(`${name}/pointer`, `${target}\n`)
     },
 

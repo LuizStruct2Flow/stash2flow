@@ -73,12 +73,11 @@ repo_root="$_bp_root"
 # Sourced here rather than further down, because agent_signal_file() lives in
 # the same lib and the baton is resolved immediately below. A use-before-source
 # yields an empty path silently instead of failing.
-. "$repo_root/scripts/lib/state-dir.sh"
-BP_STATE_ROOT="$(bp_state_root)" || exit 9
+BP_STATE_ROOT="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$repo_root/scripts/lib/state-dir.mts" bp-state-root)" || exit 9
 # BUG-019: the LIVE baton is untracked state, resolved through the one shared
 # helper. Reading the tracked AGENT_SIGNAL.md here would read protocol prose,
 # and — worse, before the split — a file git rewrites under a live dispatch.
-signal_file="$(agent_signal_file)"
+signal_file="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$repo_root/scripts/lib/state-dir.mts" agent-signal-file)"
 # BUG-077: the STATE root, not this script's CODE root. The supervisor holds
 # the feed open and appends by offset while scripts/lib/feed.sh appends by path,
 # so the two must derive the same file from the same rule — that is A-09's whole
@@ -94,9 +93,9 @@ state_file="$log_dir/.agent-activity.state"
 # project reads the dispatcher logs IT writes — never another project's
 # (BUG-002: this used to hardcode ~/.linkedin-watcher-agent).  a2bp-allow: that
 # path is the incident record, quoted in a comment, not a live path. The derivation is
-# shared with the dispatchers via scripts/lib/state-dir.sh so both sides compute
+# shared with the dispatchers via scripts/lib/state-dir.mts so both sides compute
 # the identical directory — one mechanism, never two (A-09). Sourced above.
-state_dir="$(agent_state_dir)"; mkdir -p "$state_dir"
+state_dir="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$repo_root/scripts/lib/state-dir.mts" agent-state-dir)"; mkdir -p "$state_dir"
 
 # --- who is this session? (BUG-010) ----------------------------------------
 # The roster's Orchestrator row is the source of truth. AGENT_PERSONA is an

@@ -551,19 +551,25 @@ function runSh(script: string, args: string[]): { rc: number; stdout: string; st
 
 function stageSignal(): { rc: number; out: string[] } {
   const codeRoot = process.env.BP_CODE_ROOT ?? '.'
-  const stateDirLib = join(codeRoot, 'scripts/lib/state-dir.sh')
+  const stateDirLib = join(codeRoot, 'scripts/lib/state-dir.mts')
   let sig = ''
   let stateRoot = ''
   if (existsSync(stateDirLib)) {
-    const script = `. "$1"\n: "\${BP_CODE_ROOT:=\$(pwd)}"\nBP_STATE_ROOT="\$(bp_state_root)" || exit 1\nsig="\$(agent_signal_file 2>/dev/null)"\nprintf '%s\\n%s\\n' "\$sig" "\$BP_STATE_ROOT"\n`
-    const res = runSh(script, [stateDirLib])
-    if (res.rc !== 0) {
-      const out = res.stderr.replace(/\n$/, '').split('\n').filter((l) => l.length > 0)
+    // The CLI keeps the process boundary the sourced shell lib had: `BP_CODE_ROOT`
+    // defaults to the cwd, and a failed root resolution reports the lib's own stderr.
+    const env = { ...process.env, BP_CODE_ROOT: process.env.BP_CODE_ROOT || process.cwd() }
+    const root = spawnSync('node', [stateDirLib, 'bp-state-root'], { encoding: 'utf8', env })
+    if (root.status !== 0) {
+      const out = (root.stderr ?? '').replace(/\n$/, '').split('\n').filter((l) => l.length > 0)
       return { rc: 1, out: out.length ? out : ['baton resolution failed'] }
     }
-    const lines = res.stdout.split('\n')
-    sig = lines[0] ?? ''
-    stateRoot = lines[1] ?? ''
+    stateRoot = (root.stdout ?? '').replace(/\n$/, '')
+    const file = spawnSync('node', [stateDirLib, 'agent-signal-file'], {
+      encoding: 'utf8',
+      env: { ...env, BP_STATE_ROOT: stateRoot },
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+    sig = (file.stdout ?? '').replace(/\n$/, '')
   }
 
   if (!sig || !existsSync(sig)) {

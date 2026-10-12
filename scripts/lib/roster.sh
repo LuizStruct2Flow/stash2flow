@@ -31,7 +31,7 @@
 #
 # Sourced by scripts/agent-activity.sh and scripts/team-kickoff.sh. This is the
 # same "one mechanism, never two that agree only by coincidence" rule that
-# scripts/lib/state-dir.sh enforces for the state directory (A-09).
+# scripts/lib/state-dir.mts enforces for the state directory (A-09).
 #
 # Usage:
 #   . scripts/lib/roster.sh

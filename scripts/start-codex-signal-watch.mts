@@ -9,7 +9,7 @@
 // non-interactive `exec` mode with the current `Task` field as the
 // prompt. Codex's response (file edits, signal flip) lands directly in
 // the repo via `--sandbox workspace-write`; the human-readable summary
-// is appended to the project's state dir (see scripts/lib/state-dir.sh —
+// is appended to the project's state dir (see scripts/lib/state-dir.mts —
 // `<repo>/logs/state/codex-runs.log` by default) for review.
 //
 // Usage:
@@ -96,9 +96,8 @@ set -u
 # A watcher lives for days; the derivation can change under it, and a frozen
 # path fails silently (BUG-020, Codex review round 2 finding 3).
 BP_CODE_ROOT="$ROOT"
-. "$ROOT/scripts/lib/state-dir.sh"
-BP_STATE_ROOT="$(bp_state_root)" || exit 9
-STATE_DIR="$(agent_state_dir)"
+BP_STATE_ROOT="$(BP_CODE_ROOT="\${BP_CODE_ROOT:-}" BP_STATE_ROOT="\${BP_STATE_ROOT:-}" AGENT_STATE_HOME="\${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="\${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="\${BP_STATE_ROOT_CEILING:-}" node "$ROOT/scripts/lib/state-dir.mts" bp-state-root)" || exit 9
+STATE_DIR="$(BP_CODE_ROOT="\${BP_CODE_ROOT:-}" BP_STATE_ROOT="\${BP_STATE_ROOT:-}" AGENT_STATE_HOME="\${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="\${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="\${BP_STATE_ROOT_CEILING:-}" node "$ROOT/scripts/lib/state-dir.mts" agent-state-dir)"
 mkdir -p "$STATE_DIR"
 RUN_LOG="$STATE_DIR/codex-runs.log"
 OUTPUT_LAST="$STATE_DIR/codex-last-message.md"

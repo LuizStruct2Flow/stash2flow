@@ -54,7 +54,7 @@ const PLACEHOLDER = ['{{', 'PROJECT_NAME', '}}'].join('')
 // --- Well-known dot-directories -------------------------------------------
 // Tool and shell dirs that are generic to every machine. Anything ELSE under
 // ~/. or $HOME/. is a per-project state dir — the BUG-002 / A-09 shape: it
-// must be derived at runtime via scripts/lib/state-dir.sh, never written
+// must be derived at runtime via scripts/lib/state-dir.mts, never written
 // literally into a generic file. The placeholder is deliberately NOT listed:
 // after reverse-substitution a project's own dir becomes `~/.<placeholder>`,
 // which is A-09 exactly (the shared literal dir every checkout collided on).
@@ -321,7 +321,7 @@ export function contaminationScan(f: string, projName: string, logical: string =
       // `~/.<repo-basename>`, which in a derived project IS the project name).
       // In a SCRIPT the same string is a literal unsubstituted path — A-09.
       if (isProse && name.startsWith(PLACEHOLDER.slice(0, -2))) continue
-      block(ln, 'literal per-project state dir (derive it via scripts/lib/state-dir.sh)', text)
+      block(ln, 'literal per-project state dir (derive it via scripts/lib/state-dir.mts)', text)
     }
   })
 

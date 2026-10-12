@@ -53,9 +53,8 @@ fi
 _bp_root="$(cd -P "$(dirname "$_bp_self")/.." && pwd)"
 BP_CODE_ROOT="$_bp_root"
 
-. "$_bp_root/scripts/lib/state-dir.sh"
 # BUG-140 — roster.sh is OPTIONAL infrastructure for this script, not required
-# infrastructure like state-dir.sh above: a fixture that copies only
+# infrastructure like state-dir.mts above: a fixture that copies only
 # signal-set.sh (to test the baton mechanics, not the roster check) must still
 # be able to publish. Same degrade as the no-AGENT_ROSTER.md case below, one
 # level up — the LIB itself missing, not just the roster file it reads.
@@ -64,8 +63,8 @@ if [ -r "$_bp_root/scripts/lib/roster.sh" ]; then
   . "$_bp_root/scripts/lib/roster.sh"
   _bp_have_roster_lib=1
 fi
-BP_STATE_ROOT="$(bp_state_root)" || exit 9
-SIGNAL="$(agent_signal_file)"
+BP_STATE_ROOT="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$_bp_root/scripts/lib/state-dir.mts" bp-state-root)" || exit 9
+SIGNAL="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$_bp_root/scripts/lib/state-dir.mts" agent-signal-file)"
 # JOURNAL is derived AFTER argument parsing, from the baton actually in use.
 # Deriving it here missed `--file`, which is parsed below: tests/signal-set/
 # points the baton at a fixture with `--file` and its eleven rows still landed

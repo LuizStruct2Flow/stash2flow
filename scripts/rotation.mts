@@ -71,7 +71,7 @@ export interface RotationState {
 }
 
 const CODE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
-const STATE_DIR_LIB = join(CODE_ROOT, 'scripts/lib/state-dir.sh')
+const STATE_DIR_LIB = join(CODE_ROOT, 'scripts/lib/state-dir.mts')
 const ROSTER_LIB = join(CODE_ROOT, 'scripts/lib/roster.sh')
 
 function stdout(text: string): void { writeSync(1, text) }
@@ -85,13 +85,16 @@ interface RosterRow {
 }
 
 function stateDir(): string {
-  const result = spawnSync(
-    'sh',
-    ['-c', '. "$1"; BP_STATE_ROOT="$(bp_state_root)" || exit 9; agent_state_dir', 'sh', STATE_DIR_LIB],
-    { encoding: 'utf8', env: { ...process.env, BP_CODE_ROOT: CODE_ROOT }, stdio: ['ignore', 'pipe', 'inherit'] },
-  )
-  if (result.status !== 0) process.exit(9)
-  return result.stdout.trim()
+  const run = (sub: string, extra: Record<string, string>): string => {
+    const r = spawnSync('node', [STATE_DIR_LIB, sub], {
+      encoding: 'utf8',
+      env: { ...process.env, BP_CODE_ROOT: CODE_ROOT, ...extra },
+      stdio: ['ignore', 'pipe', 'inherit'],
+    })
+    if (r.status !== 0) process.exit(9)
+    return r.stdout.trim()
+  }
+  return run('agent-state-dir', { BP_STATE_ROOT: run('bp-state-root', {}) })
 }
 
 function rotationLog(): string {

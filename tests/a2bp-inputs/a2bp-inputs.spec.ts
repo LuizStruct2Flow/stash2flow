@@ -66,11 +66,11 @@ async function project(s: Scenario): Promise<{ proj: string; managed: string }> 
   const proj = await s.workspace.dir('proj')
   await s.fs.write('proj/docs/DoD.md', 'dod\n')
   await s.fs.write('proj/docs/SECURITY.md', 'sec\n')
-  await s.fs.write('proj/scripts/lib/state-dir.sh', 'helper\n', { mode: 0o755 })
+  await s.fs.write('proj/scripts/lib/sample-lib.sh', 'helper\n', { mode: 0o755 })
   await s.fs.write('proj/project_config_dod.md', 'private\n')
   const managed = await s.fs.write(
     'managed',
-    'docs/DoD.md\ndocs/SECURITY.md\nscripts/lib/state-dir.sh\n',
+    'docs/DoD.md\ndocs/SECURITY.md\nscripts/lib/sample-lib.sh\n',
   )
   return { proj, managed }
 }
@@ -236,8 +236,8 @@ describe('a2bp validates its destination and its inputs before anything leaves',
   it('#5b the executable bit becomes 100755', async () => {
     await scenario('a2bp-inputs-5b', async (s) => {
       const { proj, managed } = await project(s)
-      const r = await call(s, 'bp_inputs_validate', [proj, managed, 'scripts/lib/state-dir.sh'])
-      expect(captured(r)).toBe('scripts/lib/state-dir.sh:100755')
+      const r = await call(s, 'bp_inputs_validate', [proj, managed, 'scripts/lib/sample-lib.sh'])
+      expect(captured(r)).toBe('scripts/lib/sample-lib.sh:100755')
     })
   })
 

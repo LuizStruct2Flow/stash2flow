@@ -108,7 +108,7 @@ import {
 } from './state-dir.js'
 
 
-const HELPER = join(REPO_ROOT, 'scripts/lib/state-dir.sh')
+const HELPER = join(REPO_ROOT, 'scripts/lib/state-dir.mts')
 
 /**
  * A synthetic consumer's body. A consumer named by its `.mts` is judged as
@@ -119,7 +119,7 @@ const TS_CONSUMER = [
   '// --- physical script root (A-09 / BUG-020, ported) ---',
   "const _bpRoot = 'dirname(dirname(realpathSync(fileURLToPath(import.meta.url))))'",
   '// --- end physical script root ---',
-  "// reaches scripts/lib/state-dir.sh across a process boundary",
+  "// reaches scripts/lib/state-dir.mts across a process boundary",
   "const LOG_FILE = 'signal.log'",
 ].join('\n')
 const bodyFor = (rel: string, shell: string): string => (rel.endsWith('.mts') ? TS_CONSUMER : shell)
@@ -163,8 +163,8 @@ async function stateDirFor(
   env: Record<string, string | undefined> = {},
 ): Promise<{ out: string; code: number | null }> {
   const r = await s.run(
-    'sh',
-    ['-c', '. "$1"; agent_state_dir_for "$2"', 'sh', HELPER, root],
+    'node',
+    [HELPER, 'agent-state-dir-for', root],
     { cwd: s.workspace.root, env: { AGENT_STATE_HOME: undefined, HOME: s.home, ...env } },
   )
   return { out: r.stdout.trim(), code: r.code }
@@ -239,7 +239,7 @@ describe('A-09 — the feed and the dispatchers rendezvous on ONE per-project st
       const empty = await stateDirFor(s, '')
       expect(empty.code).not.toBe(0)
 
-      const none = await s.run('sh', ['-c', '. "$1"; agent_state_dir_for', 'sh', HELPER], {
+      const none = await s.run('node', [HELPER, 'agent-state-dir-for'], {
         cwd: s.workspace.root,
         env: { AGENT_STATE_HOME: undefined },
       })
@@ -268,7 +268,7 @@ describe('A-09 — the feed and the dispatchers rendezvous on ONE per-project st
     // #4 — the guarantee is ONE mechanism, so every side must be wired to it.
     expect(
       scan.notSourcingHelper,
-      `${scan.notSourcingHelper.join(' ')} do not source scripts/lib/state-dir.sh — ` +
+      `${scan.notSourcingHelper.join(' ')} do not call scripts/lib/state-dir.mts — ` +
         `each has its own copy of the rule`,
     ).toEqual([])
 
@@ -330,7 +330,7 @@ describe('A-09 — the feed and the dispatchers rendezvous on ONE per-project st
     await scenario('sd-8', async (s) => {
       // Codex broke the previous fix (`dirname "$0"`) with exactly this: an
       // out-of-tree symlink made the watcher try to source
-      // /tmp/scripts/lib/state-dir.sh. He also observed, correctly, that #5b is
+      // /tmp/scripts/lib/state-dir.mts. He also observed, correctly, that #5b is
       // heuristic and a behavioural launcher test is the stronger boundary. This
       // is that test — it does not care how the path is spelled, only where the
       // bytes end up. Both hostilities at once, because that is how they arrive:
@@ -352,7 +352,7 @@ describe('A-09 — the feed and the dispatchers rendezvous on ONE per-project st
         await s.fs.copyIn(join(REPO_ROOT, rel), join('work', rel))
         await s.fs.chmod(join('work', rel), 0o755)
       }
-      await s.fs.copyIn(HELPER, join('work', 'scripts/lib/state-dir.sh'))
+      await s.fs.copyIn(HELPER, join('work', 'scripts/lib/state-dir.mts'))
       // BUG-144 round 3 — recoverStrandedMic (scripts/signal-watch.mts) now
       // actually reaches scripts/lib/roster.sh after every dispatch (it used
       // to fail resolving the roster and never get this far). This minimal
@@ -637,7 +637,7 @@ describe('A-09 R6 — the static guards are provably able to fail', () => {
       const real = await readFile(firstShellBlockSource(), 'utf8')
       const files: Record<string, string> = {}
       for (const rel of CONSUMERS) files[rel] = bodyFor(rel, real)
-      files[CONSUMERS[2]] = '#!/bin/sh\n. lib/state-dir.sh\nexceeds 40 hops\n'
+      files[CONSUMERS[2]] = '#!/bin/sh\nnode lib/state-dir.mts\nexceeds 40 hops\n'
 
       const scan = await writeAndScan(s, 'bp', files)
 
@@ -650,7 +650,7 @@ describe('A-09 R6 — the static guards are provably able to fail', () => {
   // TypeScript, TASK-088), so each shell defect gets its own scenario on it.
   const SHELL_DEFECTS: ReadonlyArray<readonly [string, keyof StateDirScan, string, string]> = [
     // #4 — a consumer with its own copy of the rule instead of the helper.
-    ['#4', 'notSourcingHelper', 'lib/state-dir.sh', 'lib/its-own-idea.sh'],
+    ['#4', 'notSourcingHelper', 'lib/state-dir.mts', 'lib/its-own-idea.sh'],
     // #10 — the GNU dependency, which fails SILENTLY on BSD.
     ['#10', 'gnuReadlink', '_bp_self="$(readlink "$_bp_self")"', '_bp_self="$(readlink -f "$_bp_self")"'],
     // #10e — a copy without the hop guard, so a cycle resolves to a wrong root.
@@ -700,7 +700,7 @@ describe('A-09 R6 — the static guards are provably able to fail', () => {
       // finding nothing to scan, which is the BUG-005 shape this guard's own
       // guard exists for.
       const files: Record<string, string> = {}
-      for (const rel of CONSUMERS) files[rel] = '#!/bin/sh\n. lib/state-dir.sh\nexceeds 40 hops\n'
+      for (const rel of CONSUMERS) files[rel] = '#!/bin/sh\nnode lib/state-dir.mts\nexceeds 40 hops\n'
 
       const scan = await writeAndScan(s, 'bp', files)
 
@@ -732,7 +732,7 @@ describe('A-09 R6 — the static guards are provably able to fail', () => {
  * moved.
  *
  * Written after three R6 cases passed vacuously: `String.replace` takes only the
- * FIRST match, and `lib/state-dir.sh` appears four times in a consumer (once as
+ * FIRST match, and `lib/state-dir.mts` appears several times in a consumer (once as
  * the `source` line, three times in prose), so the mutation landed in a comment
  * and the guard correctly saw nothing wrong. A mutant that silently applies to
  * nothing is a green R6 case proving the opposite of what it claims — which is

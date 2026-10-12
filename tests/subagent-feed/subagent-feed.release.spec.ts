@@ -250,7 +250,7 @@ async function hookTree(s: Scenario, name: string, rosterLib: string): Promise<s
   const libs = await s.run('sh', ['-c', `ls "${join(SUBJECT, 'scripts', 'lib')}"`], {
     cwd: s.workspace.root,
   })
-  for (const lib of libs.stdout.split('\n').filter((l) => l.endsWith('.sh'))) {
+  for (const lib of libs.stdout.split('\n').filter((l) => l.endsWith('.sh') || l === 'state-dir.mts')) {
     await s.fs.copyIn(join(SUBJECT, 'scripts', 'lib', lib), `${name}/scripts/lib/${lib}`)
   }
   await s.fs.write(`${name}/AGENT_ROSTER.md`, ROSTER)

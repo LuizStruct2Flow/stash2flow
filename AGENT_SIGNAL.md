@@ -362,12 +362,13 @@ code is the one whose clean review authorizes the push.
    # — a monitor pointed there never fires, and the session that armed it goes
    # blind exactly when it believes it is covered. Resolving rather than
    # hardcoding means the recipe follows the baton if it ever moves again.
-   . scripts/lib/state-dir.sh
-   # `agent_signal_file` takes no argument and refuses one, which left SIG empty
+   # `agent-signal-file` takes no argument and refuses one, which left SIG empty
    # and the loop polling nothing, silently (a2bp PR #86, stash2flow). The
-   # root-taking form is `agent_signal_file_for`; refuse to start blind, and say
-   # when the watch is armed.
-   SIG=$(agent_signal_file_for "$PWD")
+   # root-taking form is `agent-signal-file-for`; refuse to start blind, and say
+   # when the watch is armed. The CLI is a child process, so the two overrides
+   # it reads are passed in explicitly: set but unexported in this shell, they
+   # are honoured as they were when the helper was sourced.
+   SIG=$(AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" node scripts/lib/state-dir.mts agent-signal-file-for "$PWD")
    [ -f "$SIG" ] || { echo "[signal-monitor] baton not found at '$SIG'"; exit 1; }
    echo "[signal-monitor] armed on $SIG"
    last=$(mt "$SIG")

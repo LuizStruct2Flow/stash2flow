@@ -79,7 +79,7 @@
 # prevent. Resolve it the way every other consumer does, at initialisation:
 #
 #   BP_CODE_ROOT="$_bp_root"            # this script's own physical location
-#   . "$_bp_root/scripts/lib/state-dir.sh"
+#   . "$_bp_root/scripts/lib/state-dir.mts"
 #   BP_STATE_ROOT="$(bp_state_root)" || exit 9
 feed_log_path(){
   if [ -n "${AGENT_FEED_LOG:-}" ]; then printf '%s' "$AGENT_FEED_LOG"; return 0; fi

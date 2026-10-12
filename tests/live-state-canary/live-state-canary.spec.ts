@@ -62,7 +62,18 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { REPO_ROOT, scenario, type Scenario } from '../harness/index.js'
 
-const STATE_LIB = join(REPO_ROOT, 'scripts', 'lib', 'state-dir.sh')
+const STATE_MTS = join(REPO_ROOT, 'scripts', 'lib', 'state-dir.mts')
+
+/** The CLI subcommand each shell function name maps to (TASK-092). */
+const CLI_SUB: Record<string, string> = {
+  bp_state_root: 'bp-state-root',
+  agent_state_dir: 'agent-state-dir',
+  agent_state_dir_for: 'agent-state-dir-for',
+  agent_signal_file: 'agent-signal-file',
+  agent_signal_file_for: 'agent-signal-file-for',
+  agent_signal_journal: 'agent-signal-journal',
+  agent_signal_journal_for: 'agent-signal-journal-for',
+}
 
 /**
  * Resolve a live-state path exactly as production does, from a given code root
@@ -74,10 +85,18 @@ const STATE_LIB = join(REPO_ROOT, 'scripts', 'lib', 'state-dir.sh')
  * the init and got exactly that 9 back, which is the contract working.
  */
 async function resolveLive(s: Scenario, fn: string, codeRoot: string) {
-  const init = `BP_CODE_ROOT="${codeRoot}"; BP_STATE_ROOT="$(bp_state_root)" || exit 9`
+  // The once-per-script init (BP_STATE_ROOT resolved with `|| exit 9` before any
+  // state API call) is carried out against the CLI, and the five derivation
+  // inputs travel as the exported env.
   return s.run(
     'sh',
-    ['-c', `env -u AGENT_STATE_HOME -u AGENT_SIGNAL_FILE sh -c '. "${STATE_LIB}"; ${init}; ${fn}'`],
+    [
+      '-c',
+      `env -u AGENT_STATE_HOME -u AGENT_SIGNAL_FILE sh -c '` +
+        `BP_CODE_ROOT="${codeRoot}"; export BP_CODE_ROOT; ` +
+        `BP_STATE_ROOT="$(node "${STATE_MTS}" bp-state-root)" || exit 9; export BP_STATE_ROOT; ` +
+        `node "${STATE_MTS}" ${CLI_SUB[fn] ?? fn}'`,
+    ],
     { cwd: REPO_ROOT },
   )
 }

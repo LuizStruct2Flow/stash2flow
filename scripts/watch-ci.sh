@@ -42,8 +42,7 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 # here, once, the way every other consumer resolves it — $repo_root is this
 # script's CODE root, and bp_state_root walks up from it to the project.
 BP_CODE_ROOT="$repo_root"
-. "$repo_root/scripts/lib/state-dir.sh"
-BP_STATE_ROOT="$(bp_state_root)" || exit 0
+BP_STATE_ROOT="$(BP_CODE_ROOT="${BP_CODE_ROOT:-}" BP_STATE_ROOT="${BP_STATE_ROOT:-}" AGENT_STATE_HOME="${AGENT_STATE_HOME:-}" AGENT_SIGNAL_FILE="${AGENT_SIGNAL_FILE:-}" BP_STATE_ROOT_CEILING="${BP_STATE_ROOT_CEILING:-}" node "$repo_root/scripts/lib/state-dir.mts" bp-state-root)" || exit 0
 # shellcheck source=scripts/lib/feed.sh
 . "$repo_root/scripts/lib/feed.sh"
 

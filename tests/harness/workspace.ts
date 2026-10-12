@@ -20,7 +20,7 @@ import { chmod, lstat, mkdtemp, rm, mkdir, realpath, stat } from 'node:fs/promis
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 
-/** What scripts/lib/state-dir.sh `bp_state_root` treats as a project root. */
+/** What scripts/lib/state-dir.mts `bp_state_root` treats as a project root. */
 const PROJECT_MARKERS = ['.git', '.blueprint-root', '.blueprint-source'] as const
 
 /**

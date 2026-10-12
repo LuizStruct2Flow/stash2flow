@@ -5,7 +5,7 @@
  * fixture — agent-activity-bound, subagent-feed, watcher-liveness, roster — and
  * their shell originals each built the tree by hand. Every one of them then
  * needed the same retrofit twice: `cp -R scripts/lib/.` instead of naming one
- * lib (the fragility that bit when `state-dir.sh` was added), and the
+ * lib (the fragility that bit when `state-dir.mts` was added), and the
  * `.blueprint-source` root marker (TASK-021). A fixture shape copied four times
  * is four fixtures, and they drifted in exactly the way CLAUDE.md says two copies
  * of a rule drift.
@@ -140,7 +140,8 @@ async function copyLibs(s: Scenario, source: string, destRel: string): Promise<v
   const libs = await s.run('sh', ['-c', `ls "${join(source, 'scripts', 'lib')}"`], {
     cwd: s.workspace.root,
   })
-  const names = libs.stdout.split('\n').filter((n) => n.endsWith('.sh'))
+  // state-dir.mts is the one non-shell lib every feed caller runs (`node` call).
+  const names = libs.stdout.split('\n').filter((n) => n.endsWith('.sh') || n === 'state-dir.mts')
   if (names.length === 0) {
     throw new Error(
       `fixture source ${source} has no scripts/lib/*.sh — the feed aborts on a ` +
@@ -317,7 +318,12 @@ export async function feedFixture(
           `. "${join(REPO_ROOT, 'tests', 'helpers', 'proc-cwd.sh')}"
            bp_proc_cwd_available || { echo NO-PROC-CWD-MECHANISM; exit 1; }
            sup=0; tails=0
-           for p in $(ps -eo pid,args 2>/dev/null | grep '[a]gent-activity.sh' | grep -v -e --stop -e --status -e --daemon -e --whoami | awk '{print $1}'); do
+           # BUG-164 — A SUPERVISOR'S OWN FORKS ARE NOT SUPERVISORS. A subshell or
+           # pipeline stage of the supervisor carries its argv and cwd until it
+           # execs, so a single sample could count one supervisor twice. A real
+           # second supervisor is never a child of the first (--daemon setsid's it),
+           # so a candidate whose parent is also a candidate is a fork and is skipped.
+           for p in $(ps -eo pid,ppid,args 2>/dev/null | grep '[a]gent-activity.sh' | grep -v -e --stop -e --status -e --daemon -e --whoami | awk '{c[$1]=1; pp[$1]=$2} END{for(q in c) if(!(pp[q] in c)) print q}'); do
              case "$(bp_proc_cwd "$p")" in "$1"*) sup=$((sup+1)) ;; esac
            done
            for p in $(ps -eo pid,args 2>/dev/null | grep '[t]ail -n0 -F' | awk '{print $1}'); do
