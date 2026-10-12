@@ -74,6 +74,8 @@ jobs:
         run: bwrap --unshare-all --ro-bind / / -- /bin/true
       - name: Install
         run: npm ci
+      - name: Apply the schema of the index and the ledger
+        run: node src/adapters/index/apply-schema.ts
       - name: Build
         run: npm run build
       - name: Lint
