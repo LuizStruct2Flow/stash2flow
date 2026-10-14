@@ -42,7 +42,7 @@ interface World<A> {
 }
 
 /** Hands the world to the body and closes it afterwards, on both sides alike. */
-async function using<A>(
+async function withWorld<A>(
   world: Promise<World<A>>,
   body: (subject: A) => Promise<void>,
 ): Promise<void> {
@@ -59,7 +59,7 @@ const noClose = async () => {}
 /** Runs the port contract against one index implementation. */
 async function indexContract(t: TestContext, make: () => Promise<World<Index>>): Promise<void> {
   await t.test('keeps a source and answers it back', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       const source = { id: 'source-1', location: 'gdrive', account: 'user@example.com' }
       await index.keepSource(source)
       assert.deepEqual(await index.source('source-1'), source)
@@ -67,13 +67,13 @@ async function indexContract(t: TestContext, make: () => Promise<World<Index>>):
   })
 
   await t.test('answers undefined for a source it does not hold', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       assert.equal(await index.source('no-such-source'), undefined)
     })
   })
 
   await t.test('lists the sources', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await index.keepSource({ id: 'source-2', location: 'onedrive', account: 'user@example.com' })
       const sources = await index.sources()
@@ -82,7 +82,7 @@ async function indexContract(t: TestContext, make: () => Promise<World<Index>>):
   })
 
   await t.test('keeps an asset with its text and answers it back unchanged', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       const record: AssetRecord = {
         sourceId: 'source-1',
@@ -107,7 +107,7 @@ async function indexContract(t: TestContext, make: () => Promise<World<Index>>):
   })
 
   await t.test('stores an asset again under its identity, replacing what it held', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       const identity = {
         sourceId: 'source-1',
@@ -132,7 +132,7 @@ async function indexContract(t: TestContext, make: () => Promise<World<Index>>):
   })
 
   await t.test('keeps an asset without text and answers back without text', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       const record: AssetRecord = {
         sourceId: 'source-1',
@@ -151,7 +151,7 @@ async function indexContract(t: TestContext, make: () => Promise<World<Index>>):
   })
 
   await t.test('keeps a baseline per source and answers it back', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await index.keepBaseline('source-1', { assets: 3, bytes: 42 })
       assert.deepEqual(await index.baseline('source-1'), { assets: 3, bytes: 42 })
@@ -161,7 +161,7 @@ async function indexContract(t: TestContext, make: () => Promise<World<Index>>):
   })
 
   await t.test('answers undefined for a baseline it does not hold', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       assert.equal(await index.baseline('no-such-source'), undefined)
     })
   })
@@ -170,7 +170,7 @@ async function indexContract(t: TestContext, make: () => Promise<World<Index>>):
 /** The search behaviours of slice 2, over one index implementation. */
 async function searchContract(t: TestContext, make: () => Promise<World<Index>>): Promise<void> {
   await t.test('search ignores accents', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await index.keepAsset({
         sourceId: 'source-1',
@@ -186,7 +186,7 @@ async function searchContract(t: TestContext, make: () => Promise<World<Index>>)
   })
 
   await t.test('search tolerates one misread character', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await index.keepAsset({
         sourceId: 'source-1',
@@ -203,7 +203,7 @@ async function searchContract(t: TestContext, make: () => Promise<World<Index>>)
   })
 
   await t.test('every word of the query is required', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await index.keepAsset({
         sourceId: 'source-1',
@@ -228,7 +228,7 @@ async function searchContract(t: TestContext, make: () => Promise<World<Index>>)
   })
 
   await t.test('every match carries the source_link of its asset', async () => {
-    await using(make(), async (index) => {
+    await withWorld(make(), async (index) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await index.keepAsset({
         sourceId: 'source-1',
@@ -260,7 +260,7 @@ async function ledgerContract(
   make: () => Promise<World<LedgerWorld>>,
 ): Promise<void> {
   await t.test('stores a batch of asset records onto the index', async () => {
-    await using(make(), async ({ ledger, index }) => {
+    await withWorld(make(), async ({ ledger, index }) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await ledger.takeAssetRecords([
         {
@@ -280,7 +280,7 @@ async function ledgerContract(
   })
 
   await t.test('a batch delivered twice changes nothing', async () => {
-    await using(make(), async ({ ledger, index }) => {
+    await withWorld(make(), async ({ ledger, index }) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       const record = {
         sourceId: 'source-1',
@@ -297,7 +297,7 @@ async function ledgerContract(
   })
 
   await t.test('records the start and the finish of a run', async () => {
-    await using(make(), async ({ ledger, index, started, finished }) => {
+    await withWorld(make(), async ({ ledger, index, started, finished }) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await ledger.startRun('source-1', '2026-01-01T00:00:00.000Z')
       await ledger.finishRun('source-1', '2026-01-01T00:01:00.000Z')
@@ -307,7 +307,7 @@ async function ledgerContract(
   })
 
   await t.test('records two runs of one source in order', async () => {
-    await using(make(), async ({ ledger, index, started, finished }) => {
+    await withWorld(make(), async ({ ledger, index, started, finished }) => {
       await index.keepSource({ id: 'source-1', location: 'gdrive', account: 'user@example.com' })
       await ledger.startRun('source-1', '2026-01-01T00:00:00.000Z')
       await ledger.finishRun('source-1', '2026-01-01T00:01:00.000Z')
