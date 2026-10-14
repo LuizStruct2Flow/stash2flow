@@ -101,7 +101,12 @@ export class EncryptedFileTokenStore implements TokenStore {
     }
     let plain: Buffer
     try {
-      const decipher = createDecipheriv('aes-256-gcm', this.key, Buffer.from(envelope.iv, 'base64'))
+      const decipher = createDecipheriv(
+        'aes-256-gcm',
+        this.key,
+        Buffer.from(envelope.iv, 'base64'),
+        { authTagLength: 16 },
+      )
       decipher.setAAD(Buffer.from(aad))
       decipher.setAuthTag(Buffer.from(envelope.tag, 'base64'))
       plain = Buffer.concat([
@@ -120,7 +125,7 @@ export class EncryptedFileTokenStore implements TokenStore {
 
   private async write(stored: Stored): Promise<void> {
     const iv = randomBytes(12)
-    const cipher = createCipheriv('aes-256-gcm', this.key, iv)
+    const cipher = createCipheriv('aes-256-gcm', this.key, iv, { authTagLength: 16 })
     cipher.setAAD(Buffer.from(aad))
     const data = Buffer.concat([cipher.update(JSON.stringify(stored)), cipher.final()])
     const envelope = {

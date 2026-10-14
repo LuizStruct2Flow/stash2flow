@@ -4,7 +4,7 @@
 // is ever kept in the clear and that a store opened with another key refuses
 // to be read.
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test, { type TestContext } from 'node:test'
@@ -118,6 +118,16 @@ test('token store contract: the encrypted file', async (t) => {
       await writeNewKeyFile(otherKeyFile)
       const wrongKey = new EncryptedFileTokenStore(file, await readKeyFile(otherKeyFile))
       await assert.rejects(wrongKey.bindingFor('gdrive'), /cannot be read with this key/)
+    })
+
+    await t.test('a store whose authentication tag is truncated is refused', async () => {
+      const truncated = join(directory, 'truncated-tag.json')
+      const store = new EncryptedFileTokenStore(truncated, key)
+      await store.keepBinding('gdrive', 'the-binding-the-user-gave')
+      const envelope = JSON.parse(await readFile(truncated, 'utf8'))
+      envelope.tag = Buffer.from(envelope.tag, 'base64').subarray(0, 4).toString('base64')
+      await writeFile(truncated, JSON.stringify(envelope))
+      await assert.rejects(store.bindingFor('gdrive'), /cannot be read with this key/)
     })
   } finally {
     await rm(directory, { recursive: true, force: true })
