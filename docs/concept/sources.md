@@ -576,14 +576,14 @@ It lets that client into the [server](domain-language.md#server) and into no
 [provider](domain-language.md#provider). It is kept apart from the two kinds
 above, and it is administered in the same place, each with a command:
 
-- **Make a credential for a new client.** The command shows the credential
-  once. It is not shown again.
+- **Make a [credential](domain-language.md#credential) for a new client.**
+  The command shows the credential once. It is not shown again.
 - **See every client.** The list that shows every
   [source](domain-language.md#source) with the state of its
   [credential](domain-language.md#credential) also shows every client, with
   when it last called the [API](domain-language.md#api).
-- **Withdraw a client's credential.** The [API](domain-language.md#api) then
-  refuses that client. Making a new credential for it brings it back.
+- **Withdraw a client's [credential](domain-language.md#credential).** The
+  [API](domain-language.md#api) then refuses that client. Making a new credential for it brings it back.
 
 The [server](domain-language.md#server) keeps only what it needs to recognise
 a client's [credential](domain-language.md#credential), never the credential
