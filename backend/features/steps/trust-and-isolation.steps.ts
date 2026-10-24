@@ -1,23 +1,8 @@
 import { Given, Then, When } from '@cucumber/cucumber'
 import { notBuilt } from '../support/not-built.ts'
 
-Given("an asset from a source that is one of the user's own drives", () => notBuilt())
-Then('the guardian reads the asset fully', () => notBuilt())
-Given('a PDF that carries a script', () => notBuilt())
-When('the guardian reads the asset', () => notBuilt())
-Then('the script is not run', () => notBuilt())
-Given('an office document that carries a macro', () => notBuilt())
-Then('the macro is not run', () => notBuilt())
-Then('the text of the asset is still taken out', () => notBuilt())
-Given('an asset that makes the reading try to reach the network', () => notBuilt())
-Then('the guardian does not reach the network', () => notBuilt())
-Given(
-  'an asset that makes the reading try to reach the credentials for the sources and the database',
-  () => notBuilt(),
-)
-Then('the guardian reaches neither the credentials for the sources nor the database', () =>
-  notBuilt(),
-)
+// The steps of the guardian's reading on the server are in
+// trust-and-isolation.integration.steps.ts: they use the real adapters.
 Given('a Mac with a collector', () => notBuilt())
 When('the guardian reads the asset on the Mac', () => notBuilt())
 Given('a sender the user has written to', () => notBuilt())

@@ -2,32 +2,27 @@ Feature: Trust and isolation
   The guardian reads an asset only when where it comes from is trusted, and
   reads it in isolation, whoever the sender is. Nothing inside an asset is run.
 
-  @slice-2
   Scenario: An asset from the user's own drives is read fully
     Given an asset from a source that is one of the user's own drives
     When the asset goes through the pipeline
     Then the guardian reads the asset fully
 
-  @slice-2
   Scenario: A script inside a PDF is never run
     Given a PDF that carries a script
     When the guardian reads the asset
     Then the script is not run
 
-  @slice-2
   Scenario: A macro in an office document is never run
     Given an office document that carries a macro
     When the guardian reads the asset
     Then the macro is not run
     And the text of the asset is still taken out
 
-  @slice-2
   Scenario: The guardian cannot reach the network while it reads an asset
     Given an asset that makes the reading try to reach the network
     When the guardian reads the asset
     Then the guardian does not reach the network
 
-  @slice-2
   Scenario: The guardian cannot reach the credentials for the sources or the database while it reads an asset
     Given an asset that makes the reading try to reach the credentials for the sources and the database
     When the guardian reads the asset

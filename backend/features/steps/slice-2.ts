@@ -10,6 +10,8 @@ import { FakeOcr } from '../../src/fakes/fake-ocr.ts'
 import { FakeSignIn } from '../../src/fakes/fake-sign-in.ts'
 import { FakeStash } from '../../src/fakes/fake-stash.ts'
 import { FakeTokenStore } from '../../src/fakes/fake-token-store.ts'
+import type { FileReading } from '../../src/ports/file-reading.ts'
+import type { Ocr } from '../../src/ports/ocr.ts'
 
 export function newSlice2World() {
   const index = new FakeIndex()
@@ -22,6 +24,8 @@ export function newSlice2World() {
     signIn: new FakeSignIn(),
     fileReading: new FakeFileReading(),
     ocr: new FakeOcr(),
+    /** The readers a scenario of the guardian's own puts in place of the fakes. */
+    readers: undefined as { fileReading: FileReading; ocr: Ocr } | undefined,
     clock: new FakeClock(),
     source: undefined as Source | undefined,
     assets: [] as Asset[],
@@ -61,8 +65,8 @@ export async function runCurrentSource(): Promise<void> {
     stash: slice2.stash,
     tokenStore: slice2.tokenStore,
     signIn: slice2.signIn,
-    fileReading: slice2.fileReading,
-    ocr: slice2.ocr,
+    fileReading: slice2.readers?.fileReading ?? slice2.fileReading,
+    ocr: slice2.readers?.ocr ?? slice2.ocr,
     clock: slice2.clock,
     limits: slice2.limits,
   })
