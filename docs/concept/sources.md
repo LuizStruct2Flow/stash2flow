@@ -562,6 +562,30 @@ The same is told from the [run](domain-language.md#run)'s side in
 [provider](domain-language.md#provider). It authenticates to the
 [server](domain-language.md#server)'s [API](domain-language.md#api) with a
 credential of its own: [authentication](infrastructure.md#authentication). How
-the [user](domain-language.md#user) sees and withdraws that credential is
-open:
-[open question: credentials of the API's clients](open-questions.md#question-credentials-of-the-apis-clients).
+the [user](domain-language.md#user) makes, sees and withdraws that credential
+is in [credentials of the API's clients](#credentials-of-the-apis-clients).
+
+### Credentials of the API's clients
+
+`#credentials-of-the-apis-clients`
+
+Each client of the [API](domain-language.md#api) holds a
+[credential](domain-language.md#credential) of its own: a
+[collector](domain-language.md#collector), the command line and the browser.
+It lets that client into the [server](domain-language.md#server) and into no
+[provider](domain-language.md#provider). It is kept apart from the two kinds
+above, and it is administered in the same place, each with a command:
+
+- **Make a credential for a new client.** The command shows the credential
+  once. It is not shown again.
+- **See every client.** The list that shows every
+  [source](domain-language.md#source) with the state of its
+  [credential](domain-language.md#credential) also shows every client, with
+  when it last called the [API](domain-language.md#api).
+- **Withdraw a client's credential.** The [API](domain-language.md#api) then
+  refuses that client. Making a new credential for it brings it back.
+
+The [server](domain-language.md#server) keeps only what it needs to recognise
+a client's [credential](domain-language.md#credential), never the credential
+itself. So the server cannot show it again, and a client that lost it gets a
+new one.

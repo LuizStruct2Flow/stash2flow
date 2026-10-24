@@ -316,27 +316,6 @@ protect against a stolen disk, which is what
 the first search slice, which stores the first
 [credential](domain-language.md#credential).
 
-### Question: credentials of the API's clients
-
-`#question-credentials-of-the-apis-clients`
-
-**Question.** Each client of the [API](domain-language.md#api) authenticates
-with a [credential](domain-language.md#credential) of its own: a
-[collector](domain-language.md#collector), the command line and the browser.
-How does a client get its credential, and where does the
-[user](domain-language.md#user) see and withdraw it?
-
-**Recommendation.** In the same place as the
-[credentials](domain-language.md#credential) of the
-[sources](domain-language.md#source): [credentials](sources.md#credentials).
-One command makes a credential for a new client and shows it once. The list
-that shows every source with the state of its credential also shows every
-client, with when it last called. One command withdraws a client's credential,
-and the [API](domain-language.md#api) then refuses that client. The
-[server](domain-language.md#server) keeps only what it needs to recognise a
-client's credential, never the credential itself. Rule it before the first
-search slice, which builds the API's authentication.
-
 ### Question: copyright line
 
 `#question-copyright-line`

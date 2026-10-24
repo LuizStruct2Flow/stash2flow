@@ -199,9 +199,10 @@ that opens the [duplicate report](domain-language.md#duplicate-report).
   else: it holds no [credential](domain-language.md#credential) for a
   [provider](domain-language.md#provider).
 
-How a client gets its token, and how the [user](domain-language.md#user) sees
-and withdraws it, is open:
-[open question: credentials of the API's clients](open-questions.md#question-credentials-of-the-apis-clients).
+A client gets its token from a command that makes it for a new client and
+shows it once. The [user](domain-language.md#user) sees every client in a list
+and withdraws a client's token with a command:
+[credentials of the API's clients](sources.md#credentials-of-the-apis-clients).
 
 ## Isolation of reading
 
