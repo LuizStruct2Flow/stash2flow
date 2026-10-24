@@ -72,6 +72,12 @@ jobs:
       # Fails the job loudly if bwrap still cannot sandbox, so the proof cannot skip unnoticed.
       - name: Check bwrap can sandbox
         run: bwrap --unshare-all --ro-bind / / -- /bin/true
+      # The guardian starts Tesseract inside its isolation (the OCR contract and
+      # the scenario of a scanned PDF need it, with the three languages).
+      - name: Install Tesseract
+        run: sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-por tesseract-ocr-deu
+      - name: Check Tesseract has its languages
+        run: tesseract --list-langs | grep -x -e eng -e por -e deu | wc -l | grep -x 3
       - name: Install
         run: npm ci
       - name: Apply the schema of the index and the ledger
