@@ -3,9 +3,10 @@
 # this file next to .gitleaks.toml).
 #
 # tests/pre-push-secrets #15 planted the real safe curl line as a source
-# literal in 0fa623c; the line is the allowlisted env-var invocation from
+# literal in 326d354 (0fa623c before the 2026-10-12 history rewrite, see
+# docs/config/SHA-MAP-2026-10-12.txt); the line is the allowlisted env-var invocation from
 # scripts/sonar-api.sh, not a credential. The spec has built the line by
 # concatenation since the BUG-156 round-3 review, so only this one
 # historical commit needs the ignore. Inert in derived projects, which do
 # not have this commit.
-0fa623cbec30fa9581987cf06cc932b83f32ce4f:tests/pre-push-secrets/pre-push-secrets.spec.ts:curl-auth-user:450
+326d3541f34b01b547bd2eedb2cc3d94f9444585:tests/pre-push-secrets/pre-push-secrets.spec.ts:curl-auth-user:450

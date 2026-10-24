@@ -157,6 +157,11 @@ describe('signal machinery (plan §2 rule 7, §3 P1/P2)', () => {
     await tick(2)
     expect(calls).toBe(0)
     await endChild()
+    // BUG-146: not inside endChild itself (the caller has not stored the
+    // child's result yet) but at the next command boundary or, failing one, the
+    // next turn.
+    expect(calls).toBe(0)
+    await tick(2)
     expect(calls).toBe(1)
   })
 

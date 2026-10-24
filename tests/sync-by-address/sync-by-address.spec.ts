@@ -1333,6 +1333,57 @@ describe('TASK-025 — drift and pull read the blueprint by its address', () => 
     })
   })
 
+  it('#20g BUG-146: a signal that arrives while a command whose result names the scratch is still running leaves nothing behind', async () => {
+    await scenario('sync-by-address-20g', async (s) => {
+      // THE DEFERRED TRAP RUNNING BEFORE ITS OWN STATE EXISTS. Bash runs a trap
+      // between commands, AFTER `scratch=$(mktemp -d …)` has assigned. The port
+      // deferred a signal that arrived during a child to run()'s own epilogue,
+      // which is BEFORE the caller has assigned the child's result: cleanup then
+      // saw no scratch, the run died, and the directory the finished `mktemp`
+      // had just made stayed behind. This holds that exact moment open: the
+      // mktemp shim has CREATED the directory and not yet printed its name.
+      // That is the leftover scratch #20f saw in CI (int-int, 2026-10-03 and
+      // 2026-10-06), and the same window for any run() whose result is stored.
+      const never = await seam(s, 'never-20g', 'ssh')
+      const proj = await project(s, BLACKHOLE, 'no-sha', 'OLD', { tag: 'g' })
+      const cli = await cliCopy(s, 'cli-20g')
+      const tmp = s.workspace.path('tmp')
+      const held = join(tmp, 'blueprint-sync.HELD20G')
+      const marker = s.workspace.path('mktemp-20g-reached')
+      const fifo = s.workspace.path('mktemp-20g.fifo')
+      const mk = await s.run('mkfifo', [fifo], { cwd: s.workspace.root })
+      expect(mk.code, mk.output).toBe(0)
+      const real = (await s.run('sh', ['-c', 'command -v mktemp'], { cwd: s.workspace.root })).stdout.trim()
+      expect(real, 'no real mktemp to hand over to').not.toBe('')
+      const shims = await s.shimDir('mktemp-held-20g')
+      await shims.add(
+        'mktemp',
+        `case "$*" in\n` +
+          `  *blueprint-sync.XXXXXXXX*) mkdir '${held}' && : > '${marker}' && exec 3<>'${fifo}' && read -r _ <&3 && printf '%s\\n' '${held}' ;;\n` +
+          `  *) exec '${real}' "$@" ;;\n` +
+          `esac`,
+      )
+
+      const run1 = start(s, cli, proj, ['drift'], { PATH: `${shims.dir}:${never.path}`, BP_FETCH_TIMEOUT: '3' })
+      await vi.waitFor(
+        () => {
+          if (!existsSync(marker)) throw new Error('mktemp has not made the scratch yet')
+        },
+        { timeout: 60_000, interval: 10 },
+      )
+      run1.child.kill('SIGINT')
+      // Give the signal time to be RECORDED while mktemp is still running; the
+      // shim cannot finish until released, so this is ordering, not a race.
+      await new Promise((r) => setTimeout(r, 300))
+      release({ ...never, fifo })
+      const d = await s.waitOrDump(run1.done, 30_000, '#20g: waiting for the run to exit')
+
+      expect(diedOf(d, 'SIGINT'), show(d)).toBe(true)
+      await expectNothingLeft(s, 'signal while mktemp was still running')
+      release(never)
+    })
+  })
+
   it('#20e BUG-120: the fetch is gated on a token that cleanup revokes, without forking, before its TERM (structural)', async () => {
     // WHY STRUCTURAL. The lost TERM needs the child's release and cleanup's TERM
     // to land in the microseconds between its open returning and its exec, and

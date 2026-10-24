@@ -365,9 +365,20 @@ function dieOfSignal(sig: Signal): void {
 export function beginChild(): void {
   signalState.childInFlight = true
 }
+// BUG-146: the deferred trap must NOT run here. This is run()'s own epilogue,
+// before the caller has stored the child's result, so a handler run now sees
+// state that is one assignment short (`SYNC.scratch = $(mktemp)` was still
+// empty: the run died with the directory its mktemp had just made left behind).
+// Bash runs a trap AFTER the assignment, BEFORE the next command, and so do we:
+// run() and shield() check at their start, and this turn-later check is the
+// backstop for a flow that ends without starting another command.
 export async function endChild(): Promise<void> {
   signalState.childInFlight = false
-  await maybeRunHandler()
+  if (signalState.pending !== null) {
+    setImmediate(() => {
+      void maybeRunHandler()
+    })
+  }
 }
 
 // shield — a critical section: bash's subshell that ignores INT/TERM for the
@@ -375,6 +386,7 @@ export async function endChild(): Promise<void> {
 // moment it closes, a recorded signal takes the terminating path — the same
 // check run() performs after a child exits.
 export async function shield<T>(fn: () => Promise<T>): Promise<T> {
+  await maybeRunHandler()
   signalState.shielded = true
   try {
     return await fn()
@@ -465,6 +477,9 @@ function openStdioTarget(target: StdioTarget | undefined, fallback: 'inherit' | 
 export async function run(cmd: string, args: readonly string[], opts: RunOptions = {}): Promise<RunResult> {
   const stdinMode: 'inherit' | 'ignore' | 'pipe' =
     opts.stdin === undefined || opts.stdin === 'inherit' ? 'inherit' : opts.stdin === 'ignore' ? 'ignore' : 'pipe'
+  // The command boundary: a signal recorded during the previous command is
+  // handled here, after its caller consumed the result (BUG-146, endChild).
+  await maybeRunHandler()
   const out = openStdioTarget(opts.stdout, 'inherit')
   const err = openStdioTarget(opts.stderr, 'inherit')
 

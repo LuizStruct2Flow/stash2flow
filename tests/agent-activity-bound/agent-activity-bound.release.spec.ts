@@ -249,12 +249,7 @@ describe('BUG-001 / BUG-141 — one instance, a bounded process set, byte-correc
       const b = await bound(s)
       try {
         await Promise.all(
-          Array.from({ length: 50 }, () =>
-            s.run('bash', ['scripts/agent-activity.sh', '--daemon'], {
-              cwd: b.f.repo,
-              env: b.f.env,
-            }),
-          ),
+          Array.from({ length: 50 }, () => b.f.startDaemon()),
         )
         await b.f.expectSupervisors(1)
         expect((await b.f.ownedProcesses()).supervisors).toBe(1)
@@ -290,6 +285,32 @@ describe('BUG-001 / BUG-141 — one instance, a bounded process set, byte-correc
       const b = await bound(s)
       await b.f.withDaemon(async () => {})
       expect((await b.f.ownedProcesses()).supervisors).toBe(0)
+    })
+  })
+
+  // BUG-163, reopened 2026-10-12. Twice that day (CI #5b after 15.9 s, a local
+  // full-suite run of #15 after 15.6 s) the suite burned its WHOLE startup bound
+  // and reported only `expected 1 owned supervisor(s), saw 0` — the supervisor
+  // never appeared, and the fixture had discarded `--daemon`'s exit code and
+  // output, so nothing said why. This case pins the contract that a daemon
+  // which fails to start fails LOUDLY: the error must carry `--daemon`'s exit
+  // code and the child's own stderr.
+  it('BUG-163 — a --daemon that dies at startup fails with its exit code and stderr, not a bare "saw 0"', async () => {
+    await scenario('aab-163', async (s) => {
+      const b = await bound(s)
+      // The reopened row's unproven suspect, made deterministic: a
+      // `node scripts/lib/state-dir.mts` child that cannot run sends `--daemon`
+      // to `exit 9` (agent-activity.sh's startup resolution). Exactly the class
+      // a contended CI runner can produce for real (a fork/exec failure under
+      // load), which is why the diagnosis must ride the failure instead of a
+      // timeout a re-run then hides.
+      await s.fs.rm('repo/scripts/lib/state-dir.mts')
+      const err = await b.f.withDaemon(async () => {}).then(
+        () => undefined,
+        (e: unknown) => e as Error,
+      )
+      expect(err?.message).toMatch(/--daemon exited with code 9/)
+      expect(err?.message).toMatch(/Cannot find module/)
     })
   })
 
@@ -808,10 +829,7 @@ describe('BUG-001 / BUG-141 — one instance, a bounded process set, byte-correc
         AGENT_SIGNAL_FILE: join(spacey, 'signal.md'),
       }
 
-      await s.run('bash', ['scripts/agent-activity.sh', '--daemon'], {
-        cwd: b.f.repo,
-        env: { ...b.f.env, ...spaceyEnv },
-      })
+      await b.f.startDaemon(spaceyEnv)
       try {
         await b.f.expectSupervisors(1)
         await b.f.expectLine('ACTIVE — t')

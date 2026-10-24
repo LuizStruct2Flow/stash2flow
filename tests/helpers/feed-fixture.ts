@@ -30,7 +30,7 @@ import { vi } from 'vitest'
 import { join } from 'node:path'
 import { randomBytes } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
-import { REPO_ROOT, type Scenario } from '../harness/index.js'
+import { REPO_ROOT, type RunResult, type Scenario } from '../harness/index.js'
 
 export interface FeedFixtureOptions {
   /** Which tree the scripts come from. Defaults to the blueprint under test. */
@@ -62,6 +62,13 @@ export interface FeedFixture {
 
   /** Run the feed's CLI once and wait for it to exit (`--status`, `--stop`, …). */
   cli(args: string[]): ReturnType<Scenario['run']>
+  /**
+   * Run `--daemon` through the fixture, recording the result so a later
+   * `expectSupervisors(1)` failure can report WHY the supervisor never
+   * appeared (BUG-163, reopened: the fixture used to discard this result, so
+   * a daemon that died at startup surfaced only as a bare `saw 0`).
+   */
+  startDaemon(extraEnv?: Record<string, string | undefined>): Promise<RunResult>
   /** The feed log's current content, or '' before the feed has written anything. */
   read(): Promise<string>
   /** Occurrences of a literal in the feed log. */
@@ -209,6 +216,50 @@ export async function feedFixture(
 
   const read = async (): Promise<string> => readFile(log, 'utf8').catch(() => '')
 
+  // BUG-163, reopened 2026-10-12 — the result of the most recent `--daemon`
+  // invocation, however it was started (withDaemon, cli(['--daemon']),
+  // startDaemon). When a case later reports "the supervisor never appeared",
+  // this is the only evidence of WHY: `--daemon` exits 9 when one of its
+  // startup `node` children fails, 1 after its internal 5 s "no lock held"
+  // bound, and its stderr carries the child's own complaint. Without it the
+  // failure degrades to a bare `saw 0` that a re-run hides.
+  let lastDaemonStart: RunResult | undefined
+
+  // Everything a "the supervisor never appeared" failure knows, gathered at
+  // failure time (not at daemon-start time — a daemon can also exit 0 and have
+  // its supervisor die afterwards, and the state file / feed log then carry
+  // the evidence). Read-only: gathering must not change what it observes.
+  const startupDiagnostics = async (): Promise<string> => {
+    const lines: string[] = ['--- supervisor startup diagnostics (BUG-163) ---']
+    if (lastDaemonStart) {
+      lines.push(
+        `--daemon exit code: ${String(lastDaemonStart.code)}` +
+          (lastDaemonStart.signal ? `  signal: ${lastDaemonStart.signal}` : ''),
+        `--- --daemon stdout ---\n${lastDaemonStart.stdout || '(empty)'}`,
+        `--- --daemon stderr ---\n${lastDaemonStart.stderr || '(empty)'}`,
+      )
+    } else {
+      lines.push(
+        'no --daemon invocation recorded through this fixture ' +
+          '(it was started via a raw s.run, which bypasses the recording)',
+      )
+    }
+    const stateBody = await readFile(join(repo, 'logs', '.agent-activity.state'), 'utf8').catch(
+      () => '',
+    )
+    lines.push(`supervisor state file: ${stateBody ? `\n${stateBody}` : '(absent)'}`)
+    const body = await read()
+    lines.push(
+      `feed log tail (a "feed started" line here means the supervisor lived long ` +
+        `enough to write one):\n${body.split('\n').slice(-5).join('\n') || '(empty)'}`,
+    )
+    const listing = await s.run('sh', ['-c', 'ls -la "$1" 2>&1', 'x', repo], {
+      cwd: repo,
+    })
+    lines.push(`fixture repo listing:\n${listing.stdout || listing.stderr}`)
+    return lines.join('\n')
+  }
+
   const fixture: FeedFixture = {
     repo,
     stateDir,
@@ -216,7 +267,22 @@ export async function feedFixture(
     log,
     env,
 
-    cli: (args) => s.run('bash', ['scripts/agent-activity.sh', ...args], { cwd: repo, env }),
+    cli: (args) => {
+      const run = s.run('bash', ['scripts/agent-activity.sh', ...args], { cwd: repo, env })
+      if (args.includes('--daemon')) {
+        void run.then((r) => (lastDaemonStart = r)).catch(() => undefined)
+      }
+      return run
+    },
+
+    async startDaemon(extraEnv = {}) {
+      const run = await s.run('bash', ['scripts/agent-activity.sh', '--daemon'], {
+        cwd: repo,
+        env: { ...env, ...extraEnv },
+      })
+      lastDaemonStart = run
+      return run
+    },
 
     read,
 
@@ -392,16 +458,35 @@ export async function feedFixture(
     // measured loaded worst; added to `cmd_daemon`'s internal 5 s it covers a
     // 15 s total startup, while keeping the RC-1 failing-side cost at 10 s
     // per burn, not 30 s.
+    //
+    // BUG-163, reopened 2026-10-12 — the bound is unchanged; what changed is the
+    // failure message. Twice that day (CI run 38246592103 #5b after 15.9 s, a
+    // local full-suite run of #15 after 15.6 s) this wait ran its whole bound
+    // and surfaced only `saw 0`, because the fixture discarded `--daemon`'s
+    // exit code and output. A startup failure now appends what the fixture
+    // knows — the daemon's exit code/stdout/stderr, the supervisor state file,
+    // the feed-log tail — so the next occurrence names its cause.
     async expectSupervisors(want, timeoutMs = want === 1 ? 10_000 : 4_000) {
-      await vi.waitFor(
-        async () => {
-          const { supervisors } = await fixture.ownedProcesses()
-          if (supervisors !== want) {
-            throw new Error(`expected ${want} owned supervisor(s), saw ${supervisors}`)
-          }
-        },
-        { timeout: timeoutMs, interval: 100 },
-      )
+      try {
+        await vi.waitFor(
+          async () => {
+            const { supervisors } = await fixture.ownedProcesses()
+            if (supervisors !== want) {
+              throw new Error(`expected ${want} owned supervisor(s), saw ${supervisors}`)
+            }
+          },
+          { timeout: timeoutMs, interval: 100 },
+        )
+      } catch (err) {
+        // BUG-163, reopened — a startup (want = 1) failure used to be only this
+        // line, which is exactly the message CI saw twice with no cause. Attach
+        // what the fixture knows about the daemon start so the next occurrence
+        // says why instead of training another re-run. Shutdown (want = 0) is a
+        // leak, not a startup failure — its evidence is a process list, not a
+        // daemon result, so the message stays as it was.
+        if (want !== 1) throw err
+        throw new Error(`${(err as Error).message}\n${await startupDiagnostics()}`)
+      }
     },
 
     async supervisorPid() {
@@ -415,11 +500,24 @@ export async function feedFixture(
       // `--stop` mandatory rather than tidy, and it is why this wrapper exists at
       // all: every case that starts a daemon must end with zero owned supervisors,
       // asserted, or a leak crosses into a sibling scenario.
-      await s.run('bash', ['scripts/agent-activity.sh', '--daemon'], {
-        cwd: repo,
-        env: { ...env, ...extraEnv },
-      })
+      //
+      // BUG-163, reopened — `--daemon`'s own report is load-bearing: it exits 9
+      // when a startup `node` child fails, 1 when no supervisor took the lock
+      // within its internal 5 s bound. Ignoring that and waiting for the
+      // supervisor burns the whole startup bound and then reports a bare `saw
+      // 0`; a non-zero exit fails here, immediately, with the exit code and the
+      // daemon's own stdout/stderr in the message.
+      const start = await fixture.startDaemon(extraEnv)
       try {
+        if (start.code !== 0) {
+          throw new Error(
+            `--daemon exited with code ${String(start.code)}` +
+              (start.signal ? ` (signal ${start.signal})` : '') +
+              ` — the supervisor never confirmed startup.\n` +
+              `--- --daemon stdout ---\n${start.stdout || '(empty)'}\n` +
+              `--- --daemon stderr ---\n${start.stderr || '(empty)'}`,
+          )
+        }
         await fixture.expectSupervisors(1)
         await body()
       } finally {
