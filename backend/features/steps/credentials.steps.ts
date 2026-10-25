@@ -6,9 +6,7 @@ import {
   removeCredential,
   signInAgain,
 } from '../../src/application/credentials.ts'
-import { notBuilt } from '../support/not-built.ts'
 import { keepSourceWithCredential, resetSlice2, runCurrentSource, slice2 } from './slice-2.ts'
-
 let listed: Awaited<ReturnType<typeof listSources>> = []
 let refused = false
 
@@ -57,10 +55,6 @@ Then('every source is listed with the state of its credential and when it was la
     [slice2.clock.now(), slice2.clock.now(), undefined, undefined],
   )
 })
-
-// Printing is owned by the command-line and log adapters, not the core.
-Given('a source with a credential', () => notBuilt())
-Then('no command and no log prints the credential in full', () => notBuilt())
 
 Given('a source with an expired credential that can be renewed without the user', async () => {
   resetSlice2()

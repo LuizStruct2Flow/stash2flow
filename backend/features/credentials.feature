@@ -13,7 +13,6 @@ Feature: Credentials
     When the user lists the sources
     Then every source is listed with the state of its credential and when it was last used
 
-  @slice-2
   Scenario: No command and no log prints a credential in full
     Given a source with a credential
     When the user lists the sources

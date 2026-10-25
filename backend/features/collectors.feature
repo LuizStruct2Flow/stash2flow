@@ -2,20 +2,17 @@ Feature: Collectors
   A collector on a Mac fetches the sources that need macOS and sends what it
   fetched to the server through the API.
 
-  @slice-2
   Scenario: The API refuses a call without valid credentials
     Given the API of the server
     When a call is made to the API without valid credentials
     Then the API refuses the call
 
-  @slice-2
   Scenario: Each client of the API authenticates with a credential of its own
     Given a collector, the command line and the browser
     When each of them authenticates with the API
     Then each of them uses a credential of its own
     And no two of them share a credential
 
-  @slice-2
   Scenario: The API is served over HTTPS only
     Given the API of the server
     When a call is made to the API over plain HTTP

@@ -13,7 +13,7 @@ const BAN = {
   ports: folder('ports'),
   fakes: folder('fakes'),
   adapters: folder('adapters'),
-  entry: String.raw`(^|/)(server|collector)(\.ts)?$`,
+  entry: String.raw`(^|/)src/(server|collector|stash)\.ts$`,
   steps: folder('features'),
   // Anything that is not a relative path: a Node built-in or a package.
   outside: String.raw`^(?!\.{1,2}/)`,
@@ -81,7 +81,7 @@ export const layers = [
     imports(['entry', 'steps', 'fakes'], { programs: true }),
   ),
   // The entry points wire the adapters.
-  block(['src/server.ts', 'src/collector.ts'], imports(['fakes', 'steps'])),
+  block(['src/server.ts', 'src/collector.ts', 'src/stash.ts'], imports(['fakes', 'steps'])),
   // Step definitions: application, ports, fakes; real adapters only in the integration subset.
   block(['features/steps/**/*.ts'], imports(['adapters', 'entry'])),
   block(['features/steps/**/*.integration.steps.ts'], imports(['entry'])),

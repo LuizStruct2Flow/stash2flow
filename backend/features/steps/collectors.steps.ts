@@ -1,15 +1,6 @@
 import { Given, Then, When } from '@cucumber/cucumber'
 import { notBuilt } from '../support/not-built.ts'
 
-Given('the API of the server', () => notBuilt())
-When('a call is made to the API without valid credentials', () => notBuilt())
-Then('the API refuses the call', () => notBuilt())
-Given('a collector, the command line and the browser', () => notBuilt())
-When('each of them authenticates with the API', () => notBuilt())
-Then('each of them uses a credential of its own', () => notBuilt())
-Then('no two of them share a credential', () => notBuilt())
-When('a call is made to the API over plain HTTP', () => notBuilt())
-Then('the API does not answer the call', () => notBuilt())
 Given('two Macs whose collectors both fetch the same source', () => notBuilt())
 When('both collectors send the asset records of the same asset', () => notBuilt())
 Then('the index holds one row for the asset', () => notBuilt())
