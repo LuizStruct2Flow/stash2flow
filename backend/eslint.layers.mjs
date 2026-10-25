@@ -13,7 +13,10 @@ const BAN = {
   ports: folder('ports'),
   fakes: folder('fakes'),
   adapters: folder('adapters'),
-  entry: String.raw`(^|/)src/(server|collector|stash)\.ts$`,
+  // Whatever the path of the specifier. Two shapes: with src/ in it, and the
+  // relative one a file next to an entry point uses (../server.ts): only dots
+  // and slashes before the name, so the port src/ports/stash.ts is not caught.
+  entry: String.raw`(^|/)src/(server|collector|stash)\.ts$|^(\.{1,2}/)+(server|collector|stash)\.ts$`,
   steps: folder('features'),
   // Anything that is not a relative path: a Node built-in or a package.
   outside: String.raw`^(?!\.{1,2}/)`,

@@ -18,6 +18,11 @@ Feature: Collectors
     When a call is made to the API over plain HTTP
     Then the API does not answer the call
 
+  Scenario: The command line searches through the API, trusting the certificate the configuration names
+    Given the API of the server
+    When the command line searches through the API, trusting the certificate the configuration names
+    Then the command line gets the matches of the search
+
   @slice-9
   Scenario: The same asset seen by both Macs is one row
     Given two Macs whose collectors both fetch the same source

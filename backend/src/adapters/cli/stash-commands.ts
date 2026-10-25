@@ -122,7 +122,15 @@ export async function runStash(argv: string[], io: Io): Promise<number> {
       const credential = await readFile(requiredEnv('STASH_API_CREDENTIAL_FILE'), 'utf8').then(
         (file) => file.trim(),
       )
-      const api = new HttpsApiClient(requiredEnv('STASH_API'), credential)
+      // The certificate of the server is rarely in the system's trust store:
+      // the configuration names the certificate (authority) the command line
+      // trusts, as the file STASH_API_CA holds.
+      const caFile = process.env.STASH_API_CA
+      const api = new HttpsApiClient(
+        requiredEnv('STASH_API'),
+        credential,
+        caFile === undefined || caFile === '' ? {} : { ca: await readFile(caFile, 'utf8') },
+      )
       return await searchCommand({ api, words: argv[1] }, io)
     }
     if (argv[0] === 'credentials') return await runCredentialsCommand(argv.slice(1), io)
